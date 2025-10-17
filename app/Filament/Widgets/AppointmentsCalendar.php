@@ -4,8 +4,7 @@ namespace App\Filament\Widgets;
 
 use App\Filament\Resources\AppointmentResource;
 use App\Models\Appointment;
-use Filament\Widgets\Widget;
-use Guava\Calendar\ValueObjects\Event;
+use Guava\Calendar\ValueObjects\CalendarEvent;
 use Guava\Calendar\Widgets\CalendarWidget;
 use Illuminate\Database\Eloquent\Model;
 
@@ -27,8 +26,8 @@ class AppointmentsCalendar extends CalendarWidget
             )
             ->get()
             ->map(function (Appointment $appointment) {
-                return Event::make()
-                    ->id($appointment->id)
+                return CalendarEvent::make()
+                    ->key($appointment->id)
                     ->title(
                         $appointment->customer->name . ' - ' . $appointment->service->name
                     )
