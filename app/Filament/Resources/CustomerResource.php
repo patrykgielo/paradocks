@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\UserResource\Pages;
+use App\Filament\Resources\CustomerResource\Pages;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -13,19 +13,26 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
 
-class UserResource extends Resource
+class CustomerResource extends Resource
 {
     protected static ?string $model = User::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-users';
+    protected static ?string $navigationIcon = 'heroicon-o-user-group';
 
     protected static ?string $navigationGroup = 'Zarządzanie Użytkownikami';
 
-    protected static ?string $modelLabel = 'Użytkownik';
+    protected static ?string $modelLabel = 'Klient';
 
-    protected static ?string $pluralModelLabel = 'Użytkownicy';
+    protected static ?string $pluralModelLabel = 'Klienci';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 3;
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->whereHas('roles', function ($query) {
+            $query->where('name', 'customer');
+        });
+    }
 
     public static function form(Form $form): Form
     {
@@ -43,6 +50,10 @@ class UserResource extends Resource
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(255),
+                        Forms\Components\TextInput::make('phone')
+                            ->label('Telefon')
+                            ->tel()
+                            ->maxLength(20),
                         Forms\Components\DateTimePicker::make('email_verified_at')
                             ->label('Email zweryfikowany')
                             ->displayFormat('d.m.Y H:i'),
@@ -62,16 +73,14 @@ class UserResource extends Resource
                             ->helperText('Pozostaw puste, aby zachować obecne hasło'),
                     ]),
 
-                Forms\Components\Section::make('Role i uprawnienia')
+                Forms\Components\Section::make('Rola')
                     ->schema([
-                        Forms\Components\Select::make('roles')
-                            ->label('Role')
-                            ->multiple()
-                            ->relationship('roles', 'name')
-                            ->options(Role::all()->pluck('name', 'id'))
-                            ->preload()
-                            ->searchable()
-                            ->helperText('Wybierz jedną lub więcej ról dla użytkownika'),
+                        Forms\Components\Hidden::make('role')
+                            ->default('customer'),
+                        Forms\Components\Placeholder::make('role_info')
+                            ->label('Rola użytkownika')
+                            ->content('Ten użytkownik będzie miał automatycznie przypisaną rolę: Klient')
+                            ->helperText('Aby zmienić rolę użytkownika, przejdź do sekcji Użytkownicy'),
                     ]),
             ]);
     }
@@ -89,16 +98,16 @@ class UserResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->copyable(),
-                Tables\Columns\TextColumn::make('roles.name')
-                    ->label('Role')
+                Tables\Columns\TextColumn::make('phone')
+                    ->label('Telefon')
+                    ->searchable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('customerAppointments_count')
+                    ->label('Liczba rezerwacji')
+                    ->counts('customerAppointments')
+                    ->sortable()
                     ->badge()
-                    ->separator(',')
-                    ->colors([
-                        'danger' => 'super-admin',
-                        'warning' => 'admin',
-                        'success' => 'staff',
-                        'info' => 'customer',
-                    ]),
+                    ->color('success'),
                 Tables\Columns\IconColumn::make('email_verified_at')
                     ->label('Zweryfikowany')
                     ->boolean()
@@ -108,22 +117,12 @@ class UserResource extends Resource
                     ->trueColor('success')
                     ->falseColor('danger'),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Data utworzenia')
+                    ->label('Data rejestracji')
                     ->dateTime('d.m.Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: false),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->label('Data aktualizacji')
-                    ->dateTime('d.m.Y H:i')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('roles')
-                    ->label('Rola')
-                    ->relationship('roles', 'name')
-                    ->multiple()
-                    ->preload(),
                 Tables\Filters\TernaryFilter::make('email_verified_at')
                     ->label('Email zweryfikowany')
                     ->nullable()
@@ -140,12 +139,12 @@ class UserResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make()
-                        ->label('Usuń zaznaczone'),
+                        ->label('Usuń zaznaczonych'),
                 ]),
             ])
-            ->emptyStateHeading('Brak użytkowników')
-            ->emptyStateDescription('Dodaj pierwszego użytkownika klikając przycisk poniżej.')
-            ->emptyStateIcon('heroicon-o-users');
+            ->emptyStateHeading('Brak klientów')
+            ->emptyStateDescription('Dodaj pierwszego klienta klikając przycisk poniżej.')
+            ->emptyStateIcon('heroicon-o-user-group');
     }
 
     public static function getRelations(): array
@@ -158,14 +157,14 @@ class UserResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListUsers::route('/'),
-            'create' => Pages\CreateUser::route('/create'),
-            'edit' => Pages\EditUser::route('/{record}/edit'),
+            'index' => Pages\ListCustomers::route('/'),
+            'create' => Pages\CreateCustomer::route('/create'),
+            'edit' => Pages\EditCustomer::route('/{record}/edit'),
         ];
     }
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        return static::getEloquentQuery()->count();
     }
 }
