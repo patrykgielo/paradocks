@@ -4,13 +4,25 @@
 <div class="container-custom max-w-6xl">
     <!-- Multi-Step Booking Wizard with Alpine.js -->
     <div x-data="bookingWizard()"
-         x-init="service = {{ json_encode([
-             'id' => $service->id,
-             'name' => $service->name,
-             'description' => $service->description,
-             'duration_minutes' => $service->duration_minutes,
-             'price' => (float) $service->price
-         ]) }}"
+         x-init="
+             service = {{ json_encode([
+                 'id' => $service->id,
+                 'name' => $service->name,
+                 'description' => $service->description,
+                 'duration_minutes' => $service->duration_minutes,
+                 'price' => (float) $service->price
+             ]) }};
+             @auth
+             customer.first_name = '{{ $user->first_name ?? '' }}';
+             customer.last_name = '{{ $user->last_name ?? '' }}';
+             customer.phone_e164 = '{{ $user->phone_e164 ?? '' }}';
+             customer.street_name = '{{ $user->street_name ?? '' }}';
+             customer.street_number = '{{ $user->street_number ?? '' }}';
+             customer.city = '{{ $user->city ?? '' }}';
+             customer.postal_code = '{{ $user->postal_code ?? '' }}';
+             customer.access_notes = '{{ $user->access_notes ?? '' }}';
+             @endauth
+         "
          class="mb-12">
 
         <!-- Progress Header -->
@@ -190,20 +202,138 @@
 
                     <!-- Step 3: Customer Details -->
                     <div x-show="step === 3" x-transition.duration.300ms>
-                        <h2 class="text-2xl font-bold text-gray-900 mb-6">Dodatkowe Informacje</h2>
+                        <h2 class="text-2xl font-bold text-gray-900 mb-6">Twoje Dane Kontaktowe</h2>
 
+                        <!-- Personal Data Section -->
                         <div class="mb-6">
-                            <label for="notes-input" class="form-label">Dodatkowe Uwagi (opcjonalnie)</label>
-                            <textarea id="notes-input"
-                                      x-model="customer.notes"
-                                      rows="4"
-                                      class="form-input"
-                                      maxlength="1000"
-                                      placeholder="Wpisz dodatkowe informacje, np. specjalne życzenia, informacje o pojeździe..."
-                                      aria-describedby="notes-help"></textarea>
-                            <p class="form-help" id="notes-help">
-                                Możesz dodać informacje, które pomogą nam lepiej przygotować się do usługi.
-                            </p>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Dane Osobowe</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="first_name" class="form-label">
+                                        Imię
+                                        <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="text"
+                                           id="first_name"
+                                           x-model="customer.first_name"
+                                           class="form-input"
+                                           :class="{ 'form-input-error': errors.first_name }"
+                                           placeholder="Jan"
+                                           required
+                                           maxlength="255">
+                                    <p x-show="errors.first_name" class="form-error" x-text="errors.first_name"></p>
+                                </div>
+                                <div>
+                                    <label for="last_name" class="form-label">
+                                        Nazwisko
+                                        <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="text"
+                                           id="last_name"
+                                           x-model="customer.last_name"
+                                           class="form-input"
+                                           :class="{ 'form-input-error': errors.last_name }"
+                                           placeholder="Kowalski"
+                                           required
+                                           maxlength="255">
+                                    <p x-show="errors.last_name" class="form-error" x-text="errors.last_name"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contact Section -->
+                        <div class="mb-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Kontakt</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="phone_e164" class="form-label">
+                                        Telefon
+                                        <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="tel"
+                                           id="phone_e164"
+                                           x-model="customer.phone_e164"
+                                           class="form-input"
+                                           :class="{ 'form-input-error': errors.phone_e164 }"
+                                           placeholder="+48501234567"
+                                           required
+                                           maxlength="20">
+                                    <p class="form-help">Format międzynarodowy, np. +48501234567</p>
+                                    <p x-show="errors.phone_e164" class="form-error" x-text="errors.phone_e164"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Address Section -->
+                        <div class="mb-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Adres (opcjonalnie)</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="street_name" class="form-label">Ulica</label>
+                                    <input type="text"
+                                           id="street_name"
+                                           x-model="customer.street_name"
+                                           class="form-input"
+                                           placeholder="Marszałkowska"
+                                           maxlength="255">
+                                </div>
+                                <div>
+                                    <label for="street_number" class="form-label">Numer</label>
+                                    <input type="text"
+                                           id="street_number"
+                                           x-model="customer.street_number"
+                                           class="form-input"
+                                           placeholder="12/34"
+                                           maxlength="20">
+                                </div>
+                                <div>
+                                    <label for="city" class="form-label">Miasto</label>
+                                    <input type="text"
+                                           id="city"
+                                           x-model="customer.city"
+                                           class="form-input"
+                                           placeholder="Warszawa"
+                                           maxlength="255">
+                                </div>
+                                <div>
+                                    <label for="postal_code" class="form-label">Kod pocztowy</label>
+                                    <input type="text"
+                                           id="postal_code"
+                                           x-model="customer.postal_code"
+                                           class="form-input"
+                                           placeholder="00-000"
+                                           maxlength="10"
+                                           x-mask="99-999">
+                                    <p x-show="errors.postal_code" class="form-error" x-text="errors.postal_code"></p>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <label for="access_notes" class="form-label">Informacje o dostępie</label>
+                                <textarea id="access_notes"
+                                          x-model="customer.access_notes"
+                                          rows="3"
+                                          class="form-input"
+                                          maxlength="1000"
+                                          placeholder="Dodatkowe informacje o adresie, np. kod do bramy, piętro..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Additional Notes Section -->
+                        <div class="mb-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Dodatkowe Uwagi</h3>
+                            <div>
+                                <label for="notes-input" class="form-label">Uwagi do wizyty (opcjonalnie)</label>
+                                <textarea id="notes-input"
+                                          x-model="customer.notes"
+                                          rows="4"
+                                          class="form-input"
+                                          maxlength="1000"
+                                          placeholder="Wpisz dodatkowe informacje, np. specjalne życzenia, informacje o pojeździe..."
+                                          aria-describedby="notes-help"></textarea>
+                                <p class="form-help" id="notes-help">
+                                    Możesz dodać informacje, które pomogą nam lepiej przygotować się do usługi.
+                                </p>
+                            </div>
                         </div>
 
                         <!-- Important Information Box -->
@@ -229,7 +359,7 @@
                                 </svg>
                                 Wstecz
                             </button>
-                            <button @click="nextStep()" type="button" class="btn btn-primary flex-1">
+                            <button @click="validateStep3() && nextStep()" type="button" class="btn btn-primary flex-1">
                                 Podsumowanie
                                 <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -265,6 +395,25 @@
                                 </div>
                             </div>
 
+                            <!-- Customer Details Summary -->
+                            <div class="border-2 border-gray-200 rounded-lg p-4">
+                                <h3 class="font-bold text-gray-900 mb-3">Twoje Dane</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                    <div>
+                                        <span class="text-gray-500">Imię i nazwisko:</span>
+                                        <span class="font-medium ml-2" x-text="`${customer.first_name} ${customer.last_name}`"></span>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-500">Telefon:</span>
+                                        <span class="font-medium ml-2" x-text="customer.phone_e164"></span>
+                                    </div>
+                                    <div x-show="customer.city" class="md:col-span-2">
+                                        <span class="text-gray-500">Adres:</span>
+                                        <span class="font-medium ml-2" x-text="`${customer.street_name || ''} ${customer.street_number || ''}, ${customer.postal_code || ''} ${customer.city || ''}`"></span>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Notes Summary -->
                             <div x-show="customer.notes" class="border-2 border-gray-200 rounded-lg p-4">
                                 <h3 class="font-bold text-gray-900 mb-2">Uwagi</h3>
@@ -289,6 +438,15 @@
                             <input type="hidden" name="start_time" :value="timeSlot ? timeSlot.start : ''">
                             <input type="hidden" name="end_time" :value="timeSlot ? timeSlot.end : ''">
                             <input type="hidden" name="notes" :value="customer.notes">
+                            <!-- New profile fields -->
+                            <input type="hidden" name="first_name" :value="customer.first_name">
+                            <input type="hidden" name="last_name" :value="customer.last_name">
+                            <input type="hidden" name="phone_e164" :value="customer.phone_e164">
+                            <input type="hidden" name="street_name" :value="customer.street_name">
+                            <input type="hidden" name="street_number" :value="customer.street_number">
+                            <input type="hidden" name="city" :value="customer.city">
+                            <input type="hidden" name="postal_code" :value="customer.postal_code">
+                            <input type="hidden" name="access_notes" :value="customer.access_notes">
 
                             <!-- Navigation Buttons -->
                             <div class="flex gap-4">

@@ -9,6 +9,14 @@ Alpine.data('bookingWizard', () => ({
     date: null,
     timeSlot: null,
     customer: {
+        first_name: '',
+        last_name: '',
+        phone_e164: '',
+        street_name: '',
+        street_number: '',
+        city: '',
+        postal_code: '',
+        access_notes: '',
         notes: ''
     },
     loading: false,
@@ -68,9 +76,43 @@ Alpine.data('bookingWizard', () => ({
                     return false;
                 }
                 break;
+            case 3:
+                return this.validateStep3();
         }
 
         return true;
+    },
+
+    validateStep3() {
+        this.errors = {};
+        let valid = true;
+
+        // Required fields
+        if (!this.customer.first_name || this.customer.first_name.trim() === '') {
+            this.errors.first_name = 'Imię jest wymagane';
+            valid = false;
+        }
+
+        if (!this.customer.last_name || this.customer.last_name.trim() === '') {
+            this.errors.last_name = 'Nazwisko jest wymagane';
+            valid = false;
+        }
+
+        if (!this.customer.phone_e164 || this.customer.phone_e164.trim() === '') {
+            this.errors.phone_e164 = 'Telefon jest wymagany';
+            valid = false;
+        } else if (!/^\+\d{1,3}\d{6,14}$/.test(this.customer.phone_e164)) {
+            this.errors.phone_e164 = 'Nieprawidłowy format telefonu (wymagany: +48501234567)';
+            valid = false;
+        }
+
+        // Optional postal code validation
+        if (this.customer.postal_code && !/^\d{2}-\d{3}$/.test(this.customer.postal_code)) {
+            this.errors.postal_code = 'Nieprawidłowy format kodu pocztowego (wymagany: 00-000)';
+            valid = false;
+        }
+
+        return valid;
     },
 
     validateStepsUpTo(stepNumber) {

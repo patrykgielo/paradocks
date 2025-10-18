@@ -31,22 +31,68 @@ class UserResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Informacje podstawowe')
+                Forms\Components\Section::make('Dane osobowe')
                     ->schema([
-                        Forms\Components\TextInput::make('name')
-                            ->label('Imię i nazwisko')
+                        Forms\Components\TextInput::make('first_name')
+                            ->label('Imię')
                             ->required()
-                            ->maxLength(255),
+                            ->maxLength(255)
+                            ->placeholder('Jan'),
+                        Forms\Components\TextInput::make('last_name')
+                            ->label('Nazwisko')
+                            ->required()
+                            ->maxLength(255)
+                            ->placeholder('Kowalski'),
+                    ])->columns(2),
+
+                Forms\Components\Section::make('Kontakt')
+                    ->schema([
                         Forms\Components\TextInput::make('email')
                             ->label('Email')
                             ->email()
                             ->required()
                             ->unique(ignoreRecord: true)
-                            ->maxLength(255),
+                            ->maxLength(255)
+                            ->placeholder('jan.kowalski@example.com'),
+                        Forms\Components\TextInput::make('phone_e164')
+                            ->label('Telefon')
+                            ->tel()
+                            ->maxLength(20)
+                            ->placeholder('+48501234567')
+                            ->helperText('Format międzynarodowy E.164, np. +48501234567')
+                            ->regex('/^\+\d{1,3}\d{6,14}$/'),
                         Forms\Components\DateTimePicker::make('email_verified_at')
                             ->label('Email zweryfikowany')
                             ->displayFormat('d.m.Y H:i'),
                     ])->columns(2),
+
+                Forms\Components\Section::make('Adres')
+                    ->schema([
+                        Forms\Components\TextInput::make('street_name')
+                            ->label('Ulica')
+                            ->maxLength(255)
+                            ->placeholder('Marszałkowska'),
+                        Forms\Components\TextInput::make('street_number')
+                            ->label('Numer')
+                            ->maxLength(20)
+                            ->placeholder('12/34'),
+                        Forms\Components\TextInput::make('city')
+                            ->label('Miasto')
+                            ->maxLength(255)
+                            ->placeholder('Warszawa'),
+                        Forms\Components\TextInput::make('postal_code')
+                            ->label('Kod pocztowy')
+                            ->maxLength(10)
+                            ->placeholder('00-000')
+                            ->mask('99-999')
+                            ->regex('/^\d{2}-\d{3}$/'),
+                        Forms\Components\Textarea::make('access_notes')
+                            ->label('Informacje o dostępie')
+                            ->maxLength(1000)
+                            ->rows(3)
+                            ->placeholder('Dodatkowe informacje o adresie, np. kod do bramy, piętro...')
+                            ->columnSpanFull(),
+                    ])->columns(4)->collapsible(),
 
                 Forms\Components\Section::make('Hasło')
                     ->schema([
@@ -80,8 +126,12 @@ class UserResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
-                    ->label('Imię i nazwisko')
+                Tables\Columns\TextColumn::make('first_name')
+                    ->label('Imię')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('last_name')
+                    ->label('Nazwisko')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('email')
@@ -89,6 +139,10 @@ class UserResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->copyable(),
+                Tables\Columns\TextColumn::make('phone_e164')
+                    ->label('Telefon')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('roles.name')
                     ->label('Role')
                     ->badge()

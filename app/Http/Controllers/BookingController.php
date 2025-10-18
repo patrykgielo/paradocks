@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\AppointmentService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class BookingController extends Controller
 {
@@ -23,7 +24,12 @@ class BookingController extends Controller
     {
         // Note: Staff selection has been removed from the booking flow
         // Staff is automatically assigned based on availability
-        return view('booking.create', compact('service'));
+        $user = Auth::user();
+
+        return view('booking.create', [
+            'service' => $service,
+            'user' => $user,
+        ]);
     }
 
     public function getAvailableSlots(Request $request)

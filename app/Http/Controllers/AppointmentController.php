@@ -40,6 +40,15 @@ class AppointmentController extends Controller
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
             'notes' => 'nullable|string|max:1000',
+            // Customer profile fields
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'phone_e164' => ['required', 'string', 'max:20', 'regex:/^\+\d{1,3}\d{6,14}$/'],
+            'street_name' => 'nullable|string|max:255',
+            'street_number' => 'nullable|string|max:20',
+            'city' => 'nullable|string|max:255',
+            'postal_code' => ['nullable', 'string', 'max:10', 'regex:/^\d{2}-\d{3}$/'],
+            'access_notes' => 'nullable|string|max:1000',
         ]);
 
         $date = Carbon::parse($validated['appointment_date']);
@@ -77,6 +86,39 @@ class AppointmentController extends Controller
             return back()
                 ->withErrors(['appointment' => $validation['errors']])
                 ->withInput();
+        }
+
+        // Update customer profile - only fill empty fields to avoid overwriting existing data
+        $user = Auth::user();
+        $profileUpdates = [];
+
+        if (empty($user->first_name)) {
+            $profileUpdates['first_name'] = $validated['first_name'];
+        }
+        if (empty($user->last_name)) {
+            $profileUpdates['last_name'] = $validated['last_name'];
+        }
+        if (empty($user->phone_e164)) {
+            $profileUpdates['phone_e164'] = $validated['phone_e164'];
+        }
+        if (empty($user->street_name) && !empty($validated['street_name'])) {
+            $profileUpdates['street_name'] = $validated['street_name'];
+        }
+        if (empty($user->street_number) && !empty($validated['street_number'])) {
+            $profileUpdates['street_number'] = $validated['street_number'];
+        }
+        if (empty($user->city) && !empty($validated['city'])) {
+            $profileUpdates['city'] = $validated['city'];
+        }
+        if (empty($user->postal_code) && !empty($validated['postal_code'])) {
+            $profileUpdates['postal_code'] = $validated['postal_code'];
+        }
+        if (empty($user->access_notes) && !empty($validated['access_notes'])) {
+            $profileUpdates['access_notes'] = $validated['access_notes'];
+        }
+
+        if (!empty($profileUpdates)) {
+            $user->update($profileUpdates);
         }
 
         // Create appointment

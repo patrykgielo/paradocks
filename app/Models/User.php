@@ -22,8 +22,16 @@ class User extends Authenticatable implements FilamentUser
      */
     protected $fillable = [
         'name',
+        'first_name',
+        'last_name',
         'email',
         'password',
+        'phone_e164',
+        'street_name',
+        'street_number',
+        'city',
+        'postal_code',
+        'access_notes',
     ];
 
     /**
@@ -47,6 +55,21 @@ class User extends Authenticatable implements FilamentUser
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Get the user's full name.
+     * Returns concatenation of first_name and last_name, falls back to 'name' field if needed.
+     *
+     * @return string
+     */
+    public function getNameAttribute(): string
+    {
+        if ($this->attributes['first_name'] || $this->attributes['last_name']) {
+            return trim(($this->attributes['first_name'] ?? '') . ' ' . ($this->attributes['last_name'] ?? ''));
+        }
+
+        return $this->attributes['name'] ?? '';
     }
 
     public function canAccessPanel(Panel $panel): bool
