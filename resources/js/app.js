@@ -6,7 +6,6 @@ Alpine.data('bookingWizard', () => ({
     step: 1,
     totalSteps: 4,
     service: null,
-    staff: null,
     date: null,
     timeSlot: null,
     customer: {
@@ -18,7 +17,14 @@ Alpine.data('bookingWizard', () => ({
 
     init() {
         // Initialize component
-        console.log('Booking wizard initialized');
+        console.log('Booking wizard initialized - automatic staff assignment enabled');
+    },
+
+    // Calculate minimum booking date (24 hours from now)
+    minDate() {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        return tomorrow.toISOString().split('T')[0];
     },
 
     nextStep() {
@@ -53,10 +59,6 @@ Alpine.data('bookingWizard', () => ({
                 }
                 break;
             case 2:
-                if (!this.staff) {
-                    this.errors.staff = 'Wybierz pracownika';
-                    return false;
-                }
                 if (!this.date) {
                     this.errors.date = 'Wybierz datę';
                     return false;
@@ -88,7 +90,7 @@ Alpine.data('bookingWizard', () => ({
     },
 
     async fetchAvailableSlots() {
-        if (!this.staff || !this.date) return;
+        if (!this.date) return;
 
         this.loading = true;
         this.availableSlots = [];
@@ -104,7 +106,6 @@ Alpine.data('bookingWizard', () => ({
                 },
                 body: JSON.stringify({
                     service_id: this.service.id,
-                    staff_id: this.staff.id,
                     date: this.date
                 })
             });

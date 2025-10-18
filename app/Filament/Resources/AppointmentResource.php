@@ -69,7 +69,7 @@ class AppointmentResource extends Resource
                 Forms\Components\Select::make('staff_id')
                     ->label('Pracownik')
                     ->relationship('staff', 'name', fn (Builder $query) =>
-                        $query->whereHas('roles', fn ($q) => $q->whereIn('name', ['staff', 'admin', 'super-admin']))
+                        $query->whereHas('roles', fn ($q) => $q->where('name', 'staff'))
                     )
                     ->searchable()
                     ->preload()

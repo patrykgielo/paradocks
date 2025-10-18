@@ -91,68 +91,41 @@
                     <div x-show="step === 2" x-transition.duration.300ms>
                         <h2 class="text-2xl font-bold text-gray-900 mb-6">Wybierz Termin Wizyty</h2>
 
-                        @if($staffMembers->isEmpty())
-                            <div class="alert alert-warning">
-                                <div class="flex items-start">
-                                    <svg class="w-6 h-6 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
-                                    <div>
-                                        <p class="font-bold">Brak dostępnych pracowników</p>
-                                        <p class="mt-1">Obecnie nie ma dostępnych pracowników dla tej usługi. Spróbuj ponownie później.</p>
-                                    </div>
+                        <!-- Info Box: Automatic Staff Assignment -->
+                        <div class="alert alert-info mb-6">
+                            <div class="flex items-start">
+                                <svg class="w-6 h-6 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+                                <div>
+                                    <p class="font-bold">Automatyczne przypisanie specjalisty</p>
+                                    <p class="mt-1">Nasz system automatycznie przypisze dostępnego specjalistę do wybranego terminu. Rezerwacja musi być dokonana co najmniej 24 godziny wcześniej.</p>
                                 </div>
                             </div>
-                        @else
-                            <!-- Staff Selection -->
-                            <div class="mb-6">
-                                <label for="staff-select" class="form-label">
-                                    Wybierz Specjalistę
-                                    <span class="text-red-500">*</span>
-                                </label>
-                                <select id="staff-select"
-                                        @change="
-                                            if ($event.target.value) {
-                                                staff = JSON.parse($event.target.value);
-                                                if (staff && date) fetchAvailableSlots();
-                                            } else {
-                                                staff = null;
-                                            }
-                                        "
-                                        class="form-input"
-                                        :class="{ 'form-input-error': errors.staff }"
-                                        required
-                                        aria-required="true"
-                                        aria-describedby="staff-error">
-                                    <option value="">-- Wybierz specjalistę --</option>
-                                    @foreach($staffMembers as $staffMember)
-                                        <option value="{{ json_encode(['id' => $staffMember->id, 'name' => $staffMember->name]) }}">
-                                            {{ $staffMember->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                <p x-show="errors.staff" class="form-error" id="staff-error" x-text="errors.staff"></p>
-                            </div>
+                        </div>
 
-                            <!-- Date Selection -->
-                            <div class="mb-6">
-                                <label for="date-input" class="form-label">
-                                    Wybierz Datę
-                                    <span class="text-red-500">*</span>
-                                </label>
-                                <input type="date"
-                                       id="date-input"
-                                       x-model="date"
-                                       @change="staff && date ? fetchAvailableSlots() : null"
-                                       min="{{ now()->format('Y-m-d') }}"
-                                       class="form-input"
-                                       :class="{ 'form-input-error': errors.date }"
-                                       required
-                                       aria-required="true"
-                                       aria-describedby="date-error">
-                                <p x-show="errors.date" class="form-error" id="date-error" x-text="errors.date"></p>
-                            </div>
+                        <!-- Date Selection -->
+                        <div class="mb-6">
+                            <label for="date-input" class="form-label">
+                                Wybierz Datę
+                                <span class="text-red-500">*</span>
+                            </label>
+                            <input type="date"
+                                   id="date-input"
+                                   x-model="date"
+                                   @change="date ? fetchAvailableSlots() : null"
+                                   :min="minDate()"
+                                   class="form-input"
+                                   :class="{ 'form-input-error': errors.date }"
+                                   required
+                                   aria-required="true"
+                                   aria-describedby="date-error date-help">
+                            <p class="form-help" id="date-help">
+                                Minimalna rezerwacja: 24 godziny przed wizytą
+                            </p>
+                            <p x-show="errors.date" class="form-error" id="date-error" x-text="errors.date"></p>
+                        </div>
 
-                            <!-- Available Time Slots -->
-                            <div x-show="staff && date" x-transition>
+                        <!-- Available Time Slots -->
+                        <div x-show="date" x-transition>
                                 <label class="form-label">
                                     Dostępne Godziny
                                     <span class="text-red-500">*</span>
@@ -194,7 +167,6 @@
 
                                 <p x-show="errors.timeSlot" class="form-error mt-2" x-text="errors.timeSlot"></p>
                             </div>
-                        @endif
 
                         <!-- Navigation Buttons -->
                         <div class="flex gap-4 mt-8">
@@ -280,10 +252,6 @@
                             <!-- Appointment Details -->
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="border-2 border-gray-200 rounded-lg p-4">
-                                    <h3 class="font-bold text-gray-900 mb-2">Specjalista</h3>
-                                    <p class="text-gray-700" x-text="staff ? staff.name : '-'"></p>
-                                </div>
-                                <div class="border-2 border-gray-200 rounded-lg p-4">
                                     <h3 class="font-bold text-gray-900 mb-2">Data</h3>
                                     <p class="text-gray-700" x-text="date || '-'"></p>
                                 </div>
@@ -291,7 +259,7 @@
                                     <h3 class="font-bold text-gray-900 mb-2">Godzina</h3>
                                     <p class="text-gray-700" x-text="timeSlot ? `${timeSlot.start} - ${timeSlot.end}` : '-'"></p>
                                 </div>
-                                <div class="border-2 border-gray-200 rounded-lg p-4">
+                                <div class="border-2 border-gray-200 rounded-lg p-4 md:col-span-2">
                                     <h3 class="font-bold text-gray-900 mb-2">Czas trwania</h3>
                                     <p class="text-gray-700" x-text="`${service.duration_minutes} minut`"></p>
                                 </div>
@@ -316,7 +284,7 @@
                         <form method="POST" action="{{ route('appointments.store') }}" class="mt-8">
                             @csrf
                             <input type="hidden" name="service_id" :value="service.id">
-                            <input type="hidden" name="staff_id" :value="staff ? staff.id : ''">
+                            <!-- staff_id is auto-assigned by backend -->
                             <input type="hidden" name="appointment_date" :value="date">
                             <input type="hidden" name="start_time" :value="timeSlot ? timeSlot.start : ''">
                             <input type="hidden" name="end_time" :value="timeSlot ? timeSlot.end : ''">
@@ -356,16 +324,6 @@
 
                         <!-- Selected Details -->
                         <div class="space-y-3 text-sm">
-                            <div class="flex items-start">
-                                <svg class="w-5 h-5 text-gray-400 mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                                </svg>
-                                <div>
-                                    <p class="text-gray-500">Specjalista</p>
-                                    <p class="font-medium text-gray-900" x-text="staff ? staff.name : 'Nie wybrano'"></p>
-                                </div>
-                            </div>
-
                             <div class="flex items-start">
                                 <svg class="w-5 h-5 text-gray-400 mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>

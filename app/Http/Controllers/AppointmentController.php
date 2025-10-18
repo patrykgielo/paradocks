@@ -35,14 +35,36 @@ class AppointmentController extends Controller
     {
         $validated = $request->validate([
             'service_id' => 'required|exists:services,id',
-            'staff_id' => 'required|exists:users,id',
+            'staff_id' => 'nullable|exists:users,id', // Made optional for auto-assignment
             'appointment_date' => 'required|date|after_or_equal:today',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
             'notes' => 'nullable|string|max:1000',
         ]);
 
-        // Validate availability
+        $date = Carbon::parse($validated['appointment_date']);
+        $startTime = Carbon::parse($validated['appointment_date'] . ' ' . $validated['start_time']);
+        $endTime = Carbon::parse($validated['appointment_date'] . ' ' . $validated['end_time']);
+
+        // If staff_id not provided, find first available staff
+        if (empty($validated['staff_id'])) {
+            $staffId = $this->appointmentService->findFirstAvailableStaff(
+                serviceId: $validated['service_id'],
+                date: $date,
+                startTime: $startTime,
+                endTime: $endTime
+            );
+
+            if (!$staffId) {
+                return back()
+                    ->withErrors(['appointment' => ['Niestety, żaden pracownik nie jest dostępny w wybranym terminie. Proszę wybrać inny termin.']])
+                    ->withInput();
+            }
+
+            $validated['staff_id'] = $staffId;
+        }
+
+        // Validate availability for assigned staff
         $validation = $this->appointmentService->validateAppointment(
             staffId: $validated['staff_id'],
             serviceId: $validated['service_id'],

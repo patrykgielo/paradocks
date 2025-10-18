@@ -107,7 +107,40 @@ class Appointment extends Model
 
     public function getCanBeCancelledAttribute(): bool
     {
-        return in_array($this->status, ['pending', 'confirmed'])
-            && $this->appointment_date >= now()->toDateString();
+        // Only pending or confirmed appointments can be cancelled
+        if (!in_array($this->status, ['pending', 'confirmed'])) {
+            return false;
+        }
+
+        // Check if appointment is in the future
+        if ($this->appointment_date < now()->toDateString()) {
+            return false;
+        }
+
+        // Check 24-hour cancellation policy
+        $appointmentDateTime = \Carbon\Carbon::parse(
+            $this->appointment_date->format('Y-m-d') . ' ' . $this->start_time->format('H:i:s')
+        );
+
+        $cancellationHours = config('booking.cancellation_hours', 24);
+        $cancellationDeadline = $appointmentDateTime->subHours($cancellationHours);
+
+        return now()->lte($cancellationDeadline);
+    }
+
+    public function getCancellationDeadlineAttribute(): string
+    {
+        if (!$this->appointment_date || !$this->start_time) {
+            return '';
+        }
+
+        $appointmentDateTime = \Carbon\Carbon::parse(
+            $this->appointment_date->format('Y-m-d') . ' ' . $this->start_time->format('H:i:s')
+        );
+
+        $cancellationHours = config('booking.cancellation_hours', 24);
+        $deadline = $appointmentDateTime->subHours($cancellationHours);
+
+        return $deadline->format('Y-m-d H:i');
     }
 }

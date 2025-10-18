@@ -21,30 +21,36 @@ class BookingController extends Controller
 
     public function create(Service $service)
     {
-        // Get staff members who have availability for this service
-        $staffMembers = User::whereHas('roles', function ($query) {
-            $query->whereIn('name', ['staff', 'admin', 'super-admin']);
-        })->whereHas('serviceAvailabilities', function ($query) use ($service) {
-            $query->where('service_id', $service->id);
-        })->get();
-
-        return view('booking.create', compact('service', 'staffMembers'));
+        // Note: Staff selection has been removed from the booking flow
+        // Staff is automatically assigned based on availability
+        return view('booking.create', compact('service'));
     }
 
     public function getAvailableSlots(Request $request)
     {
         $request->validate([
             'service_id' => 'required|exists:services,id',
-            'staff_id' => 'required|exists:users,id',
-            'date' => 'required|date|after_or_equal:today',
+            'date' => 'required|date',
         ]);
 
         $service = Service::findOrFail($request->service_id);
         $date = Carbon::parse($request->date);
 
-        $slots = $this->appointmentService->getAvailableTimeSlots(
+        // Check if date meets advance booking requirement
+        $minDateTime = now()->addHours(config('booking.advance_booking_hours', 24));
+        $requestedDate = Carbon::parse($request->date . ' 00:00:00');
+
+        if ($requestedDate->lt($minDateTime->startOfDay())) {
+            return response()->json([
+                'slots' => [],
+                'date' => $date->format('Y-m-d'),
+                'message' => 'Rezerwacja musi być dokonana co najmniej 24 godziny przed terminem wizyty.',
+            ]);
+        }
+
+        // Get available slots across ALL staff members
+        $slots = $this->appointmentService->getAvailableSlotsAcrossAllStaff(
             serviceId: $request->service_id,
-            staffId: $request->staff_id,
             date: $date,
             serviceDurationMinutes: $service->duration_minutes
         );
