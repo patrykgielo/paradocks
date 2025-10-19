@@ -72,7 +72,8 @@ app/
 │   │   ├── 2025_10_06_190501_create_services_table.php
 │   │   ├── 2025_10_06_190502_create_service_availabilities_table.php
 │   │   ├── 2025_10_06_190503_create_appointments_table.php
-│   │   └── 2025_10_18_122658_extend_users_profile_fields.php  # NEW
+│   │   ├── 2025_10_18_122658_extend_users_profile_fields.php
+│   │   └── 2025_10_19_162113_remove_name_column_from_users_table.php  # NEW
 │   ├── factories/
 │   │   └── UserFactory.php                # Updated with profile fields
 │   └── seeders/
@@ -130,8 +131,10 @@ app/
 - `model_has_roles` - Role assignments
 
 **Recent Changes:**
+- **2025-10-19**: Removed 'name' column from users table (migration 2025_10_19_162113)
 - **2025-10-18**: Extended user profile with 8 new fields (see ADR-001)
-- Name field split into first_name/last_name with data migration
+- Name field split into first_name/last_name, then 'name' column removed
+- Added getFullNameAttribute() accessor, implemented Filament HasName interface
 - Added phone_e164 (E.164 format) and Polish address fields
 
 ### 2. Service Management
@@ -211,7 +214,6 @@ app/
 | Column          | Type         | Nullable | Description                          |
 |-----------------|--------------|----------|--------------------------------------|
 | id              | bigint       | No       | Primary key                          |
-| name            | varchar(255) | No       | Legacy field (accessor only)         |
 | first_name      | varchar(255) | Yes      | User's first name                    |
 | last_name       | varchar(255) | Yes      | User's last name                     |
 | email           | varchar(255) | No       | Unique email                         |
@@ -354,27 +356,51 @@ composer run dev  # Starts: server + queue + pail + vite
 
 ## Recent Changes Log
 
-### 2025-10-19: Staff Role Enforcement (ADR-006)
+### 2025-10-19: Staff Role Enforcement + User Model Refactoring (ADR-006)
 
-**Implementation:** Defense-in-depth validation strategy with 5 layers
+**Part 1: Staff Role Enforcement**
+
+Defense-in-depth validation strategy with 5 layers to ensure only users with 'staff' role can be assigned to appointments.
 
 **New Files:**
 - `app/Observers/AppointmentObserver.php` - Model-level validation
 - `app/Rules/StaffRoleRule.php` - Custom validation rule
 - `app/Console/Commands/AuditInvalidStaffAssignments.php` - Audit command
-- `app/Console/Commands/FixInvalidStaffAssignments.php` - Fix command
-- `tests/Feature/AppointmentStaffValidationTest.php` - Feature tests
+- `app/Console/Commands/FixInvalidStaffAssignments.php` - Fix command with --dry-run
+- `tests/Feature/AppointmentStaffValidationTest.php` - Feature tests (4 tests)
 - `tests/Unit/Services/AppointmentServiceTest.php` - Unit tests
 - `docs/decisions/ADR-006-staff-role-enforcement.md` - Documentation
+- `database/migrations/2025_10_19_162113_remove_name_column_from_users_table.php` - Remove 'name' column
 
 **Modified Files:**
 - `app/Services/AppointmentService.php` - Fixed 3 role queries to only use 'staff'
 - `database/seeders/ServiceAvailabilitySeeder.php` - Fixed role query
 - `app/Http/Controllers/AppointmentController.php` - Added StaffRoleRule validation
-- `app/Filament/Resources/AppointmentResource.php` - Reverted to correct implementation
+- `app/Filament/Resources/AppointmentResource.php` - Correct relationship() implementation
 - `app/Filament/Resources/AppointmentResource/Pages/CreateAppointment.php` - Added validation
 - `app/Filament/Resources/AppointmentResource/Pages/EditAppointment.php` - Added validation
-- `app/Providers/AppServiceProvider.php` - Registered observer
+- `app/Providers/AppServiceProvider.php` - Registered AppointmentObserver
+- `database/factories/ServiceFactory.php` - Complete factory for tests
+
+**Part 2: User Model 'name' Column Removal**
+
+Completed migration from single 'name' field to first_name/last_name split.
+
+**Migration:** `2025_10_19_162113_remove_name_column_from_users_table.php`
+
+**Modified Files:**
+- `app/Models/User.php` - Removed 'name' from $fillable, added getFullNameAttribute(), implemented HasName interface
+- `app/Http/Controllers/Auth/RegisterController.php` - Updated validation for first_name/last_name
+- `database/factories/UserFactory.php` - Removed 'name' field
+- `database/seeders/DatabaseSeeder.php` - Removed 'name' field
+- `resources/views/layouts/app.blade.php` - Use full_name accessor instead of name
+
+**Key Changes:**
+- Column 'name' physically removed from database (was NOT NULL without default)
+- All references updated to use first_name + last_name
+- Model accessor `getFullNameAttribute()` provides backward compatibility
+- Filament `getFilamentName()` method for admin panel display
+- Tests updated to work with new structure
 
 **Data Cleanup Commands:**
 ```bash
@@ -415,9 +441,10 @@ php artisan appointments:fix-staff
 - street_name, street_number, city, postal_code, access_notes (address)
 
 **Backward Compatibility:**
-- Original `name` field retained
-- Model accessor returns `first_name + last_name`
+- ~~Original `name` field retained~~ **REMOVED 2025-10-19**
+- Model accessor `getFullNameAttribute()` returns `first_name + last_name`
 - Existing users auto-migrated with name split
+- All code updated to use first_name/last_name directly
 
 ## Dependencies
 
