@@ -46,15 +46,19 @@ class AppointmentResource extends Resource
 
                 Forms\Components\Select::make('customer_id')
                     ->label('Klient')
-                    ->relationship('customer', 'name', fn (Builder $query) =>
+                    ->relationship('customer', 'first_name', fn (Builder $query) =>
                         $query->whereHas('roles', fn ($q) => $q->where('name', 'customer'))
                     )
+                    ->getOptionLabelFromRecordUsing(fn (User $record) => $record->full_name)
                     ->searchable()
                     ->preload()
                     ->required()
                     ->createOptionForm([
-                        Forms\Components\TextInput::make('name')
-                            ->label('Imię i nazwisko')
+                        Forms\Components\TextInput::make('first_name')
+                            ->label('Imię')
+                            ->required(),
+                        Forms\Components\TextInput::make('last_name')
+                            ->label('Nazwisko')
                             ->required(),
                         Forms\Components\TextInput::make('email')
                             ->label('Email')
@@ -68,9 +72,10 @@ class AppointmentResource extends Resource
 
                 Forms\Components\Select::make('staff_id')
                     ->label('Pracownik')
-                    ->relationship('staff', 'name', fn (Builder $query) =>
+                    ->relationship('staff', 'first_name', fn (Builder $query) =>
                         $query->whereHas('roles', fn ($q) => $q->where('name', 'staff'))
                     )
+                    ->getOptionLabelFromRecordUsing(fn (User $record) => $record->full_name)
                     ->searchable()
                     ->preload()
                     ->required()
@@ -138,12 +143,14 @@ class AppointmentResource extends Resource
                     ->label('Usługa')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('customer.name')
+                Tables\Columns\TextColumn::make('customer.first_name')
                     ->label('Klient')
+                    ->getStateUsing(fn ($record) => $record->customer?->full_name)
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('staff.name')
+                Tables\Columns\TextColumn::make('staff.first_name')
                     ->label('Pracownik')
+                    ->getStateUsing(fn ($record) => $record->staff?->full_name)
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('appointment_date')
@@ -192,7 +199,8 @@ class AppointmentResource extends Resource
                     ->relationship('service', 'name'),
                 Tables\Filters\SelectFilter::make('staff')
                     ->label('Pracownik')
-                    ->relationship('staff', 'name'),
+                    ->relationship('staff', 'first_name')
+                    ->getOptionLabelFromRecordUsing(fn (User $record) => $record->full_name),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),

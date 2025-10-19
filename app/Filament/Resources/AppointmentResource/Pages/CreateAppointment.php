@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\AppointmentResource\Pages;
 
 use App\Filament\Resources\AppointmentResource;
+use App\Models\User;
 use App\Services\AppointmentService;
 use Filament\Actions;
 use Filament\Notifications\Notification;
@@ -15,6 +16,21 @@ class CreateAppointment extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
+        // Validate staff role
+        if (isset($data['staff_id'])) {
+            $staff = User::find($data['staff_id']);
+            if ($staff && !$staff->hasRole('staff')) {
+                Notification::make()
+                    ->danger()
+                    ->title('Błąd walidacji')
+                    ->body('Tylko użytkownicy z rolą "staff" mogą być przypisani do wizyt.')
+                    ->persistent()
+                    ->send();
+
+                $this->halt();
+            }
+        }
+
         $appointmentService = app(AppointmentService::class);
 
         $validation = $appointmentService->validateAppointment(

@@ -1,6 +1,6 @@
 # Project Map - Paradocks Application
 
-**Last Updated:** 2025-10-18
+**Last Updated:** 2025-10-19
 **Laravel Version:** 12.x
 **PHP Version:** 8.2+
 
@@ -8,11 +8,35 @@
 
 Paradocks is a booking and appointment management system built with Laravel 12, Filament v3.3+ admin panel, and modern frontend stack (Vite + Alpine.js + Tailwind CSS 4.0). The application focuses on service booking workflow with role-based access control.
 
+## Recent Changes (2025-10-19)
+
+### Staff Role Enforcement (ADR-006)
+Implemented comprehensive validation system to ensure only users with 'staff' role can be assigned to appointments.
+
+**Key Components:**
+- `AppointmentObserver` - Model-level validation on create/update
+- `StaffRoleRule` - Custom validation rule for controllers
+- Data cleanup commands: `appointments:audit-staff`, `appointments:fix-staff`
+- 5-layer defense-in-depth strategy
+
+**Affected Files:**
+- Services: `AppointmentService.php` (3 query fixes)
+- Seeders: `ServiceAvailabilitySeeder.php`
+- Controllers: `AppointmentController.php`
+- Filament: `AppointmentResource.php`, Create/Edit pages
+- Tests: Feature + Unit test coverage
+
+See `/docs/decisions/ADR-006-staff-role-enforcement.md` for details.
+
 ## Directory Structure
 
 ```
 app/
 ├── app/
+│   ├── Console/
+│   │   └── Commands/
+│   │       ├── AuditInvalidStaffAssignments.php  # NEW: Data cleanup
+│   │       └── FixInvalidStaffAssignments.php    # NEW: Data cleanup
 │   ├── Filament/
 │   │   ├── Resources/
 │   │   │   ├── UserResource.php           # All users management
@@ -32,10 +56,15 @@ app/
 │   │   ├── Service.php
 │   │   ├── Appointment.php
 │   │   └── ServiceAvailability.php
+│   ├── Observers/
+│   │   └── AppointmentObserver.php        # NEW: Staff role validation
+│   ├── Rules/
+│   │   └── StaffRoleRule.php              # NEW: Custom validation rule
 │   ├── Services/
 │   │   └── AppointmentService.php         # Business logic for booking
 │   └── Providers/
-│       └── Filament/AdminPanelProvider.php
+│       ├── Filament/AdminPanelProvider.php
+│       └── AppServiceProvider.php         # UPDATED: Observer registration
 ├── database/
 │   ├── migrations/
 │   │   ├── 0001_01_01_000000_create_users_table.php
@@ -65,10 +94,17 @@ app/
 ├── routes/
 │   ├── web.php                            # Public + auth routes
 │   └── api.php                            # Available slots API
-└── docs/                                  # NEW
+├── tests/
+│   ├── Feature/
+│   │   └── AppointmentStaffValidationTest.php  # NEW: Staff role tests
+│   └── Unit/
+│       └── Services/
+│           └── AppointmentServiceTest.php      # NEW: Service tests
+└── docs/
     ├── decisions/
-    │   └── ADR-001-extended-user-profile-fields.md
-    └── project_map.md                     # This file
+    │   ├── ADR-001-extended-user-profile-fields.md
+    │   └── ADR-006-staff-role-enforcement.md   # NEW
+    └── project_map.md                          # This file
 ```
 
 ## Core Modules
@@ -317,6 +353,46 @@ composer run dev  # Starts: server + queue + pail + vite
 - Run: `php artisan test`
 
 ## Recent Changes Log
+
+### 2025-10-19: Staff Role Enforcement (ADR-006)
+
+**Implementation:** Defense-in-depth validation strategy with 5 layers
+
+**New Files:**
+- `app/Observers/AppointmentObserver.php` - Model-level validation
+- `app/Rules/StaffRoleRule.php` - Custom validation rule
+- `app/Console/Commands/AuditInvalidStaffAssignments.php` - Audit command
+- `app/Console/Commands/FixInvalidStaffAssignments.php` - Fix command
+- `tests/Feature/AppointmentStaffValidationTest.php` - Feature tests
+- `tests/Unit/Services/AppointmentServiceTest.php` - Unit tests
+- `docs/decisions/ADR-006-staff-role-enforcement.md` - Documentation
+
+**Modified Files:**
+- `app/Services/AppointmentService.php` - Fixed 3 role queries to only use 'staff'
+- `database/seeders/ServiceAvailabilitySeeder.php` - Fixed role query
+- `app/Http/Controllers/AppointmentController.php` - Added StaffRoleRule validation
+- `app/Filament/Resources/AppointmentResource.php` - Reverted to correct implementation
+- `app/Filament/Resources/AppointmentResource/Pages/CreateAppointment.php` - Added validation
+- `app/Filament/Resources/AppointmentResource/Pages/EditAppointment.php` - Added validation
+- `app/Providers/AppServiceProvider.php` - Registered observer
+
+**Data Cleanup Commands:**
+```bash
+# Audit existing appointments for invalid staff assignments
+php artisan appointments:audit-staff
+
+# Preview fixes (dry-run)
+php artisan appointments:fix-staff --dry-run
+
+# Apply fixes
+php artisan appointments:fix-staff
+```
+
+**Business Rules:**
+- ONLY users with 'staff' role can be assigned to appointments
+- Admin and super-admin roles are blocked from appointment assignments
+- Observer validates on every create/update operation
+- Multiple validation layers ensure data integrity
 
 ### 2025-10-18: Extended User Profile Fields (ADR-001)
 

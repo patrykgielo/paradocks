@@ -4,13 +4,14 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasName;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable implements FilamentUser, HasName
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasRoles;
@@ -21,7 +22,6 @@ class User extends Authenticatable implements FilamentUser
      * @var list<string>
      */
     protected $fillable = [
-        'name',
         'first_name',
         'last_name',
         'email',
@@ -59,17 +59,24 @@ class User extends Authenticatable implements FilamentUser
 
     /**
      * Get the user's full name.
-     * Returns concatenation of first_name and last_name, falls back to 'name' field if needed.
+     * Returns concatenation of first_name and last_name.
      *
      * @return string
      */
-    public function getNameAttribute(): string
+    public function getFullNameAttribute(): string
     {
-        if ($this->attributes['first_name'] || $this->attributes['last_name']) {
-            return trim(($this->attributes['first_name'] ?? '') . ' ' . ($this->attributes['last_name'] ?? ''));
-        }
+        return trim(($this->first_name ?? '') . ' ' . ($this->last_name ?? ''));
+    }
 
-        return $this->attributes['name'] ?? '';
+    /**
+     * Get the name to display in Filament (avatar, menu, etc.)
+     * Required by Filament\Models\Contracts\HasName interface.
+     *
+     * @return string
+     */
+    public function getFilamentName(): string
+    {
+        return $this->getFullNameAttribute();
     }
 
     public function canAccessPanel(Panel $panel): bool

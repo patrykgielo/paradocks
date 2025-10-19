@@ -133,7 +133,7 @@ class AppointmentService
     ): bool {
         // Get all staff members who can perform this service
         $staffMembers = User::whereHas('roles', function ($query) {
-            $query->whereIn('name', ['staff', 'admin', 'super-admin']);
+            $query->where('name', 'staff');
         })->whereHas('serviceAvailabilities', function ($query) use ($serviceId) {
             $query->where('service_id', $serviceId);
         })->get();
@@ -169,7 +169,7 @@ class AppointmentService
     ): ?int {
         // Get all staff members who can perform this service
         $staffMembers = User::whereHas('roles', function ($query) {
-            $query->whereIn('name', ['staff', 'admin', 'super-admin']);
+            $query->where('name', 'staff');
         })->whereHas('serviceAvailabilities', function ($query) use ($serviceId) {
             $query->where('service_id', $serviceId);
         })->get();
@@ -201,7 +201,7 @@ class AppointmentService
     ): array {
         // Get all staff members who can perform this service
         $staffMembers = User::whereHas('roles', function ($query) {
-            $query->whereIn('name', ['staff', 'admin', 'super-admin']);
+            $query->where('name', 'staff');
         })->whereHas('serviceAvailabilities', function ($query) use ($serviceId) {
             $query->where('service_id', $serviceId);
         })->get();

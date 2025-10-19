@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Appointment;
 use App\Models\Service;
+use App\Rules\StaffRoleRule;
 use App\Services\AppointmentService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -35,7 +36,7 @@ class AppointmentController extends Controller
     {
         $validated = $request->validate([
             'service_id' => 'required|exists:services,id',
-            'staff_id' => 'nullable|exists:users,id', // Made optional for auto-assignment
+            'staff_id' => ['nullable', 'exists:users,id', new StaffRoleRule()], // Made optional for auto-assignment with role validation
             'appointment_date' => 'required|date|after_or_equal:today',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',

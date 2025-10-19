@@ -16,7 +16,7 @@ class ServiceAvailabilitySeeder extends Seeder
     {
         // Get staff users
         $staffUsers = User::whereHas('roles', function ($query) {
-            $query->whereIn('name', ['staff', 'admin', 'super-admin']);
+            $query->where('name', 'staff');
         })->get();
 
         if ($staffUsers->isEmpty()) {
