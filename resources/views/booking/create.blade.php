@@ -103,13 +103,26 @@
                     <div x-show="step === 2" x-transition.duration.300ms>
                         <h2 class="text-2xl font-bold text-gray-900 mb-6">Wybierz Termin Wizyty</h2>
 
+                        <!-- Date Availability Warning -->
+                        <div class="alert alert-warning mb-6">
+                            <div class="flex items-start">
+                                <svg class="w-6 h-6 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                                </svg>
+                                <div>
+                                    <p class="font-bold">Wymaganie 24 godzin</p>
+                                    <p class="mt-1">Rezerwacje można składać z co najmniej 24-godzinnym wyprzedzeniem. Najbliższy dostępny termin: <span id="earliest-date" class="font-semibold"></span></p>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Info Box: Automatic Staff Assignment -->
                         <div class="alert alert-info mb-6">
                             <div class="flex items-start">
                                 <svg class="w-6 h-6 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
                                 <div>
                                     <p class="font-bold">Automatyczne przypisanie specjalisty</p>
-                                    <p class="mt-1">Nasz system automatycznie przypisze dostępnego specjalistę do wybranego terminu. Rezerwacja musi być dokonana co najmniej 24 godziny wcześniej.</p>
+                                    <p class="mt-1">Nasz system automatycznie przypisze dostępnego specjalistę do wybranego terminu.</p>
                                 </div>
                             </div>
                         </div>
@@ -520,4 +533,23 @@
 <style>
     [x-cloak] { display: none !important; }
 </style>
+
+<script>
+    // Calculate and display earliest available date
+    document.addEventListener('DOMContentLoaded', function() {
+        const minDate = new Date();
+        minDate.setDate(minDate.getDate() + 2);
+        minDate.setHours(0, 0, 0, 0);
+
+        const formatted = minDate.toLocaleDateString('pl-PL', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        const el = document.getElementById('earliest-date');
+        if (el) el.textContent = formatted;
+    });
+</script>
 @endsection

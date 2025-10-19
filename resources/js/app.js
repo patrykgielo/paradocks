@@ -28,11 +28,14 @@ Alpine.data('bookingWizard', () => ({
         console.log('Booking wizard initialized - automatic staff assignment enabled');
     },
 
-    // Calculate minimum booking date (24 hours from now)
+    // Calculate minimum booking date (24 hours advance requirement)
+    // Conservative approach: Always block next 2 full days to ensure 24h requirement
+    // This avoids edge cases with business hours (9-18) and timezone issues
     minDate() {
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        return tomorrow.toISOString().split('T')[0];
+        const minDate = new Date();
+        minDate.setDate(minDate.getDate() + 2);
+        minDate.setHours(0, 0, 0, 0);
+        return minDate.toISOString().split('T')[0];
     },
 
     nextStep() {

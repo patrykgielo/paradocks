@@ -42,15 +42,19 @@ class BookingController extends Controller
         $service = Service::findOrFail($request->service_id);
         $date = Carbon::parse($request->date);
 
-        // Check if date meets advance booking requirement
-        $minDateTime = now()->addHours(config('booking.advance_booking_hours', 24));
-        $requestedDate = Carbon::parse($request->date . ' 00:00:00');
+        // Check if date meets 24-hour advance booking requirement
+        // We check the EARLIEST possible slot (business hours start) to be conservative
+        $businessHours = config('booking.business_hours');
+        $earliestSlotDateTime = Carbon::parse($date->format('Y-m-d') . ' ' . $businessHours['start']);
 
-        if ($requestedDate->lt($minDateTime->startOfDay())) {
+        if (!$this->appointmentService->meetsAdvanceBookingRequirement($earliestSlotDateTime)) {
+            $minDateTime = now()->addHours(config('booking.advance_booking_hours', 24));
+
             return response()->json([
                 'slots' => [],
                 'date' => $date->format('Y-m-d'),
-                'message' => 'Rezerwacja musi być dokonana co najmniej 24 godziny przed terminem wizyty.',
+                'message' => 'Rezerwacje możliwe dopiero od ' . $minDateTime->format('d.m.Y H:i'),
+                'reason' => 'advance_booking_not_met'
             ]);
         }
 
