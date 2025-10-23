@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Appointment;
-use App\Models\Service;
 use App\Rules\StaffRoleRule;
 use App\Services\AppointmentService;
 use Carbon\Carbon;
@@ -36,7 +35,7 @@ class AppointmentController extends Controller
     {
         $validated = $request->validate([
             'service_id' => 'required|exists:services,id',
-            'staff_id' => ['nullable', 'exists:users,id', new StaffRoleRule()], // Made optional for auto-assignment with role validation
+            'staff_id' => ['nullable', 'exists:users,id', new StaffRoleRule], // Made optional for auto-assignment with role validation
             'appointment_date' => 'required|date|after_or_equal:today',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
@@ -50,11 +49,17 @@ class AppointmentController extends Controller
             'city' => 'nullable|string|max:255',
             'postal_code' => ['nullable', 'string', 'max:10', 'regex:/^\d{2}-\d{3}$/'],
             'access_notes' => 'nullable|string|max:1000',
+            // Google Maps location fields (REQUIRED for service location)
+            'location_address' => 'required|string|max:500',
+            'location_latitude' => 'required|numeric|between:-90,90',
+            'location_longitude' => 'required|numeric|between:-180,180',
+            'location_place_id' => 'required|string|max:255',
+            'location_components' => 'nullable|json',
         ]);
 
         $date = Carbon::parse($validated['appointment_date']);
-        $startTime = Carbon::parse($validated['appointment_date'] . ' ' . $validated['start_time']);
-        $endTime = Carbon::parse($validated['appointment_date'] . ' ' . $validated['end_time']);
+        $startTime = Carbon::parse($validated['appointment_date'].' '.$validated['start_time']);
+        $endTime = Carbon::parse($validated['appointment_date'].' '.$validated['end_time']);
 
         // If staff_id not provided, find first available staff
         if (empty($validated['staff_id'])) {
@@ -65,7 +70,7 @@ class AppointmentController extends Controller
                 endTime: $endTime
             );
 
-            if (!$staffId) {
+            if (! $staffId) {
                 return back()
                     ->withErrors(['appointment' => ['Niestety, żaden pracownik nie jest dostępny w wybranym terminie. Proszę wybrać inny termin.']])
                     ->withInput();
@@ -83,7 +88,7 @@ class AppointmentController extends Controller
             endTime: $validated['end_time']
         );
 
-        if (!$validation['valid']) {
+        if (! $validation['valid']) {
             return back()
                 ->withErrors(['appointment' => $validation['errors']])
                 ->withInput();
@@ -102,23 +107,23 @@ class AppointmentController extends Controller
         if (empty($user->phone_e164)) {
             $profileUpdates['phone_e164'] = $validated['phone_e164'];
         }
-        if (empty($user->street_name) && !empty($validated['street_name'])) {
+        if (empty($user->street_name) && ! empty($validated['street_name'])) {
             $profileUpdates['street_name'] = $validated['street_name'];
         }
-        if (empty($user->street_number) && !empty($validated['street_number'])) {
+        if (empty($user->street_number) && ! empty($validated['street_number'])) {
             $profileUpdates['street_number'] = $validated['street_number'];
         }
-        if (empty($user->city) && !empty($validated['city'])) {
+        if (empty($user->city) && ! empty($validated['city'])) {
             $profileUpdates['city'] = $validated['city'];
         }
-        if (empty($user->postal_code) && !empty($validated['postal_code'])) {
+        if (empty($user->postal_code) && ! empty($validated['postal_code'])) {
             $profileUpdates['postal_code'] = $validated['postal_code'];
         }
-        if (empty($user->access_notes) && !empty($validated['access_notes'])) {
+        if (empty($user->access_notes) && ! empty($validated['access_notes'])) {
             $profileUpdates['access_notes'] = $validated['access_notes'];
         }
 
-        if (!empty($profileUpdates)) {
+        if (! empty($profileUpdates)) {
             $user->update($profileUpdates);
         }
 
@@ -132,6 +137,11 @@ class AppointmentController extends Controller
             'end_time' => $validated['end_time'],
             'status' => 'pending',
             'notes' => $validated['notes'] ?? null,
+            'location_address' => $validated['location_address'] ?? null,
+            'location_latitude' => $validated['location_latitude'] ?? null,
+            'location_longitude' => $validated['location_longitude'] ?? null,
+            'location_place_id' => $validated['location_place_id'] ?? null,
+            'location_components' => isset($validated['location_components']) ? json_decode($validated['location_components'], true) : null,
         ]);
 
         return redirect()
@@ -147,7 +157,7 @@ class AppointmentController extends Controller
         }
 
         // Check if appointment can be cancelled
-        if (!$appointment->can_be_cancelled) {
+        if (! $appointment->can_be_cancelled) {
             return back()->withErrors(['appointment' => 'Ta wizyta nie może być anulowana.']);
         }
 

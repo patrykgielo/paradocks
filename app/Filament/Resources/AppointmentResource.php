@@ -3,19 +3,16 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\AppointmentResource\Pages;
-use App\Filament\Resources\AppointmentResource\RelationManagers;
 use App\Models\Appointment;
 use App\Models\Service;
 use App\Models\User;
-use App\Services\AppointmentService;
+use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Carbon\Carbon;
 
 class AppointmentResource extends Resource
 {
@@ -46,8 +43,7 @@ class AppointmentResource extends Resource
 
                 Forms\Components\Select::make('customer_id')
                     ->label('Klient')
-                    ->relationship('customer', 'first_name', fn (Builder $query) =>
-                        $query->whereHas('roles', fn ($q) => $q->where('name', 'customer'))
+                    ->relationship('customer', 'first_name', fn (Builder $query) => $query->whereHas('roles', fn ($q) => $q->where('name', 'customer'))
                     )
                     ->getOptionLabelFromRecordUsing(fn (User $record) => $record->full_name)
                     ->searchable()
@@ -72,8 +68,7 @@ class AppointmentResource extends Resource
 
                 Forms\Components\Select::make('staff_id')
                     ->label('Pracownik')
-                    ->relationship('staff', 'first_name', fn (Builder $query) =>
-                        $query->whereHas('roles', fn ($q) => $q->where('name', 'staff'))
+                    ->relationship('staff', 'first_name', fn (Builder $query) => $query->whereHas('roles', fn ($q) => $q->where('name', 'staff'))
                     )
                     ->getOptionLabelFromRecordUsing(fn (User $record) => $record->full_name)
                     ->searchable()
@@ -131,6 +126,30 @@ class AppointmentResource extends Resource
                     ->rows(3)
                     ->visible(fn (callable $get) => $get('status') === 'cancelled')
                     ->columnSpanFull(),
+
+                Forms\Components\Section::make('Lokalizacja')
+                    ->schema([
+                        Forms\Components\TextInput::make('location_address')
+                            ->label('Adres')
+                            ->maxLength(500)
+                            ->columnSpanFull()
+                            ->readOnly(),
+                        Forms\Components\TextInput::make('location_latitude')
+                            ->label('Szerokość geograficzna')
+                            ->numeric()
+                            ->readOnly(),
+                        Forms\Components\TextInput::make('location_longitude')
+                            ->label('Długość geograficzna')
+                            ->numeric()
+                            ->readOnly(),
+                        Forms\Components\TextInput::make('location_place_id')
+                            ->label('Google Place ID')
+                            ->maxLength(255)
+                            ->columnSpanFull()
+                            ->readOnly(),
+                    ])
+                    ->collapsible()
+                    ->collapsed(),
             ])
             ->columns(2);
     }
@@ -163,6 +182,15 @@ class AppointmentResource extends Resource
                 Tables\Columns\TextColumn::make('end_time')
                     ->label('Do')
                     ->time('H:i'),
+                Tables\Columns\TextColumn::make('location_address')
+                    ->label('Lokalizacja')
+                    ->searchable()
+                    ->limit(50)
+                    ->placeholder('—')
+                    ->tooltip(function (Tables\Columns\TextColumn $column): ?string {
+                        return $column->getState();
+                    })
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\BadgeColumn::make('status')
                     ->label('Status')
                     ->colors([

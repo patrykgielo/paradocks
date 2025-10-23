@@ -20,12 +20,18 @@ class Appointment extends Model
         'status',
         'notes',
         'cancellation_reason',
+        'location_address',
+        'location_latitude',
+        'location_longitude',
+        'location_place_id',
+        'location_components',
     ];
 
     protected $casts = [
         'appointment_date' => 'date',
         'start_time' => 'datetime:H:i',
         'end_time' => 'datetime:H:i',
+        'location_components' => 'array',
     ];
 
     // Relationships
@@ -108,7 +114,7 @@ class Appointment extends Model
     public function getCanBeCancelledAttribute(): bool
     {
         // Only pending or confirmed appointments can be cancelled
-        if (!in_array($this->status, ['pending', 'confirmed'])) {
+        if (! in_array($this->status, ['pending', 'confirmed'])) {
             return false;
         }
 
@@ -119,7 +125,7 @@ class Appointment extends Model
 
         // Check 24-hour cancellation policy
         $appointmentDateTime = \Carbon\Carbon::parse(
-            $this->appointment_date->format('Y-m-d') . ' ' . $this->start_time->format('H:i:s')
+            $this->appointment_date->format('Y-m-d').' '.$this->start_time->format('H:i:s')
         );
 
         $cancellationHours = config('booking.cancellation_hours', 24);
@@ -130,17 +136,38 @@ class Appointment extends Model
 
     public function getCancellationDeadlineAttribute(): string
     {
-        if (!$this->appointment_date || !$this->start_time) {
+        if (! $this->appointment_date || ! $this->start_time) {
             return '';
         }
 
         $appointmentDateTime = \Carbon\Carbon::parse(
-            $this->appointment_date->format('Y-m-d') . ' ' . $this->start_time->format('H:i:s')
+            $this->appointment_date->format('Y-m-d').' '.$this->start_time->format('H:i:s')
         );
 
         $cancellationHours = config('booking.cancellation_hours', 24);
         $deadline = $appointmentDateTime->subHours($cancellationHours);
 
         return $deadline->format('Y-m-d H:i');
+    }
+
+    public function getFormattedLocationAttribute(): ?string
+    {
+        if ($this->location_address) {
+            return $this->location_address;
+        }
+
+        // Fallback to customer's legacy address fields
+        if ($this->customer) {
+            $parts = array_filter([
+                $this->customer->street_name,
+                $this->customer->street_number,
+                $this->customer->postal_code,
+                $this->customer->city,
+            ]);
+
+            return ! empty($parts) ? implode(', ', $parts) : null;
+        }
+
+        return null;
     }
 }

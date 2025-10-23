@@ -2,65 +2,54 @@
 
 @section('content')
 <div class="container-custom max-w-6xl">
-    <!-- Multi-Step Booking Wizard with Alpine.js -->
-    <div x-data="bookingWizard()"
-         x-init="
-             service = {{ json_encode([
-                 'id' => $service->id,
-                 'name' => $service->name,
-                 'description' => $service->description,
-                 'duration_minutes' => $service->duration_minutes,
-                 'price' => (float) $service->price
-             ]) }};
-             @auth
-             customer.first_name = '{{ $user->first_name ?? '' }}';
-             customer.last_name = '{{ $user->last_name ?? '' }}';
-             customer.phone_e164 = '{{ $user->phone_e164 ?? '' }}';
-             customer.street_name = '{{ $user->street_name ?? '' }}';
-             customer.street_number = '{{ $user->street_number ?? '' }}';
-             customer.city = '{{ $user->city ?? '' }}';
-             customer.postal_code = '{{ $user->postal_code ?? '' }}';
-             customer.access_notes = '{{ $user->access_notes ?? '' }}';
-             @endauth
-         "
+    <!-- Multi-Step Booking Wizard - Pure Vanilla JavaScript -->
+    <div data-wizard
+         data-map-id="{{ config('services.google_maps.map_id') }}"
+         data-service='{{ json_encode([
+             'id' => $service->id,
+             'name' => $service->name,
+             'description' => $service->description,
+             'duration_minutes' => $service->duration_minutes,
+             'price' => (float) $service->price
+         ]) }}'
+         @auth
+         data-customer='{{ json_encode([
+             'first_name' => $user->first_name ?? '',
+             'last_name' => $user->last_name ?? '',
+             'phone_e164' => $user->phone_e164 ?? '',
+             'street_name' => $user->street_name ?? '',
+             'street_number' => $user->street_number ?? '',
+             'city' => $user->city ?? '',
+             'postal_code' => $user->postal_code ?? '',
+             'access_notes' => $user->access_notes ?? ''
+         ]) }}'
+         @endauth
          class="mb-12">
 
         <!-- Progress Header -->
         <div class="bg-white rounded-xl shadow-lg p-6 md:p-8 mb-8">
             <h1 class="text-2xl md:text-3xl font-bold text-gray-900 mb-6 text-center">
-                Rezerwacja: <span class="text-primary-600" x-text="service.name"></span>
+                Rezerwacja: <span class="text-primary-600" data-service-name>{{ $service->name }}</span>
             </h1>
 
             <!-- Progress Bar -->
             <div class="progress-bar mb-6">
-                <div class="progress-bar-fill" :style="`width: ${progressPercentage}%`"></div>
+                <div class="progress-bar-fill" style="width: 25%"></div>
             </div>
 
             <!-- Step Indicators -->
             <nav aria-label="Kroki rezerwacji" class="flex justify-between items-center max-w-3xl mx-auto">
-                <template x-for="(stepName, index) in ['Usługa', 'Termin', 'Dane', 'Podsumowanie']" :key="index">
-                    <button @click="goToStep(index + 1)"
+                @foreach(['Usługa', 'Termin', 'Dane', 'Podsumowanie'] as $index => $stepName)
+                    <button data-go-to-step="{{ $index + 1 }}"
                             class="flex flex-col items-center flex-1"
-                            :aria-current="step === (index + 1) ? 'step' : undefined"
-                            :aria-label="`Krok ${index + 1}: ${stepName}`"
+                            aria-label="Krok {{ $index + 1 }}: {{ $stepName }}"
                             type="button">
-                        <div class="step-indicator"
-                             :class="{
-                                 'step-indicator-active': step === (index + 1),
-                                 'step-indicator-completed': step > (index + 1)
-                             }">
-                            <template x-if="step > (index + 1)">
-                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </template>
-                            <template x-if="step <= (index + 1)">
-                                <span x-text="index + 1"></span>
-                            </template>
+                        <div class="step-indicator {{ $index === 0 ? 'step-indicator-active' : '' }}">
+                            <span>{{ $index + 1 }}</span>
                         </div>
-                        <span class="mt-2 text-xs md:text-sm font-medium text-gray-600 hidden sm:block" x-text="stepName"></span>
+                        <span class="mt-2 text-xs md:text-sm font-medium text-gray-600 hidden sm:block" data-step-label>{{ $stepName }}</span>
                     </button>
-                </template>
+                @endforeach
             </nav>
         </div>
 
@@ -71,27 +60,27 @@
                 <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
 
                     <!-- Step 1: Service Confirmation -->
-                    <div x-show="step === 1" x-transition.duration.300ms>
+                    <div data-step="1" style="display: block;">
                         <h2 class="text-2xl font-bold text-gray-900 mb-6">Potwierdź Wybraną Usługę</h2>
 
                         <div class="service-card service-card-selected">
                             <div class="p-6">
-                                <h3 class="text-xl font-bold text-gray-900 mb-3" x-text="service.name"></h3>
-                                <p class="text-gray-600 mb-4" x-text="service.description || 'Profesjonalna usługa detailingowa'"></p>
+                                <h3 class="text-xl font-bold text-gray-900 mb-3" data-service-name>{{ $service->name }}</h3>
+                                <p class="text-gray-600 mb-4">{{ $service->description ?? 'Profesjonalna usługa detailingowa' }}</p>
 
                                 <div class="flex items-center justify-between text-gray-700">
                                     <div class="flex items-center">
                                         <svg class="w-5 h-5 mr-2 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                         </svg>
-                                        <span class="font-medium" x-text="service.duration_minutes + ' min'"></span>
+                                        <span class="font-medium" data-service-duration>{{ $service->duration_minutes }} min</span>
                                     </div>
-                                    <div class="text-2xl font-bold text-primary-600" x-text="Number(service.price).toFixed(0) + ' zł'"></div>
+                                    <div class="text-2xl font-bold text-primary-600" data-service-price>{{ (int) $service->price }} zł</div>
                                 </div>
                             </div>
                         </div>
 
-                        <button @click="nextStep()" class="btn btn-primary w-full mt-6">
+                        <button data-next-step class="btn btn-primary w-full mt-6">
                             Przejdź Do Wyboru Terminu
                             <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
@@ -100,7 +89,7 @@
                     </div>
 
                     <!-- Step 2: Date & Time Selection -->
-                    <div x-show="step === 2" x-transition.duration.300ms>
+                    <div data-step="2" style="display: none;">
                         <h2 class="text-2xl font-bold text-gray-900 mb-6">Wybierz Termin Wizyty</h2>
 
                         <!-- Date Availability Warning -->
@@ -135,76 +124,64 @@
                             </label>
                             <input type="date"
                                    id="date-input"
-                                   x-model="date"
-                                   @change="date ? fetchAvailableSlots() : null"
-                                   :min="minDate()"
                                    class="form-input"
-                                   :class="{ 'form-input-error': errors.date }"
                                    required
                                    aria-required="true"
                                    aria-describedby="date-error date-help">
                             <p class="form-help" id="date-help">
                                 Minimalna rezerwacja: 24 godziny przed wizytą
                             </p>
-                            <p x-show="errors.date" class="form-error" id="date-error" x-text="errors.date"></p>
+                            <p class="form-error" id="date-error" style="display: none;"></p>
                         </div>
 
                         <!-- Available Time Slots -->
-                        <div x-show="date" x-transition>
-                                <label class="form-label">
-                                    Dostępne Godziny
-                                    <span class="text-red-500">*</span>
-                                </label>
+                        <div id="time-slots-section" style="display: none;">
+                            <label class="form-label">
+                                Dostępne Godziny
+                                <span class="text-red-500">*</span>
+                            </label>
 
-                                <!-- Loading State -->
-                                <div x-show="loading" class="flex flex-col items-center justify-center py-12">
-                                    <div class="spinner"></div>
-                                    <p class="mt-4 text-gray-600">Ładowanie dostępnych terminów...</p>
-                                </div>
-
-                                <!-- Time Slots Grid -->
-                                <div x-show="!loading && availableSlots.length > 0"
-                                     class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"
-                                     role="radiogroup"
-                                     aria-label="Dostępne godziny">
-                                    <template x-for="slot in availableSlots" :key="slot.start">
-                                        <button type="button"
-                                                @click="selectTimeSlot(slot)"
-                                                class="time-slot"
-                                                :class="{ 'time-slot-selected': timeSlot && timeSlot.start === slot.start }"
-                                                :aria-checked="timeSlot && timeSlot.start === slot.start"
-                                                role="radio">
-                                            <span class="block text-lg font-semibold" x-text="slot.start"></span>
-                                            <span class="block text-xs text-gray-500" x-text="`do ${slot.end}`"></span>
-                                        </button>
-                                    </template>
-                                </div>
-
-                                <!-- No Slots Available -->
-                                <div x-show="!loading && availableSlots.length === 0" class="alert alert-warning">
-                                    <p>Brak dostępnych terminów w tym dniu. Wybierz inną datę.</p>
-                                </div>
-
-                                <!-- Error Message -->
-                                <div x-show="errors.slots" class="alert alert-error mt-4">
-                                    <p x-text="errors.slots"></p>
-                                </div>
-
-                                <p x-show="errors.timeSlot" class="form-error mt-2" x-text="errors.timeSlot"></p>
+                            <!-- Loading State -->
+                            <div id="time-slots-loading" class="flex flex-col items-center justify-center py-12" style="display: none;">
+                                <div class="spinner"></div>
+                                <p class="mt-4 text-gray-600">Ładowanie dostępnych terminów...</p>
                             </div>
+
+                            <!-- Time Slots Grid -->
+                            <div id="time-slots-container"
+                                 class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"
+                                 role="radiogroup"
+                                 aria-label="Dostępne godziny"
+                                 style="display: none;">
+                                <!-- Slots will be dynamically inserted by JavaScript -->
+                            </div>
+
+                            <!-- No Slots Available -->
+                            <div id="time-slots-empty" class="alert alert-warning" style="display: none;">
+                                <p>Brak dostępnych terminów w tym dniu. Wybierz inną datę.</p>
+                            </div>
+
+                            <!-- Error Message -->
+                            <div id="time-slots-error" class="alert alert-error mt-4" style="display: none;">
+                                <p></p>
+                            </div>
+
+                            <p class="form-error mt-2" id="time-slot-error" style="display: none;"></p>
+                        </div>
 
                         <!-- Navigation Buttons -->
                         <div class="flex gap-4 mt-8">
-                            <button @click="prevStep()" type="button" class="btn btn-ghost flex-1">
+                            <button data-prev-step type="button" class="btn btn-ghost flex-1">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"/>
                                 </svg>
                                 Wstecz
                             </button>
-                            <button @click="nextStep()"
+                            <button data-next-step
                                     type="button"
-                                    :disabled="!timeSlot"
-                                    class="btn btn-primary flex-1">
+                                    id="step2-next-btn"
+                                    class="btn btn-primary flex-1"
+                                    disabled>
                                 Dalej
                                 <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
@@ -214,7 +191,7 @@
                     </div>
 
                     <!-- Step 3: Customer Details -->
-                    <div x-show="step === 3" x-transition.duration.300ms>
+                    <div data-step="3" style="display: none;">
                         <h2 class="text-2xl font-bold text-gray-900 mb-6">Twoje Dane Kontaktowe</h2>
 
                         <!-- Personal Data Section -->
@@ -228,13 +205,11 @@
                                     </label>
                                     <input type="text"
                                            id="first_name"
-                                           x-model="customer.first_name"
                                            class="form-input"
-                                           :class="{ 'form-input-error': errors.first_name }"
                                            placeholder="Jan"
                                            required
                                            maxlength="255">
-                                    <p x-show="errors.first_name" class="form-error" x-text="errors.first_name"></p>
+                                    <p class="form-error" id="first-name-error" style="display: none;"></p>
                                 </div>
                                 <div>
                                     <label for="last_name" class="form-label">
@@ -243,13 +218,11 @@
                                     </label>
                                     <input type="text"
                                            id="last_name"
-                                           x-model="customer.last_name"
                                            class="form-input"
-                                           :class="{ 'form-input-error': errors.last_name }"
                                            placeholder="Kowalski"
                                            required
                                            maxlength="255">
-                                    <p x-show="errors.last_name" class="form-error" x-text="errors.last_name"></p>
+                                    <p class="form-error" id="last-name-error" style="display: none;"></p>
                                 </div>
                             </div>
                         </div>
@@ -265,27 +238,118 @@
                                     </label>
                                     <input type="tel"
                                            id="phone_e164"
-                                           x-model="customer.phone_e164"
                                            class="form-input"
-                                           :class="{ 'form-input-error': errors.phone_e164 }"
                                            placeholder="+48501234567"
                                            required
                                            maxlength="20">
                                     <p class="form-help">Format międzynarodowy, np. +48501234567</p>
-                                    <p x-show="errors.phone_e164" class="form-error" x-text="errors.phone_e164"></p>
+                                    <p class="form-error" id="phone-error" style="display: none;"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Google Maps Location Section -->
+                        <div class="mb-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Lokalizacja Usługi</h3>
+                            <div>
+                                <label for="place-autocomplete" class="form-label">
+                                    Wyszukaj adres
+                                    <span class="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    id="place-autocomplete"
+                                    class="form-input"
+                                    placeholder="Zacznij wpisywać adres..."
+                                    autocomplete="off">
+                                <p class="form-help" id="location-help">
+                                    Użyj autouzupełniania Google Maps aby wybrać dokładny adres. System automatycznie zapisze współrzędne lokalizacji.
+                                </p>
+                                <p class="form-error" id="location-error" style="display: none;"></p>
+                            </div>
+
+                            <!-- Map always visible on step 3 -->
+                            <div class="mt-6 space-y-4">
+
+                                <!-- Selected address info - only show when address selected -->
+                                <div id="selected-address-info"
+                                     class="p-4 bg-primary-50 border border-primary-200 rounded-lg"
+                                     style="display: none;">
+                                    <div class="flex items-start">
+                                        <svg class="w-5 h-5 text-primary-600 mr-3 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                                        </svg>
+                                        <div class="flex-1">
+                                            <p class="font-semibold text-gray-900">Wybrana lokalizacja:</p>
+                                            <p class="text-gray-700 mt-1" id="selected-address-text">-</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Google Map with Loading Indicator -->
+                                <div class="map-container relative">
+                                    <div id="location-map" class="w-full h-96 rounded-lg shadow-md border border-gray-200" style="min-height: 384px;"></div>
+
+                                    <!-- Loading Overlay -->
+                                    <div id="map-loading-overlay"
+                                         class="absolute inset-0 flex items-center justify-center bg-gray-50 bg-opacity-95 rounded-lg"
+                                         style="z-index: 10; display: none;">
+                                        <div class="text-center">
+                                            <svg class="animate-spin h-10 w-10 text-primary-600 mx-auto mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            <p class="text-sm font-medium text-gray-700">Ładowanie mapy...</p>
+                                            <p class="text-xs text-gray-500 mt-1">Proszę czekać</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Debug Info Panel (remove in production) -->
+                                <div class="text-xs bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-1">
+                                    <p class="font-semibold text-gray-700 mb-2">🔧 Informacje debugowania:</p>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <span class="text-gray-500">Adres:</span>
+                                            <span class="font-medium text-gray-900 ml-1" id="debug-address">-</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-500">Place ID:</span>
+                                            <span class="font-mono text-gray-900 ml-1 text-xs" id="debug-place-id">-</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-500">Szerokość:</span>
+                                            <span class="font-mono text-gray-900 ml-1" id="debug-latitude">-</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-500">Długość:</span>
+                                            <span class="font-mono text-gray-900 ml-1" id="debug-longitude">-</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-500">Mapa init:</span>
+                                            <span class="font-medium ml-1" id="debug-map-init">✗ NIE</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-500">Marker:</span>
+                                            <span class="font-medium ml-1 text-gray-400" id="debug-marker">✗ NIE</span>
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-gray-400 mt-2 pt-2 border-t border-gray-200">
+                                        💡 Sprawdź konsolę przeglądarki (F12) aby zobaczyć szczegółowe logi
+                                    </p>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Address Section -->
                         <div class="mb-6">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Adres (opcjonalnie)</h3>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Adres (wypełniane automatycznie)</h3>
+                            <p class="text-sm text-gray-600 mb-4">Pola poniżej są wypełniane automatycznie na podstawie wybranej lokalizacji. Możesz je edytować jeśli potrzebujesz.</p>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label for="street_name" class="form-label">Ulica</label>
                                     <input type="text"
                                            id="street_name"
-                                           x-model="customer.street_name"
                                            class="form-input"
                                            placeholder="Marszałkowska"
                                            maxlength="255">
@@ -294,7 +358,6 @@
                                     <label for="street_number" class="form-label">Numer</label>
                                     <input type="text"
                                            id="street_number"
-                                           x-model="customer.street_number"
                                            class="form-input"
                                            placeholder="12/34"
                                            maxlength="20">
@@ -303,7 +366,6 @@
                                     <label for="city" class="form-label">Miasto</label>
                                     <input type="text"
                                            id="city"
-                                           x-model="customer.city"
                                            class="form-input"
                                            placeholder="Warszawa"
                                            maxlength="255">
@@ -312,18 +374,15 @@
                                     <label for="postal_code" class="form-label">Kod pocztowy</label>
                                     <input type="text"
                                            id="postal_code"
-                                           x-model="customer.postal_code"
                                            class="form-input"
                                            placeholder="00-000"
-                                           maxlength="10"
-                                           x-mask="99-999">
-                                    <p x-show="errors.postal_code" class="form-error" x-text="errors.postal_code"></p>
+                                           maxlength="10">
+                                    <p class="form-error" id="postal-code-error" style="display: none;"></p>
                                 </div>
                             </div>
                             <div class="mt-4">
                                 <label for="access_notes" class="form-label">Informacje o dostępie</label>
                                 <textarea id="access_notes"
-                                          x-model="customer.access_notes"
                                           rows="3"
                                           class="form-input"
                                           maxlength="1000"
@@ -337,7 +396,6 @@
                             <div>
                                 <label for="notes-input" class="form-label">Uwagi do wizyty (opcjonalnie)</label>
                                 <textarea id="notes-input"
-                                          x-model="customer.notes"
                                           rows="4"
                                           class="form-input"
                                           maxlength="1000"
@@ -366,13 +424,13 @@
 
                         <!-- Navigation Buttons -->
                         <div class="flex gap-4 mt-8">
-                            <button @click="prevStep()" type="button" class="btn btn-ghost flex-1">
+                            <button data-prev-step type="button" class="btn btn-ghost flex-1">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"/>
                                 </svg>
                                 Wstecz
                             </button>
-                            <button @click="validateStep3() && nextStep()" type="button" class="btn btn-primary flex-1">
+                            <button data-next-step type="button" id="step3-next-btn" class="btn btn-primary flex-1">
                                 Podsumowanie
                                 <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -382,29 +440,29 @@
                     </div>
 
                     <!-- Step 4: Summary & Confirmation -->
-                    <div x-show="step === 4" x-transition.duration.300ms>
+                    <div data-step="4" style="display: none;">
                         <h2 class="text-2xl font-bold text-gray-900 mb-6">Podsumowanie Rezerwacji</h2>
 
                         <div class="space-y-6">
                             <!-- Service Summary -->
                             <div class="border-2 border-primary-100 rounded-lg p-4 bg-primary-50/50">
                                 <h3 class="font-bold text-gray-900 mb-2">Usługa</h3>
-                                <p class="text-lg text-gray-700" x-text="service.name"></p>
+                                <p class="text-lg text-gray-700" id="summary-service-name">-</p>
                             </div>
 
                             <!-- Appointment Details -->
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="border-2 border-gray-200 rounded-lg p-4">
                                     <h3 class="font-bold text-gray-900 mb-2">Data</h3>
-                                    <p class="text-gray-700" x-text="date || '-'"></p>
+                                    <p class="text-gray-700" id="summary-date">-</p>
                                 </div>
                                 <div class="border-2 border-gray-200 rounded-lg p-4">
                                     <h3 class="font-bold text-gray-900 mb-2">Godzina</h3>
-                                    <p class="text-gray-700" x-text="timeSlot ? `${timeSlot.start} - ${timeSlot.end}` : '-'"></p>
+                                    <p class="text-gray-700" id="summary-time">-</p>
                                 </div>
                                 <div class="border-2 border-gray-200 rounded-lg p-4 md:col-span-2">
                                     <h3 class="font-bold text-gray-900 mb-2">Czas trwania</h3>
-                                    <p class="text-gray-700" x-text="`${service.duration_minutes} minut`"></p>
+                                    <p class="text-gray-700" id="summary-duration">-</p>
                                 </div>
                             </div>
 
@@ -414,56 +472,63 @@
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                                     <div>
                                         <span class="text-gray-500">Imię i nazwisko:</span>
-                                        <span class="font-medium ml-2" x-text="`${customer.first_name} ${customer.last_name}`"></span>
+                                        <span class="font-medium ml-2" id="summary-customer-name">-</span>
                                     </div>
                                     <div>
                                         <span class="text-gray-500">Telefon:</span>
-                                        <span class="font-medium ml-2" x-text="customer.phone_e164"></span>
+                                        <span class="font-medium ml-2" id="summary-customer-phone">-</span>
                                     </div>
-                                    <div x-show="customer.city" class="md:col-span-2">
+                                    <div id="summary-customer-address-row" class="md:col-span-2" style="display: none;">
                                         <span class="text-gray-500">Adres:</span>
-                                        <span class="font-medium ml-2" x-text="`${customer.street_name || ''} ${customer.street_number || ''}, ${customer.postal_code || ''} ${customer.city || ''}`"></span>
+                                        <span class="font-medium ml-2" id="summary-customer-address">-</span>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Notes Summary -->
-                            <div x-show="customer.notes" class="border-2 border-gray-200 rounded-lg p-4">
+                            <div id="summary-notes-section" class="border-2 border-gray-200 rounded-lg p-4" style="display: none;">
                                 <h3 class="font-bold text-gray-900 mb-2">Uwagi</h3>
-                                <p class="text-gray-700" x-text="customer.notes"></p>
+                                <p class="text-gray-700" id="summary-notes">-</p>
                             </div>
 
                             <!-- Price Summary -->
                             <div class="bg-gradient-to-r from-primary-50 to-accent-50 rounded-lg p-6 border-2 border-primary-200">
                                 <div class="flex items-center justify-between">
                                     <span class="text-lg font-semibold text-gray-900">Całkowity Koszt:</span>
-                                    <span class="text-3xl font-bold text-primary-600" x-text="Number(service.price).toFixed(0) + ' zł'"></span>
+                                    <span class="text-3xl font-bold text-primary-600" id="summary-price">0 zł</span>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Final Form Submission -->
-                        <form method="POST" action="{{ route('appointments.store') }}" class="mt-8">
+                        <form method="POST" action="{{ route('appointments.store') }}" class="mt-8" id="booking-form">
                             @csrf
-                            <input type="hidden" name="service_id" :value="service.id">
+                            <input type="hidden" name="service_id" id="form-service-id">
                             <!-- staff_id is auto-assigned by backend -->
-                            <input type="hidden" name="appointment_date" :value="date">
-                            <input type="hidden" name="start_time" :value="timeSlot ? timeSlot.start : ''">
-                            <input type="hidden" name="end_time" :value="timeSlot ? timeSlot.end : ''">
-                            <input type="hidden" name="notes" :value="customer.notes">
+                            <input type="hidden" name="appointment_date" id="form-appointment-date">
+                            <input type="hidden" name="start_time" id="form-start-time">
+                            <input type="hidden" name="end_time" id="form-end-time">
+                            <input type="hidden" name="notes" id="form-notes">
                             <!-- New profile fields -->
-                            <input type="hidden" name="first_name" :value="customer.first_name">
-                            <input type="hidden" name="last_name" :value="customer.last_name">
-                            <input type="hidden" name="phone_e164" :value="customer.phone_e164">
-                            <input type="hidden" name="street_name" :value="customer.street_name">
-                            <input type="hidden" name="street_number" :value="customer.street_number">
-                            <input type="hidden" name="city" :value="customer.city">
-                            <input type="hidden" name="postal_code" :value="customer.postal_code">
-                            <input type="hidden" name="access_notes" :value="customer.access_notes">
+                            <input type="hidden" name="first_name" id="form-first-name">
+                            <input type="hidden" name="last_name" id="form-last-name">
+                            <input type="hidden" name="phone_e164" id="form-phone-e164">
+                            <!-- Google Maps location data -->
+                            <input type="hidden" name="location_address" id="form-location-address">
+                            <input type="hidden" name="location_latitude" id="form-location-latitude">
+                            <input type="hidden" name="location_longitude" id="form-location-longitude">
+                            <input type="hidden" name="location_place_id" id="form-location-place-id">
+                            <input type="hidden" name="location_components" id="form-location-components">
+                            <!-- Legacy address fields -->
+                            <input type="hidden" name="street_name" id="form-street-name">
+                            <input type="hidden" name="street_number" id="form-street-number">
+                            <input type="hidden" name="city" id="form-city">
+                            <input type="hidden" name="postal_code" id="form-postal-code">
+                            <input type="hidden" name="access_notes" id="form-access-notes">
 
                             <!-- Navigation Buttons -->
                             <div class="flex gap-4">
-                                <button @click="prevStep()" type="button" class="btn btn-ghost flex-1">
+                                <button data-prev-step type="button" class="btn btn-ghost flex-1">
                                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"/>
                                     </svg>
@@ -490,7 +555,7 @@
                         <!-- Service Info -->
                         <div class="pb-4 border-b border-gray-200">
                             <p class="text-sm text-gray-500 mb-1">Usługa</p>
-                            <p class="font-semibold text-gray-900" x-text="service.name"></p>
+                            <p class="font-semibold text-gray-900" id="sidebar-service-name">{{ $service->name }}</p>
                         </div>
 
                         <!-- Selected Details -->
@@ -501,7 +566,7 @@
                                 </svg>
                                 <div>
                                     <p class="text-gray-500">Data</p>
-                                    <p class="font-medium text-gray-900" x-text="date || 'Nie wybrano'"></p>
+                                    <p class="font-medium text-gray-900" id="sidebar-date">Nie wybrano</p>
                                 </div>
                             </div>
 
@@ -511,7 +576,7 @@
                                 </svg>
                                 <div>
                                     <p class="text-gray-500">Godzina</p>
-                                    <p class="font-medium text-gray-900" x-text="timeSlot ? `${timeSlot.start} - ${timeSlot.end}` : 'Nie wybrano'"></p>
+                                    <p class="font-medium text-gray-900" id="sidebar-time">Nie wybrano</p>
                                 </div>
                             </div>
                         </div>
@@ -520,7 +585,7 @@
                         <div class="pt-4 border-t border-gray-200">
                             <div class="flex items-center justify-between">
                                 <span class="font-semibold text-gray-900">Cena:</span>
-                                <span class="text-2xl font-bold text-primary-600" x-text="Number(service.price).toFixed(0) + ' zł'"></span>
+                                <span class="text-2xl font-bold text-primary-600" id="sidebar-price">{{ (int) $service->price }} zł</span>
                             </div>
                         </div>
                     </div>
@@ -531,7 +596,29 @@
 </div>
 
 <style>
-    [x-cloak] { display: none !important; }
+
+    /* Google Map Container */
+    #location-map {
+        min-height: 384px; /* h-96 = 24rem = 384px */
+    }
+
+    .map-container {
+        position: relative;
+        overflow: hidden;
+        border-radius: 0.5rem;
+    }
+
+    /* Responsive map height */
+    @media (max-width: 768px) {
+        #location-map {
+            min-height: 300px;
+        }
+    }
+
+    /* Smooth transitions for map display */
+    .map-container {
+        transition: all 0.3s ease-in-out;
+    }
 </style>
 
 <script>
@@ -551,5 +638,16 @@
         const el = document.getElementById('earliest-date');
         if (el) el.textContent = formatted;
     });
+
+    // Global initialization callback for Google Maps API
+    window.initGoogleMaps = function() {
+        console.log('Google Maps API loaded successfully');
+        window.dispatchEvent(new CustomEvent('google-maps-loaded'));
+    };
 </script>
+
+@push('scripts')
+<script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.api_key') }}&libraries=places&v=weekly&callback=initGoogleMaps" async defer></script>
+@endpush
+
 @endsection
