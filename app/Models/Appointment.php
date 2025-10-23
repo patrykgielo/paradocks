@@ -170,4 +170,72 @@ class Appointment extends Model
 
         return null;
     }
+
+    /**
+     * Get Google Maps link for viewing location
+     * Opens map with location marker
+     */
+    public function getGoogleMapsLinkAttribute(): ?string
+    {
+        // Priority 1: Use Place ID with /place/ format (most reliable marker display)
+        if (! empty($this->location_place_id)) {
+            return 'https://www.google.com/maps/place/?q=place_id:'.urlencode($this->location_place_id);
+        }
+
+        // Priority 2: Use coordinates with /place/ format (reliable marker)
+        if (! empty($this->location_latitude) && ! empty($this->location_longitude)) {
+            $lat = round($this->location_latitude, 8);
+            $lng = round($this->location_longitude, 8);
+
+            return "https://www.google.com/maps/place/{$lat},{$lng}";
+        }
+
+        // Priority 3: Use address string with simple query format
+        if (! empty($this->location_address)) {
+            return 'https://www.google.com/maps?q='.urlencode($this->location_address);
+        }
+
+        // No location data available
+        return null;
+    }
+
+    /**
+     * Get Google Maps directions link
+     * Opens directly in navigation/directions mode
+     */
+    public function getGoogleMapsDirectionsLinkAttribute(): ?string
+    {
+        $baseUrl = 'https://www.google.com/maps/dir/?api=1';
+
+        // Use coordinates with Place ID for best accuracy
+        if (! empty($this->location_latitude) && ! empty($this->location_longitude)) {
+            $destination = round($this->location_latitude, 8).','.round($this->location_longitude, 8);
+            $url = $baseUrl.'&destination='.urlencode($destination);
+
+            // Add Place ID if available (increases accuracy)
+            if (! empty($this->location_place_id)) {
+                $url .= '&destination_place_id='.urlencode($this->location_place_id);
+            }
+
+            return $url;
+        }
+
+        // Fallback to address
+        if (! empty($this->location_address)) {
+            return $baseUrl.'&destination='.urlencode($this->location_address);
+        }
+
+        // No location data available
+        return null;
+    }
+
+    /**
+     * Check if appointment has location data
+     */
+    public function hasLocationData(): bool
+    {
+        return ! empty($this->location_place_id)
+            || (! empty($this->location_latitude) && ! empty($this->location_longitude))
+            || ! empty($this->location_address);
+    }
 }

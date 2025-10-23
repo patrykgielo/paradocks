@@ -147,6 +147,45 @@ class AppointmentResource extends Resource
                             ->maxLength(255)
                             ->columnSpanFull()
                             ->readOnly(),
+                        Forms\Components\Placeholder::make('google_maps_links')
+                            ->label('Google Maps')
+                            ->content(function ($record) {
+                                if (! $record || ! $record->hasLocationData()) {
+                                    return '—';
+                                }
+
+                                $links = [];
+
+                                // View on Map button
+                                if ($record->google_maps_link) {
+                                    $links[] = sprintf(
+                                        '<a href="%s" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                                            </svg>
+                                            Pokaż na mapie
+                                        </a>',
+                                        htmlspecialchars($record->google_maps_link, ENT_QUOTES, 'UTF-8')
+                                    );
+                                }
+
+                                // Navigation button
+                                if ($record->google_maps_directions_link) {
+                                    $links[] = sprintf(
+                                        '<a href="%s" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-3 py-2 bg-blue-600 border border-blue-600 rounded-lg text-sm font-medium text-white hover:bg-blue-700 transition">
+                                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 01.894 1.79l-1.233.616 1.738 5.42a1 1 0 01-.285 1.05A3.989 3.989 0 0115 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.715-5.349L11 6.477V16h2a1 1 0 110 2H7a1 1 0 110-2h2V6.477L6.237 7.582l1.715 5.349a1 1 0 01-.285 1.05A3.989 3.989 0 015 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.738-5.42-1.233-.617a1 1 0 01.894-1.788l1.599.799L9 4.323V3a1 1 0 011-1z"/>
+                                            </svg>
+                                            Nawiguj
+                                        </a>',
+                                        htmlspecialchars($record->google_maps_directions_link, ENT_QUOTES, 'UTF-8')
+                                    );
+                                }
+
+                                return new \Illuminate\Support\HtmlString('<div class="flex gap-2">'.implode('', $links).'</div>');
+                            })
+                            ->columnSpanFull()
+                            ->visible(fn ($record) => $record && $record->hasLocationData()),
                     ])
                     ->collapsible()
                     ->collapsed(),
