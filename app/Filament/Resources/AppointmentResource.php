@@ -189,6 +189,43 @@ class AppointmentResource extends Resource
                     ])
                     ->collapsible()
                     ->collapsed(),
+
+                Forms\Components\Section::make('Pojazd')
+                    ->schema([
+                        Forms\Components\Select::make('vehicle_type_id')
+                            ->label('Typ pojazdu')
+                            ->relationship('vehicleType', 'name')
+                            ->searchable()
+                            ->preload(),
+                        Forms\Components\Select::make('car_brand_id')
+                            ->label('Marka')
+                            ->relationship('carBrand', 'name')
+                            ->searchable()
+                            ->preload(),
+                        Forms\Components\Select::make('car_model_id')
+                            ->label('Model')
+                            ->relationship('carModel', 'name')
+                            ->searchable()
+                            ->preload(),
+                        Forms\Components\TextInput::make('vehicle_year')
+                            ->label('Rocznik')
+                            ->numeric()
+                            ->minValue(1990)
+                            ->maxValue(date('Y') + 1),
+                        Forms\Components\TextInput::make('vehicle_custom_brand')
+                            ->label('Własna marka')
+                            ->maxLength(100)
+                            ->readOnly()
+                            ->visible(fn ($record) => $record && $record->vehicle_custom_brand),
+                        Forms\Components\TextInput::make('vehicle_custom_model')
+                            ->label('Własny model')
+                            ->maxLength(100)
+                            ->readOnly()
+                            ->visible(fn ($record) => $record && $record->vehicle_custom_model),
+                    ])
+                    ->columns(2)
+                    ->collapsible()
+                    ->collapsed(),
             ])
             ->columns(2);
     }
@@ -230,6 +267,12 @@ class AppointmentResource extends Resource
                         return $column->getState();
                     })
                     ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('vehicle_display')
+                    ->label('Pojazd')
+                    ->getStateUsing(fn ($record) => $record->vehicle_display)
+                    ->placeholder('—')
+                    ->searchable()
+                    ->toggleable(),
                 Tables\Columns\BadgeColumn::make('status')
                     ->label('Status')
                     ->colors([

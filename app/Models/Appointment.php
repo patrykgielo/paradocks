@@ -25,6 +25,12 @@ class Appointment extends Model
         'location_longitude',
         'location_place_id',
         'location_components',
+        'vehicle_type_id',
+        'car_brand_id',
+        'car_model_id',
+        'vehicle_year',
+        'vehicle_custom_brand',
+        'vehicle_custom_model',
     ];
 
     protected $casts = [
@@ -48,6 +54,21 @@ class Appointment extends Model
     public function staff()
     {
         return $this->belongsTo(User::class, 'staff_id');
+    }
+
+    public function vehicleType()
+    {
+        return $this->belongsTo(VehicleType::class);
+    }
+
+    public function carBrand()
+    {
+        return $this->belongsTo(CarBrand::class);
+    }
+
+    public function carModel()
+    {
+        return $this->belongsTo(CarModel::class);
     }
 
     // Scopes
@@ -237,5 +258,34 @@ class Appointment extends Model
         return ! empty($this->location_place_id)
             || (! empty($this->location_latitude) && ! empty($this->location_longitude))
             || ! empty($this->location_address);
+    }
+
+    /**
+     * Get formatted vehicle display string
+     */
+    public function getVehicleDisplayAttribute(): ?string
+    {
+        // If we have a car model, use it
+        if ($this->carModel) {
+            $display = $this->carModel->full_name;
+            if ($this->vehicle_year) {
+                $display .= ' ('.$this->vehicle_year.')';
+            }
+
+            return $display;
+        }
+
+        // If we have custom brand/model
+        if ($this->vehicle_custom_brand || $this->vehicle_custom_model) {
+            $parts = array_filter([
+                $this->vehicle_custom_brand,
+                $this->vehicle_custom_model,
+                $this->vehicle_year,
+            ]);
+
+            return ! empty($parts) ? implode(' ', $parts) : null;
+        }
+
+        return null;
     }
 }
