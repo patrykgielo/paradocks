@@ -31,6 +31,20 @@
             access_notes: '',
             notes: ''
         },
+        // Vehicle data
+        vehicle: {
+            type_id: null,
+            type_name: '',
+            type_slug: '',
+            brand_id: null,
+            brand_name: '',
+            model_id: null,
+            model_name: '',
+            year: null
+        },
+        vehicleTypes: [],
+        carBrands: [],
+        carModels: [],
         loading: false,
         errors: {},
         availableSlots: [],
@@ -72,6 +86,17 @@
             timeSlotsError: document.getElementById('time-slots-error'),
             timeSlotError: document.getElementById('time-slot-error'),
 
+            // Vehicle inputs
+            vehicleTypesContainer: document.getElementById('vehicle-types-container'),
+            vehicleTypeError: document.getElementById('vehicle-type-error'),
+            vehicleDetailsSection: document.getElementById('vehicle-details-section'),
+            carBrandSelect: document.getElementById('car_brand'),
+            carModelSelect: document.getElementById('car_model'),
+            vehicleYearSelect: document.getElementById('vehicle_year'),
+            brandError: document.getElementById('brand-error'),
+            modelError: document.getElementById('model-error'),
+            yearError: document.getElementById('year-error'),
+
             // Customer inputs
             firstNameInput: document.getElementById('first_name'),
             lastNameInput: document.getElementById('last_name'),
@@ -107,6 +132,10 @@
             summaryPhone: document.getElementById('summary-customer-phone'),
             summaryAddress: document.getElementById('summary-customer-address'),
             summaryAddressRow: document.getElementById('summary-customer-address-row'),
+            summaryVehicleType: document.getElementById('summary-vehicle-type'),
+            summaryVehicleBrand: document.getElementById('summary-vehicle-brand'),
+            summaryVehicleModel: document.getElementById('summary-vehicle-model'),
+            summaryVehicleYear: document.getElementById('summary-vehicle-year'),
             summaryNotes: document.getElementById('summary-notes'),
             summaryNotesContainer: document.getElementById('summary-notes-section'),
             summaryServiceName: document.getElementById('summary-service-name'),
@@ -131,6 +160,12 @@
             hiddenCity: document.querySelector('[name="city"]'),
             hiddenPostalCode: document.querySelector('[name="postal_code"]'),
             hiddenAccessNotes: document.querySelector('[name="access_notes"]'),
+            hiddenVehicleTypeId: document.querySelector('[name="vehicle_type_id"]'),
+            hiddenCarBrandId: document.querySelector('[name="car_brand_id"]'),
+            hiddenCarBrandName: document.querySelector('[name="car_brand_name"]'),
+            hiddenCarModelId: document.querySelector('[name="car_model_id"]'),
+            hiddenCarModelName: document.querySelector('[name="car_model_name"]'),
+            hiddenVehicleYear: document.querySelector('[name="vehicle_year"]'),
 
             // Sidebar
             sidebarDate: document.getElementById('sidebar-date'),
@@ -159,6 +194,10 @@
 
         // Initialize Google Maps
         initializeGoogleMaps();
+
+        // Fetch vehicle types and years
+        fetchVehicleTypes();
+        populateVehicleYears();
 
         // Show first step
         updateUI();
@@ -220,6 +259,17 @@
             elements.dateInput.addEventListener('change', handleDateChange);
             // Set min date
             elements.dateInput.min = getMinDate();
+        }
+
+        // Vehicle selects
+        if (elements.carBrandSelect) {
+            elements.carBrandSelect.addEventListener('change', handleBrandChange);
+        }
+        if (elements.carModelSelect) {
+            elements.carModelSelect.addEventListener('change', handleModelChange);
+        }
+        if (elements.vehicleYearSelect) {
+            elements.vehicleYearSelect.addEventListener('change', handleYearChange);
         }
 
         // Customer inputs - bind to state
@@ -438,6 +488,20 @@
             }
         }
 
+        // Vehicle summary
+        if (elements.summaryVehicleType) {
+            elements.summaryVehicleType.textContent = state.vehicle.type_name || '-';
+        }
+        if (elements.summaryVehicleBrand) {
+            elements.summaryVehicleBrand.textContent = state.vehicle.brand_name || '-';
+        }
+        if (elements.summaryVehicleModel) {
+            elements.summaryVehicleModel.textContent = state.vehicle.model_name || '-';
+        }
+        if (elements.summaryVehicleYear) {
+            elements.summaryVehicleYear.textContent = state.vehicle.year || '-';
+        }
+
         // Price
         if (elements.summaryPrice && state.service) {
             elements.summaryPrice.textContent = `${Math.floor(state.service.price)} zł`;
@@ -570,6 +634,39 @@
             state.errors.postal_code = 'Nieprawidłowy format kodu pocztowego (wymagany: 00-000)';
             showError(document.getElementById('postal-code-error'), state.errors.postal_code);
             valid = false;
+        }
+
+        // Vehicle validation
+        if (!state.vehicle.type_id) {
+            state.errors.vehicle_type = 'Wybierz typ pojazdu';
+            showError(elements.vehicleTypeError, state.errors.vehicle_type);
+            valid = false;
+        } else {
+            hideError(elements.vehicleTypeError);
+        }
+
+        if (!state.vehicle.brand_id && !state.vehicle.brand_name) {
+            state.errors.brand = 'Wybierz markę pojazdu';
+            showError(elements.brandError, state.errors.brand);
+            valid = false;
+        } else {
+            hideError(elements.brandError);
+        }
+
+        if (!state.vehicle.model_id && !state.vehicle.model_name) {
+            state.errors.model = 'Wybierz model pojazdu';
+            showError(elements.modelError, state.errors.model);
+            valid = false;
+        } else {
+            hideError(elements.modelError);
+        }
+
+        if (!state.vehicle.year) {
+            state.errors.year = 'Wybierz rocznik pojazdu';
+            showError(elements.yearError, state.errors.year);
+            valid = false;
+        } else {
+            hideError(elements.yearError);
         }
 
         return valid;
@@ -1064,8 +1161,271 @@
         if (elements.hiddenPostalCode) elements.hiddenPostalCode.value = state.customer.postal_code || '';
         if (elements.hiddenAccessNotes) elements.hiddenAccessNotes.value = state.customer.access_notes || '';
 
+        // Vehicle data
+        if (elements.hiddenVehicleTypeId) elements.hiddenVehicleTypeId.value = state.vehicle.type_id || '';
+        if (elements.hiddenCarBrandId) elements.hiddenCarBrandId.value = state.vehicle.brand_id || '';
+        if (elements.hiddenCarBrandName) elements.hiddenCarBrandName.value = state.vehicle.brand_name || '';
+        if (elements.hiddenCarModelId) elements.hiddenCarModelId.value = state.vehicle.model_id || '';
+        if (elements.hiddenCarModelName) elements.hiddenCarModelName.value = state.vehicle.model_name || '';
+        if (elements.hiddenVehicleYear) elements.hiddenVehicleYear.value = state.vehicle.year || '';
+
         console.log('✅ Form data prepared for submission');
         // Form will submit normally
+    }
+
+    // ===================================================================
+    // VEHICLE MANAGEMENT
+    // ===================================================================
+
+    /**
+     * Fetch vehicle types from API and render cards
+     */
+    async function fetchVehicleTypes() {
+        try {
+            const response = await fetch('/api/vehicle-types');
+            const data = await response.json();
+
+            if (data.success) {
+                state.vehicleTypes = data.data;
+                renderVehicleTypeCards();
+                console.log('✅ Vehicle types loaded:', state.vehicleTypes.length);
+            }
+        } catch (error) {
+            console.error('❌ Error fetching vehicle types:', error);
+        }
+    }
+
+    /**
+     * Render vehicle type selection cards with SVG icons
+     */
+    function renderVehicleTypeCards() {
+        if (!elements.vehicleTypesContainer) return;
+
+        elements.vehicleTypesContainer.innerHTML = '';
+
+        // SVG icons for each vehicle type
+        const icons = {
+            city_car: '<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>',
+            small_car: '<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>',
+            medium_car: '<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>',
+            large_car: '<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>',
+            delivery_van: '<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>'
+        };
+
+        state.vehicleTypes.forEach(type => {
+            const card = document.createElement('button');
+            card.type = 'button';
+            card.className = 'vehicle-type-card';
+            card.dataset.typeId = type.id;
+            card.dataset.typeName = type.name;
+            card.dataset.typeSlug = type.slug;
+
+            card.innerHTML = `
+                ${icons[type.slug] || icons.medium_car}
+                <span class="name">${type.name}</span>
+            `;
+
+            card.addEventListener('click', () => selectVehicleType(type));
+            elements.vehicleTypesContainer.appendChild(card);
+        });
+    }
+
+    /**
+     * Handle vehicle type selection
+     */
+    function selectVehicleType(type) {
+        console.log('🚗 Vehicle type selected:', type.name);
+
+        // Update state
+        state.vehicle.type_id = type.id;
+        state.vehicle.type_name = type.name;
+        state.vehicle.type_slug = type.slug;
+
+        // Clear errors
+        hideError(elements.vehicleTypeError);
+
+        // Update UI - highlight selected card
+        document.querySelectorAll('.vehicle-type-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        const selectedCard = document.querySelector(`[data-type-id="${type.id}"]`);
+        if (selectedCard) {
+            selectedCard.classList.add('selected');
+        }
+
+        // Show vehicle details section
+        if (elements.vehicleDetailsSection) {
+            elements.vehicleDetailsSection.style.display = 'block';
+        }
+
+        // Reset brand/model/year when type changes
+        state.vehicle.brand_id = null;
+        state.vehicle.brand_name = '';
+        state.vehicle.model_id = null;
+        state.vehicle.model_name = '';
+        if (elements.carBrandSelect) elements.carBrandSelect.value = '';
+        if (elements.carModelSelect) {
+            elements.carModelSelect.value = '';
+            elements.carModelSelect.disabled = true;
+        }
+
+        // Fetch brands for this vehicle type
+        fetchCarBrands();
+    }
+
+    /**
+     * Fetch car brands filtered by vehicle type
+     */
+    async function fetchCarBrands() {
+        if (!state.vehicle.type_id) return;
+
+        try {
+            const url = `/api/car-brands?vehicle_type_id=${state.vehicle.type_id}`;
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.success) {
+                state.carBrands = data.data;
+                populateBrandSelect();
+                console.log('✅ Brands loaded:', state.carBrands.length);
+            }
+        } catch (error) {
+            console.error('❌ Error fetching brands:', error);
+        }
+    }
+
+    /**
+     * Populate brand select dropdown
+     */
+    function populateBrandSelect() {
+        if (!elements.carBrandSelect) return;
+
+        elements.carBrandSelect.innerHTML = '<option value="">Wybierz markę</option>';
+
+        state.carBrands.forEach(brand => {
+            const option = document.createElement('option');
+            option.value = brand.id;
+            option.textContent = brand.name;
+            elements.carBrandSelect.appendChild(option);
+        });
+    }
+
+    /**
+     * Handle brand selection change
+     */
+    function handleBrandChange(e) {
+        const brandId = parseInt(e.target.value);
+
+        if (!brandId) {
+            state.vehicle.brand_id = null;
+            state.vehicle.brand_name = '';
+            elements.carModelSelect.innerHTML = '<option value="">Najpierw wybierz markę</option>';
+            elements.carModelSelect.disabled = true;
+            return;
+        }
+
+        const selectedBrand = state.carBrands.find(b => b.id === brandId);
+        state.vehicle.brand_id = brandId;
+        state.vehicle.brand_name = selectedBrand?.name || '';
+
+        // Clear model
+        state.vehicle.model_id = null;
+        state.vehicle.model_name = '';
+        if (elements.carModelSelect) elements.carModelSelect.value = '';
+
+        hideError(elements.brandError);
+
+        // Fetch models for this brand
+        fetchCarModels();
+    }
+
+    /**
+     * Fetch car models filtered by brand and vehicle type
+     */
+    async function fetchCarModels() {
+        if (!state.vehicle.brand_id) return;
+
+        try {
+            const url = `/api/car-models?car_brand_id=${state.vehicle.brand_id}&vehicle_type_id=${state.vehicle.type_id}`;
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.success) {
+                state.carModels = data.data;
+                populateModelSelect();
+                console.log('✅ Models loaded:', state.carModels.length);
+            }
+        } catch (error) {
+            console.error('❌ Error fetching models:', error);
+        }
+    }
+
+    /**
+     * Populate model select dropdown
+     */
+    function populateModelSelect() {
+        if (!elements.carModelSelect) return;
+
+        elements.carModelSelect.innerHTML = '<option value="">Wybierz model</option>';
+        elements.carModelSelect.disabled = false;
+
+        state.carModels.forEach(model => {
+            const option = document.createElement('option');
+            option.value = model.id;
+            option.textContent = model.name;
+            elements.carModelSelect.appendChild(option);
+        });
+    }
+
+    /**
+     * Handle model selection change
+     */
+    function handleModelChange(e) {
+        const modelId = parseInt(e.target.value);
+
+        if (!modelId) {
+            state.vehicle.model_id = null;
+            state.vehicle.model_name = '';
+            return;
+        }
+
+        const selectedModel = state.carModels.find(m => m.id === modelId);
+        state.vehicle.model_id = modelId;
+        state.vehicle.model_name = selectedModel?.name || '';
+
+        hideError(elements.modelError);
+    }
+
+    /**
+     * Handle year selection change
+     */
+    function handleYearChange(e) {
+        const year = parseInt(e.target.value);
+
+        state.vehicle.year = year || null;
+
+        if (year) {
+            hideError(elements.yearError);
+        }
+    }
+
+    /**
+     * Populate vehicle year dropdown (1990 to current year)
+     */
+    function populateVehicleYears() {
+        if (!elements.vehicleYearSelect) return;
+
+        const currentYear = new Date().getFullYear();
+        const startYear = 1990;
+
+        elements.vehicleYearSelect.innerHTML = '<option value="">Wybierz rok</option>';
+
+        for (let year = currentYear; year >= startYear; year--) {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            elements.vehicleYearSelect.appendChild(option);
+        }
     }
 
     // ===================================================================

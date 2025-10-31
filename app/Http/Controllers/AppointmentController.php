@@ -55,6 +55,13 @@ class AppointmentController extends Controller
             'location_longitude' => 'required|numeric|between:-180,180',
             'location_place_id' => 'required|string|max:255',
             'location_components' => 'nullable|json',
+            // Vehicle fields (REQUIRED)
+            'vehicle_type_id' => 'required|exists:vehicle_types,id',
+            'car_brand_id' => 'nullable|exists:car_brands,id',
+            'car_brand_name' => 'nullable|string|max:100',
+            'car_model_id' => 'nullable|exists:car_models,id',
+            'car_model_name' => 'nullable|string|max:100',
+            'vehicle_year' => 'required|integer|min:1990|max:'.(date('Y') + 1),
         ]);
 
         $date = Carbon::parse($validated['appointment_date']);
@@ -127,6 +134,24 @@ class AppointmentController extends Controller
             $user->update($profileUpdates);
         }
 
+        // Handle custom brand/model (if provided instead of IDs)
+        $vehicleData = [
+            'vehicle_type_id' => $validated['vehicle_type_id'],
+            'vehicle_year' => $validated['vehicle_year'],
+        ];
+
+        if (! empty($validated['car_brand_id'])) {
+            $vehicleData['car_brand_id'] = $validated['car_brand_id'];
+        } elseif (! empty($validated['car_brand_name'])) {
+            $vehicleData['vehicle_custom_brand'] = $validated['car_brand_name'];
+        }
+
+        if (! empty($validated['car_model_id'])) {
+            $vehicleData['car_model_id'] = $validated['car_model_id'];
+        } elseif (! empty($validated['car_model_name'])) {
+            $vehicleData['vehicle_custom_model'] = $validated['car_model_name'];
+        }
+
         // Create appointment
         $appointment = Appointment::create([
             'service_id' => $validated['service_id'],
@@ -142,6 +167,7 @@ class AppointmentController extends Controller
             'location_longitude' => $validated['location_longitude'] ?? null,
             'location_place_id' => $validated['location_place_id'] ?? null,
             'location_components' => isset($validated['location_components']) ? json_decode($validated['location_components'], true) : null,
+            ...$vehicleData,
         ]);
 
         return redirect()

@@ -194,6 +194,71 @@
                     <div data-step="3" style="display: none;">
                         <h2 class="text-2xl font-bold text-gray-900 mb-6">Twoje Dane Kontaktowe</h2>
 
+                        <!-- Vehicle Selection Section -->
+                        <div class="mb-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Informacje o Pojeździe</h3>
+
+                            <!-- 1. Vehicle Type Selection (Cards with Icons) -->
+                            <div class="mb-4">
+                                <label class="form-label">
+                                    Typ pojazdu
+                                    <span class="text-red-500">*</span>
+                                </label>
+                                <div id="vehicle-types-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">
+                                    <!-- Vehicle type cards will be inserted by JavaScript -->
+                                </div>
+                                <p class="form-error mt-2" id="vehicle-type-error" style="display: none;"></p>
+                            </div>
+
+                            <!-- 2. Vehicle Details (shown after type selection) -->
+                            <div id="vehicle-details-section" style="display: none;">
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <!-- Brand Select -->
+                                    <div>
+                                        <label for="car_brand" class="form-label">
+                                            Marka
+                                            <span class="text-red-500">*</span>
+                                        </label>
+                                        <select id="car_brand" class="form-input">
+                                            <option value="">Wybierz markę</option>
+                                        </select>
+                                        <p class="form-error mt-1" id="brand-error" style="display: none;"></p>
+                                    </div>
+
+                                    <!-- Model Select -->
+                                    <div>
+                                        <label for="car_model" class="form-label">
+                                            Model
+                                            <span class="text-red-500">*</span>
+                                        </label>
+                                        <select id="car_model" class="form-input" disabled>
+                                            <option value="">Najpierw wybierz markę</option>
+                                        </select>
+                                        <p class="form-error mt-1" id="model-error" style="display: none;"></p>
+                                    </div>
+
+                                    <!-- Year Select -->
+                                    <div>
+                                        <label for="vehicle_year" class="form-label">
+                                            Rocznik
+                                            <span class="text-red-500">*</span>
+                                        </label>
+                                        <select id="vehicle_year" class="form-input">
+                                            <option value="">Wybierz rok</option>
+                                        </select>
+                                        <p class="form-error mt-1" id="year-error" style="display: none;"></p>
+                                    </div>
+                                </div>
+
+                                <p class="form-help text-sm text-gray-600 mt-3">
+                                    <svg class="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                    </svg>
+                                    Jeśli nie znajdziesz swojej marki/modelu, wybierz najbliższy odpowiednik lub skontaktuj się z nami.
+                                </p>
+                            </div>
+                        </div>
+
                         <!-- Personal Data Section -->
                         <div class="mb-6">
                             <h3 class="text-lg font-semibold text-gray-900 mb-4">Dane Osobowe</h3>
@@ -485,6 +550,29 @@
                                 </div>
                             </div>
 
+                            <!-- Vehicle Summary -->
+                            <div class="border-2 border-gray-200 rounded-lg p-4">
+                                <h3 class="font-bold text-gray-900 mb-3">Pojazd</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                    <div>
+                                        <span class="text-gray-500">Typ:</span>
+                                        <span class="font-medium ml-2" id="summary-vehicle-type">-</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-500">Marka:</span>
+                                        <span class="font-medium ml-2" id="summary-vehicle-brand">-</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-500">Model:</span>
+                                        <span class="font-medium ml-2" id="summary-vehicle-model">-</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-500">Rocznik:</span>
+                                        <span class="font-medium ml-2" id="summary-vehicle-year">-</span>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Notes Summary -->
                             <div id="summary-notes-section" class="border-2 border-gray-200 rounded-lg p-4" style="display: none;">
                                 <h3 class="font-bold text-gray-900 mb-2">Uwagi</h3>
@@ -525,6 +613,13 @@
                             <input type="hidden" name="city" id="form-city">
                             <input type="hidden" name="postal_code" id="form-postal-code">
                             <input type="hidden" name="access_notes" id="form-access-notes">
+                            <!-- Vehicle fields -->
+                            <input type="hidden" name="vehicle_type_id" id="form-vehicle-type-id">
+                            <input type="hidden" name="car_brand_id" id="form-car-brand-id">
+                            <input type="hidden" name="car_brand_name" id="form-car-brand-name">
+                            <input type="hidden" name="car_model_id" id="form-car-model-id">
+                            <input type="hidden" name="car_model_name" id="form-car-model-name">
+                            <input type="hidden" name="vehicle_year" id="form-vehicle-year">
 
                             <!-- Navigation Buttons -->
                             <div class="flex gap-4">
@@ -596,6 +691,50 @@
 </div>
 
 <style>
+    /* Vehicle Type Cards */
+    .vehicle-type-card {
+        cursor: pointer;
+        padding: 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 0.75rem;
+        background: white;
+        transition: all 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        min-height: 120px;
+    }
+
+    .vehicle-type-card:hover {
+        border-color: #3b82f6;
+        background: #eff6ff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .vehicle-type-card.selected {
+        border-color: #2563eb;
+        background: #dbeafe;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .vehicle-type-card .icon {
+        width: 40px;
+        height: 40px;
+        margin-bottom: 0.5rem;
+        color: #6b7280;
+    }
+
+    .vehicle-type-card.selected .icon {
+        color: #2563eb;
+    }
+
+    .vehicle-type-card .name {
+        font-weight: 600;
+        color: #1f2937;
+        font-size: 0.875rem;
+    }
 
     /* Google Map Container */
     #location-map {
