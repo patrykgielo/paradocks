@@ -584,6 +584,11 @@
         state.errors = {};
         let valid = true;
 
+        console.log('🔍 Validating Step 3...', {
+            vehicle: state.vehicle,
+            customer: state.customer
+        });
+
         // First name
         if (!state.customer.first_name || state.customer.first_name.trim() === '') {
             state.errors.first_name = 'Imię jest wymagane';
@@ -669,6 +674,7 @@
             hideError(elements.yearError);
         }
 
+        console.log('✅ Step 3 validation result:', valid, 'Errors:', state.errors);
         return valid;
     }
 

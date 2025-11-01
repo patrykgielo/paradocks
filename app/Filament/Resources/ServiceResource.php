@@ -40,39 +40,49 @@ class ServiceResource extends Resource
                             ->default(0)
                             ->suffix('dni')
                             ->helperText('Usługi wielodniowe nie są obsługiwane')
-                            ->disabled(),
+                            ->disabled()
+                            ->dehydrated(false),
                         Forms\Components\TextInput::make('duration_hours')
                             ->label('Godziny')
                             ->numeric()
                             ->minValue(0)
-                            ->maxValue(9)
-                            ->default(fn ($get) => floor(($get('duration_minutes') ?? 60) / 60))
+                            ->maxValue(23)
                             ->suffix('godz')
-                            ->reactive()
+                            ->live(onBlur: true)
+                            ->afterStateHydrated(function ($state, $set, $get, $record) {
+                                if ($record && $record->duration_minutes) {
+                                    $set('duration_hours', floor($record->duration_minutes / 60));
+                                }
+                            })
                             ->afterStateUpdated(function ($state, $set, $get) {
-                                $hours = (int) $state;
+                                $hours = (int) ($state ?? 0);
                                 $minutes = (int) ($get('duration_mins') ?? 0);
                                 $set('duration_minutes', ($hours * 60) + $minutes);
                             })
-                            ->required(),
+                            ->dehydrated(false),
                         Forms\Components\TextInput::make('duration_mins')
                             ->label('Minuty')
                             ->numeric()
                             ->minValue(0)
                             ->maxValue(59)
                             ->step(15)
-                            ->default(fn ($get) => ($get('duration_minutes') ?? 60) % 60)
                             ->suffix('min')
-                            ->reactive()
+                            ->live(onBlur: true)
+                            ->afterStateHydrated(function ($state, $set, $get, $record) {
+                                if ($record && $record->duration_minutes) {
+                                    $set('duration_mins', $record->duration_minutes % 60);
+                                }
+                            })
                             ->afterStateUpdated(function ($state, $set, $get) {
                                 $hours = (int) ($get('duration_hours') ?? 0);
-                                $minutes = (int) $state;
+                                $minutes = (int) ($state ?? 0);
                                 $set('duration_minutes', ($hours * 60) + $minutes);
                             })
-                            ->required(),
+                            ->dehydrated(false),
                     ]),
                 Forms\Components\Hidden::make('duration_minutes')
-                    ->default(60),
+                    ->default(60)
+                    ->required(),
                 Forms\Components\TextInput::make('price')
                     ->label('Cena')
                     ->required()
