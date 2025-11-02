@@ -8,6 +8,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
+    @php($contact = app(\App\Support\Settings\SettingsManager::class)->contactInformation())
     <!-- Navbar -->
     <nav class="bg-white shadow-lg">
         <div class="container mx-auto px-4">
@@ -90,8 +91,10 @@
                 </div>
                 <div>
                     <h3 class="text-lg font-bold mb-4">Kontakt</h3>
-                    <p class="text-gray-400">Email: kontakt@example.com</p>
-                    <p class="text-gray-400">Tel: +48 123 456 789</p>
+                    <p class="text-gray-400">Email: {{ $contact['email'] ?? 'kontakt@example.com' }}</p>
+                    <p class="text-gray-400">Tel: {{ $contact['phone'] ?? '+48 123 456 789' }}</p>
+                    <p class="text-gray-400">{{ $contact['address_line'] ?? 'ul. Przykładowa 1' }}</p>
+                    <p class="text-gray-400">{{ trim(($contact['postal_code'] ?? '') . ' ' . ($contact['city'] ?? '')) }}</p>
                 </div>
                 <div>
                     <h3 class="text-lg font-bold mb-4">Linki</h3>

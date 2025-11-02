@@ -2,6 +2,7 @@
 
 namespace App\Filament\Forms\Components;
 
+use App\Support\Settings\SettingsManager;
 use Filament\Forms\Components\Component;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\TextInput;
@@ -82,8 +83,8 @@ class DurationInput extends Component
         // Calculate total minutes
         $totalMinutes = ($days * 1440) + ($hours * 60) + $minutes;
 
-        // Validate max duration (540 minutes = 9 hours)
-        $maxDuration = config('booking.max_service_duration_minutes', 540);
+        // Validate max duration based on settings
+        $maxDuration = app(SettingsManager::class)->maxServiceDurationMinutes();
         if ($totalMinutes > $maxDuration) {
             $totalMinutes = $maxDuration;
         }
