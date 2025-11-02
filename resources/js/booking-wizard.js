@@ -53,7 +53,17 @@
         marker: null,
         mapInitialized: false,
         mapLoading: false,
-        mapId: null
+        mapId: null,
+        mapDefaultLat: 52.2297,
+        mapDefaultLng: 21.0122,
+        mapDefaultZoom: 15,
+        mapCountryCode: 'pl',
+        mapDebugPanelEnabled: true,
+        advanceBookingHours: 24,
+        businessHoursStart: '09:00',
+        businessHoursEnd: '18:00',
+        slotIntervalMinutes: 15,
+        cancellationHours: 24
     };
 
     // ===================================================================
@@ -211,7 +221,17 @@
 
         try {
             state.service = JSON.parse(wizardContainer.dataset.service);
-            state.mapId = wizardContainer.dataset.mapId;
+            state.mapId = wizardContainer.dataset.mapId || null;
+            state.mapDefaultLat = parseFloat(wizardContainer.dataset.mapLat || state.mapDefaultLat);
+            state.mapDefaultLng = parseFloat(wizardContainer.dataset.mapLng || state.mapDefaultLng);
+            state.mapDefaultZoom = parseInt(wizardContainer.dataset.mapZoom || state.mapDefaultZoom, 10);
+            state.mapCountryCode = wizardContainer.dataset.mapCountry || state.mapCountryCode;
+            state.mapDebugPanelEnabled = wizardContainer.dataset.mapDebug === 'true';
+            state.advanceBookingHours = parseInt(wizardContainer.dataset.advanceHours || state.advanceBookingHours, 10);
+            state.businessHoursStart = wizardContainer.dataset.businessHoursStart || state.businessHoursStart;
+            state.businessHoursEnd = wizardContainer.dataset.businessHoursEnd || state.businessHoursEnd;
+            state.slotIntervalMinutes = parseInt(wizardContainer.dataset.slotInterval || state.slotIntervalMinutes, 10);
+            state.cancellationHours = parseInt(wizardContainer.dataset.cancellationHours || state.cancellationHours, 10);
 
             console.log('Service loaded:', state.service);
             console.log('Map ID:', state.mapId);
@@ -718,10 +738,11 @@
     // ===================================================================
 
     function getMinDate() {
-        const minDate = new Date();
-        minDate.setDate(minDate.getDate() + 2);
-        minDate.setHours(0, 0, 0, 0);
-        return minDate.toISOString().split('T')[0];
+        const minDateTime = new Date();
+        minDateTime.setHours(minDateTime.getHours() + state.advanceBookingHours);
+
+        const localTime = new Date(minDateTime.getTime() - (minDateTime.getTimezoneOffset() * 60000));
+        return localTime.toISOString().split('T')[0];
     }
 
     function handleDateChange(e) {
@@ -927,12 +948,17 @@
             const { Autocomplete } = await google.maps.importLibrary("places");
             console.log('✅ Places library loaded');
 
-            // Create Autocomplete instance
-            const autocomplete = new Autocomplete(elements.placeAutocomplete, {
+            const autocompleteOptions = {
                 fields: ['place_id', 'geometry', 'formatted_address', 'address_components', 'name'],
-                componentRestrictions: { country: 'pl' },
                 types: ['address']
-            });
+            };
+
+            if (state.mapCountryCode) {
+                autocompleteOptions.componentRestrictions = { country: state.mapCountryCode };
+            }
+
+            // Create Autocomplete instance
+            const autocomplete = new Autocomplete(elements.placeAutocomplete, autocompleteOptions);
 
             console.log('✅ Autocomplete instance created');
 
@@ -1037,11 +1063,6 @@
 
         console.log('🗺️ Initializing map...');
 
-        if (!state.mapId) {
-            console.error('❌ Map ID missing');
-            return;
-        }
-
         // Show loading
         if (elements.mapLoadingOverlay) {
             elements.mapLoadingOverlay.style.display = 'flex';
@@ -1066,16 +1087,21 @@
             }
 
             // Create map
-            state.map = new Map(elements.locationMap, {
-                center: { lat: 52.2297, lng: 21.0122 }, // Warsaw
-                zoom: 15,
-                mapId: state.mapId,
+            const mapOptions = {
+                center: { lat: state.mapDefaultLat, lng: state.mapDefaultLng },
+                zoom: state.mapDefaultZoom,
                 mapTypeControl: false,
                 fullscreenControl: true,
                 streetViewControl: false,
                 zoomControl: true,
                 gestureHandling: 'cooperative'
-            });
+            };
+
+            if (state.mapId) {
+                mapOptions.mapId = state.mapId;
+            }
+
+            state.map = new Map(elements.locationMap, mapOptions);
 
             state.MarkerConstructor = Marker;
             state.mapInitialized = true;

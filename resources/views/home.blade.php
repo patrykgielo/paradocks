@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
+@php($marketing = $marketingContent ?? app(\App\Support\Settings\SettingsManager::class)->marketingContent())
 <div class="container-custom">
     <!-- Hero Section with Alpine.js -->
     <section class="hero-gradient rounded-2xl shadow-2xl p-8 md:p-12 lg:p-16 mb-16 text-white relative overflow-hidden">
@@ -11,10 +12,10 @@
 
         <div class="relative z-10 max-w-4xl mx-auto text-center">
             <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-black">
-                Profesjonalne Czyszczenie i Detailing Samochodów
+                {{ $marketing['hero_title'] ?? 'Profesjonalne Czyszczenie i Detailing Samochodów' }}
             </h1>
             <p class="text-lg md:text-xl mb-8 text-white/90 max-w-2xl mx-auto">
-                Zarezerwuj wizytę online w kilku prostych krokach. Gwarantujemy najwyższą jakość usług i satysfakcję klientów.
+                {{ $marketing['hero_subtitle'] ?? 'Zarezerwuj wizytę online w kilku prostych krokach. Gwarantujemy najwyższą jakość usług i satysfakcję klientów.' }}
             </p>
 
             <!-- Trust Signals -->
@@ -50,9 +51,9 @@
     <!-- Services Section with Alpine.js -->
     <section id="services" class="section">
         <div class="text-center mb-12">
-            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Nasze Usługi Detailingowe</h2>
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{{ $marketing['services_heading'] ?? 'Nasze Usługi Detailingowe' }}</h2>
             <p class="text-lg text-gray-600 max-w-2xl mx-auto">
-                Wybierz pakiet dopasowany do potrzeb Twojego pojazdu. Wszystkie usługi wykonujemy z najwyższą starannością.
+                {{ $marketing['services_subheading'] ?? 'Wybierz pakiet dopasowany do potrzeb Twojego pojazdu. Wszystkie usługi wykonujemy z najwyższą starannością.' }}
             </p>
         </div>
 
@@ -149,51 +150,41 @@
     <section class="section bg-gray-50 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
         <div class="container-custom">
             <div class="text-center mb-12">
-                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Dlaczego Warto Nas Wybrać</h2>
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{{ $marketing['features_heading'] ?? 'Dlaczego Warto Nas Wybrać' }}</h2>
                 <p class="text-lg text-gray-600 max-w-2xl mx-auto">
-                    Oferujemy najwyższy standard obsługi i jakości wykonanych usług
+                    {{ $marketing['features_subheading'] ?? 'Oferujemy najwyższy standard obsługi i jakości wykonanych usług' }}
                 </p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12"
                  x-data="{ visible: false }"
                  x-intersect.once="visible = true">
-
-                <div class="text-center"
-                     x-show="visible"
-                     x-transition.delay.100ms>
-                    <div class="inline-flex items-center justify-center w-16 h-16 bg-primary-100 rounded-2xl mb-6 shadow-lg">
-                        <svg class="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                        </svg>
+                @foreach(($marketing['features'] ?? []) as $feature)
+                    <div class="text-center"
+                         x-show="visible"
+                         x-transition.delay.{{ ($loop->index + 1) * 100 }}ms>
+                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-6 shadow-lg {{ match($loop->index) { 1 => 'bg-accent-100', 2 => 'bg-purple-100', default => 'bg-primary-100' } }}">
+                            @switch($loop->index)
+                                @case(1)
+                                    <svg class="w-8 h-8 text-accent-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    @break
+                                @case(2)
+                                    <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    @break
+                                @default
+                                    <svg class="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                    </svg>
+                            @endswitch
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900 mb-3">{{ $feature['title'] ?? '' }}</h3>
+                        <p class="text-gray-600">{{ $feature['description'] ?? '' }}</p>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-3">Łatwa Rezerwacja Online</h3>
-                    <p class="text-gray-600">Zarezerwuj wizytę w kilku kliknięciach, 24/7 dostępność systemu rezerwacji</p>
-                </div>
-
-                <div class="text-center"
-                     x-show="visible"
-                     x-transition.delay.200ms>
-                    <div class="inline-flex items-center justify-center w-16 h-16 bg-accent-100 rounded-2xl mb-6 shadow-lg">
-                        <svg class="w-8 h-8 text-accent-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-3">Natychmiastowe Potwierdzenie</h3>
-                    <p class="text-gray-600">Otrzymasz potwierdzenie rezerwacji od razu po dokonaniu zapisu</p>
-                </div>
-
-                <div class="text-center"
-                     x-show="visible"
-                     x-transition.delay.300ms>
-                    <div class="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-2xl mb-6 shadow-lg">
-                        <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-3">Elastyczne Godziny</h3>
-                    <p class="text-gray-600">Wybierz termin dopasowany do Twojego harmonogramu</p>
-                </div>
+                @endforeach
             </div>
         </div>
     </section>
@@ -203,10 +194,10 @@
     <section class="section text-center">
         <div class="max-w-3xl mx-auto">
             <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-                Gotowy na Profesjonalny Detailing?
+                {{ $marketing['cta_heading'] ?? 'Gotowy na Profesjonalny Detailing?' }}
             </h2>
             <p class="text-lg text-gray-600 mb-8">
-                Dołącz do setek zadowolonych klientów. Zarejestruj się i zarezerwuj swoją pierwszą wizytę już dziś.
+                {{ $marketing['cta_subheading'] ?? 'Dołącz do setek zadowolonych klientów. Zarejestruj się i zarezerwuj swoją pierwszą wizytę już dziś.' }}
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
                 <a href="{{ route('register') }}" class="btn btn-primary text-lg">

@@ -5,10 +5,15 @@ namespace App\Services;
 use App\Models\Appointment;
 use App\Models\ServiceAvailability;
 use App\Models\User;
+use App\Support\Settings\SettingsManager;
 use Carbon\Carbon;
 
 class AppointmentService
 {
+    public function __construct(protected SettingsManager $settings)
+    {
+    }
+
     /**
      * Check if staff member is available for given time slot
      */
@@ -90,6 +95,8 @@ class AppointmentService
 
         $timeSlots = [];
 
+        $slotInterval = $this->settings->slotIntervalMinutes();
+
         foreach ($availabilities as $availability) {
             $currentSlot = Carbon::parse($availability->start_time);
             $endOfAvailability = Carbon::parse($availability->end_time);
@@ -113,8 +120,8 @@ class AppointmentService
                     ];
                 }
 
-                // Move to next slot (15 minute intervals)
-                $currentSlot->addMinutes(15);
+                // Move to next slot based on configured interval
+                $currentSlot->addMinutes($slotInterval);
             }
         }
 
@@ -211,8 +218,8 @@ class AppointmentService
         }
 
         $allSlots = [];
-        $slotInterval = config('booking.slot_interval_minutes', 15);
-        $businessHours = config('booking.business_hours');
+        $slotInterval = $this->settings->slotIntervalMinutes();
+        $businessHours = $this->settings->bookingBusinessHours();
         $businessStart = Carbon::parse($date->format('Y-m-d') . ' ' . $businessHours['start']);
         $businessEnd = Carbon::parse($date->format('Y-m-d') . ' ' . $businessHours['end']);
 
@@ -254,7 +261,7 @@ class AppointmentService
      */
     public function isWithinBusinessHours(Carbon $startTime, Carbon $endTime): bool
     {
-        $businessHours = config('booking.business_hours');
+        $businessHours = $this->settings->bookingBusinessHours();
         $businessStart = Carbon::parse($startTime->format('Y-m-d') . ' ' . $businessHours['start']);
         $businessEnd = Carbon::parse($startTime->format('Y-m-d') . ' ' . $businessHours['end']);
 
@@ -266,7 +273,7 @@ class AppointmentService
      */
     public function meetsAdvanceBookingRequirement(Carbon $appointmentDateTime): bool
     {
-        $advanceHours = config('booking.advance_booking_hours', 24);
+        $advanceHours = $this->settings->advanceBookingHours();
         $minimumDateTime = now()->addHours($advanceHours);
 
         return $appointmentDateTime->gte($minimumDateTime);
@@ -295,13 +302,17 @@ class AppointmentService
         }
 
         // Check 24-hour advance booking requirement
+        $advanceHours = $this->settings->advanceBookingHours();
         if (!$this->meetsAdvanceBookingRequirement($start)) {
-            $errors[] = 'Rezerwacja musi być dokonana co najmniej 24 godziny przed terminem wizyty.';
+            $errors[] = sprintf(
+                'Rezerwacja musi być dokonana co najmniej %d godzin przed terminem wizyty.',
+                $advanceHours
+            );
         }
 
         // Check if within business hours
         if (!$this->isWithinBusinessHours($start, $end)) {
-            $businessHours = config('booking.business_hours');
+            $businessHours = $this->settings->bookingBusinessHours();
             $errors[] = sprintf(
                 'Wizyta musi się odbywać w godzinach pracy: %s - %s.',
                 $businessHours['start'],
