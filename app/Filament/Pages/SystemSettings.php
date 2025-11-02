@@ -35,11 +35,9 @@ class SystemSettings extends Page implements HasForms
 
     public ?array $data = [];
 
-    protected SettingsManager $settings;
-
-    protected function getSettings(): SettingsManager
+    public function __construct(protected SettingsManager $settings)
     {
-        return $this->settings ??= app(SettingsManager::class);
+        parent::__construct();
     }
 
     public static function canAccess(): bool
@@ -49,12 +47,10 @@ class SystemSettings extends Page implements HasForms
 
     protected function getFormDefaults(): array
     {
-        $settings = $this->getSettings();
-
-        $booking = $settings->bookingConfiguration();
-        $map = $settings->mapConfiguration();
-        $contact = $settings->contactInformation();
-        $marketing = $settings->marketingContent();
+        $booking = $this->settings->bookingConfiguration();
+        $map = $this->settings->mapConfiguration();
+        $contact = $this->settings->contactInformation();
+        $marketing = $this->settings->marketingContent();
 
         return [
             'booking' => $booking,
@@ -309,7 +305,7 @@ class SystemSettings extends Page implements HasForms
             'important_info_points' => $this->splitImportantInfoPoints($state['marketing']['important_info_points'] ?? ''),
         ];
 
-        $this->getSettings()->updateGroups([
+        $this->settings->updateGroups([
             'booking' => $booking,
             'map' => $map,
             'contact' => $contact,
