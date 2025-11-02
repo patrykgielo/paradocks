@@ -283,10 +283,10 @@ app/
 
 ### API Endpoints
 
-| Endpoint              | Method | Description                    | Auth Required |
-|-----------------------|--------|--------------------------------|---------------|
-| `/api/available-slots`| POST   | Get available booking slots    | No            |
-| `/appointments`       | POST   | Create new appointment         | Yes           |
+| Endpoint                    | Method | Description                    | Auth Required |
+|-----------------------------|--------|--------------------------------|---------------|
+| `/booking/available-slots`  | POST   | Get available booking slots    | No            |
+| `/appointments`             | POST   | Create new appointment         | Yes           |
 | `/appointments/{id}/cancel` | POST | Cancel appointment      | Yes           |
 
 ## Configuration

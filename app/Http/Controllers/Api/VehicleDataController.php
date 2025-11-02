@@ -28,20 +28,14 @@ class VehicleDataController extends Controller
 
     /**
      * Get car brands (for select dropdown)
-     * Optionally filter by vehicle_type_id
+     * Returns ALL active brands (no vehicle type filtering)
      */
     public function brands(Request $request): JsonResponse
     {
-        $query = CarBrand::active()->orderBy('name');
-
-        // Filter by vehicle type if provided
-        if ($request->has('vehicle_type_id')) {
-            $query->whereHas('models.vehicleTypes', function ($q) use ($request) {
-                $q->where('vehicle_types.id', $request->vehicle_type_id);
-            });
-        }
-
-        $brands = $query->get(['id', 'name', 'slug']);
+        // Return all active brands - vehicle type is customer's declaration
+        $brands = CarBrand::active()
+            ->orderBy('name')
+            ->get(['id', 'name', 'slug']);
 
         return response()->json([
             'success' => true,
@@ -51,28 +45,20 @@ class VehicleDataController extends Controller
 
     /**
      * Get car models (for select dropdown)
-     * Filter by car_brand_id and optionally vehicle_type_id
+     * Filter by car_brand_id only (no vehicle type filtering)
      */
     public function models(Request $request): JsonResponse
     {
         $request->validate([
             'car_brand_id' => 'required|exists:car_brands,id',
-            'vehicle_type_id' => 'nullable|exists:vehicle_types,id',
         ]);
 
-        $query = CarModel::active()
+        // Return all active models for brand - vehicle type is customer's declaration
+        $models = CarModel::active()
             ->where('car_brand_id', $request->car_brand_id)
             ->with('brand:id,name')
-            ->orderBy('name');
-
-        // Filter by vehicle type if provided
-        if ($request->has('vehicle_type_id')) {
-            $query->whereHas('vehicleTypes', function ($q) use ($request) {
-                $q->where('vehicle_types.id', $request->vehicle_type_id);
-            });
-        }
-
-        $models = $query->get(['id', 'car_brand_id', 'name', 'slug']);
+            ->orderBy('name')
+            ->get(['id', 'car_brand_id', 'name', 'slug']);
 
         return response()->json([
             'success' => true,

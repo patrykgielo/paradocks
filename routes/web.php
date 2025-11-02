@@ -16,16 +16,19 @@ Auth::routes();
 Route::middleware(['auth'])->group(function () {
     // Booking
     Route::get('/services/{service}/book', [BookingController::class, 'create'])->name('booking.create');
-    Route::post('/api/available-slots', [BookingController::class, 'getAvailableSlots'])->name('booking.slots');
 
-    // Vehicle Data API
-    Route::get('/api/vehicle-types', [VehicleDataController::class, 'vehicleTypes'])->name('api.vehicle-types');
-    Route::get('/api/car-brands', [VehicleDataController::class, 'brands'])->name('api.car-brands');
-    Route::get('/api/car-models', [VehicleDataController::class, 'models'])->name('api.car-models');
-    Route::get('/api/vehicle-years', [VehicleDataController::class, 'years'])->name('api.vehicle-years');
+    Route::post('/booking/available-slots', [BookingController::class, 'getAvailableSlots'])->name('booking.slots');
 
     // Appointments
     Route::get('/my-appointments', [AppointmentController::class, 'index'])->name('appointments.index');
     Route::post('/appointments', [AppointmentController::class, 'store'])->name('appointments.store');
     Route::post('/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel'])->name('appointments.cancel');
+});
+
+
+Route::prefix('api')->name('api.')->middleware(['auth', 'role:super-admin'])->group(function () {
+    Route::get('/vehicle-types', [VehicleDataController::class, 'vehicleTypes'])->name('vehicle-types');
+    Route::get('/car-brands', [VehicleDataController::class, 'brands'])->name('car-brands');
+    Route::get('/car-models', [VehicleDataController::class, 'models'])->name('car-models');
+    Route::get('/vehicle-years', [VehicleDataController::class, 'years'])->name('vehicle-years');
 });

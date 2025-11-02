@@ -23,7 +23,7 @@ class AppointmentController extends Controller
     {
         $appointments = Auth::user()
             ->customerAppointments()
-            ->with(['service', 'staff'])
+            ->with(['customer', 'staff'])
             ->orderBy('appointment_date', 'desc')
             ->orderBy('start_time', 'desc')
             ->get();
