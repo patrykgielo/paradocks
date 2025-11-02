@@ -149,7 +149,7 @@ class Appointment extends Model
             $this->appointment_date->format('Y-m-d').' '.$this->start_time->format('H:i:s')
         );
 
-        $cancellationHours = config('booking.cancellation_hours', 24);
+        $cancellationHours = app(\App\Support\Settings\SettingsManager::class)->cancellationHours();
         $cancellationDeadline = $appointmentDateTime->subHours($cancellationHours);
 
         return now()->lte($cancellationDeadline);
@@ -165,7 +165,7 @@ class Appointment extends Model
             $this->appointment_date->format('Y-m-d').' '.$this->start_time->format('H:i:s')
         );
 
-        $cancellationHours = config('booking.cancellation_hours', 24);
+        $cancellationHours = app(\App\Support\Settings\SettingsManager::class)->cancellationHours();
         $deadline = $appointmentDateTime->subHours($cancellationHours);
 
         return $deadline->format('Y-m-d H:i');

@@ -1,10 +1,21 @@
 @extends('layouts.app')
 
 @section('content')
+@php($marketing = $marketingContent ?? app(\App\Support\Settings\SettingsManager::class)->marketingContent())
 <div class="container-custom max-w-6xl">
     <!-- Multi-Step Booking Wizard - Pure Vanilla JavaScript -->
     <div data-wizard
-         data-map-id="{{ config('services.google_maps.map_id') }}"
+         data-map-id="{{ $mapConfig['map_id'] ?? config('services.google_maps.map_id') }}"
+         data-map-lat="{{ $mapConfig['default_latitude'] ?? 0 }}"
+         data-map-lng="{{ $mapConfig['default_longitude'] ?? 0 }}"
+         data-map-zoom="{{ $mapConfig['default_zoom'] ?? 15 }}"
+         data-map-country="{{ $mapConfig['country_code'] ?? 'pl' }}"
+         data-map-debug="{{ ($mapConfig['debug_panel_enabled'] ?? false) ? 'true' : 'false' }}"
+         data-advance-hours="{{ $bookingConfig['advance_booking_hours'] ?? 24 }}"
+         data-business-hours-start="{{ $bookingConfig['business_hours_start'] ?? '09:00' }}"
+         data-business-hours-end="{{ $bookingConfig['business_hours_end'] ?? '18:00' }}"
+         data-slot-interval="{{ $bookingConfig['slot_interval_minutes'] ?? 15 }}"
+         data-cancellation-hours="{{ $bookingConfig['cancellation_hours'] ?? 24 }}"
          data-service='{{ json_encode([
              'id' => $service->id,
              'name' => $service->name,
@@ -99,8 +110,8 @@
                                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
                                 </svg>
                                 <div>
-                                    <p class="font-bold">Wymaganie 24 godzin</p>
-                                    <p class="mt-1">Rezerwacje można składać z co najmniej 24-godzinnym wyprzedzeniem. Najbliższy dostępny termin: <span id="earliest-date" class="font-semibold"></span></p>
+                                    <p class="font-bold">Minimalne wyprzedzenie: {{ $bookingConfig['advance_booking_hours'] ?? 24 }} godzin</p>
+                                    <p class="mt-1">Rezerwacje można składać z co najmniej {{ $bookingConfig['advance_booking_hours'] ?? 24 }}-godzinnym wyprzedzeniem. Najbliższy dostępny termin: <span id="earliest-date" class="font-semibold"></span></p>
                                 </div>
                             </div>
                         </div>
@@ -129,7 +140,7 @@
                                    aria-required="true"
                                    aria-describedby="date-error date-help">
                             <p class="form-help" id="date-help">
-                                Minimalna rezerwacja: 24 godziny przed wizytą
+                                Minimalna rezerwacja: {{ $bookingConfig['advance_booking_hours'] ?? 24 }} godzin przed wizytą
                             </p>
                             <p class="form-error" id="date-error" style="display: none;"></p>
                         </div>
@@ -370,39 +381,41 @@
                                     </div>
                                 </div>
 
-                                <!-- Debug Info Panel (remove in production) -->
-                                <div class="text-xs bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-1">
-                                    <p class="font-semibold text-gray-700 mb-2">🔧 Informacje debugowania:</p>
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <div>
-                                            <span class="text-gray-500">Adres:</span>
-                                            <span class="font-medium text-gray-900 ml-1" id="debug-address">-</span>
+                                @if($mapConfig['debug_panel_enabled'] ?? false)
+                                    <!-- Debug Info Panel (remove in production) -->
+                                    <div class="text-xs bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-1">
+                                        <p class="font-semibold text-gray-700 mb-2">🔧 Informacje debugowania:</p>
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <div>
+                                                <span class="text-gray-500">Adres:</span>
+                                                <span class="font-medium text-gray-900 ml-1" id="debug-address">-</span>
+                                            </div>
+                                            <div>
+                                                <span class="text-gray-500">Place ID:</span>
+                                                <span class="font-mono text-gray-900 ml-1 text-xs" id="debug-place-id">-</span>
+                                            </div>
+                                            <div>
+                                                <span class="text-gray-500">Szerokość:</span>
+                                                <span class="font-mono text-gray-900 ml-1" id="debug-latitude">-</span>
+                                            </div>
+                                            <div>
+                                                <span class="text-gray-500">Długość:</span>
+                                                <span class="font-mono text-gray-900 ml-1" id="debug-longitude">-</span>
+                                            </div>
+                                            <div>
+                                                <span class="text-gray-500">Mapa init:</span>
+                                                <span class="font-medium ml-1" id="debug-map-init">✗ NIE</span>
+                                            </div>
+                                            <div>
+                                                <span class="text-gray-500">Marker:</span>
+                                                <span class="font-medium ml-1 text-gray-400" id="debug-marker">✗ NIE</span>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <span class="text-gray-500">Place ID:</span>
-                                            <span class="font-mono text-gray-900 ml-1 text-xs" id="debug-place-id">-</span>
-                                        </div>
-                                        <div>
-                                            <span class="text-gray-500">Szerokość:</span>
-                                            <span class="font-mono text-gray-900 ml-1" id="debug-latitude">-</span>
-                                        </div>
-                                        <div>
-                                            <span class="text-gray-500">Długość:</span>
-                                            <span class="font-mono text-gray-900 ml-1" id="debug-longitude">-</span>
-                                        </div>
-                                        <div>
-                                            <span class="text-gray-500">Mapa init:</span>
-                                            <span class="font-medium ml-1" id="debug-map-init">✗ NIE</span>
-                                        </div>
-                                        <div>
-                                            <span class="text-gray-500">Marker:</span>
-                                            <span class="font-medium ml-1 text-gray-400" id="debug-marker">✗ NIE</span>
-                                        </div>
+                                        <p class="text-xs text-gray-400 mt-2 pt-2 border-t border-gray-200">
+                                            💡 Sprawdź konsolę przeglądarki (F12) aby zobaczyć szczegółowe logi
+                                        </p>
                                     </div>
-                                    <p class="text-xs text-gray-400 mt-2 pt-2 border-t border-gray-200">
-                                        💡 Sprawdź konsolę przeglądarki (F12) aby zobaczyć szczegółowe logi
-                                    </p>
-                                </div>
+                                @endif
                             </div>
                         </div>
 
@@ -477,11 +490,12 @@
                             <div class="flex items-start">
                                 <svg class="w-6 h-6 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
                                 <div>
-                                    <p class="font-bold mb-1">Ważne Informacje</p>
+                                    <p class="font-bold mb-1">{{ $marketing['important_info_heading'] ?? 'Ważne Informacje' }}</p>
                                     <ul class="list-disc list-inside space-y-1 text-sm">
-                                        <li>Prosimy o przybycie 5 minut przed umówionym terminem</li>
-                                        <li>W przypadku spóźnienia powyżej 15 minut rezerwacja może zostać anulowana</li>
-                                        <li>Możesz anulować wizytę do 24 godzin przed terminem</li>
+                                        @foreach(($marketing['important_info_points'] ?? []) as $point)
+                                            @php($infoText = str_contains($point, ':hours') ? str_replace(':hours', $bookingConfig['cancellation_hours'] ?? 24, $point) : $point)
+                                            <li>{{ $infoText }}</li>
+                                        @endforeach
                                     </ul>
                                 </div>
                             </div>
@@ -763,11 +777,14 @@
 <script>
     // Calculate and display earliest available date
     document.addEventListener('DOMContentLoaded', function() {
-        const minDate = new Date();
-        minDate.setDate(minDate.getDate() + 2);
-        minDate.setHours(0, 0, 0, 0);
+        const wizard = document.querySelector('[data-wizard]');
+        const advanceHours = wizard ? parseInt(wizard.dataset.advanceHours || '24', 10) : 24;
 
-        const formatted = minDate.toLocaleDateString('pl-PL', {
+        const minDateTime = new Date();
+        minDateTime.setHours(minDateTime.getHours() + advanceHours);
+        minDateTime.setMinutes(0, 0, 0);
+
+        const formatted = minDateTime.toLocaleDateString('pl-PL', {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
