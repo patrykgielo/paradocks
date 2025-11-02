@@ -26,7 +26,7 @@ Route::middleware(['auth'])->group(function () {
 });
 
 
-Route::prefix('api')->name('api.')->middleware(['auth', 'role:super-admin'])->group(function () {
+Route::prefix('api')->name('api.')->middleware(['auth'])->group(function () {
     Route::get('/vehicle-types', [VehicleDataController::class, 'vehicleTypes'])->name('vehicle-types');
     Route::get('/car-brands', [VehicleDataController::class, 'brands'])->name('car-brands');
     Route::get('/car-models', [VehicleDataController::class, 'models'])->name('car-models');
