@@ -15,7 +15,7 @@ php artisan optimize:clear # Clear all caches
 
 ### Access Points
 - **Booking Flow:** https://paradocks.local:8444/booking/{service_id}
-- **API Endpoint:** POST /api/available-slots (auth required)
+- **API Endpoint:** POST /booking/available-slots (auth required)
 - **Admin Panel:** https://paradocks.local:8444/admin (can create appointments without restrictions)
 
 ## Test Scenarios
@@ -77,7 +77,7 @@ php artisan tinker
 # Replace {date} with day after tomorrow (YYYY-MM-DD format)
 DATE=$(date -d "+2 days" +%Y-%m-%d)
 
-curl -X POST https://paradocks.local:8444/api/available-slots \
+curl -X POST https://paradocks.local:8444/booking/available-slots \
   -H "Content-Type: application/json" \
   -H "Cookie: XSRF-TOKEN=...; laravel_session=..." \
   -H "X-CSRF-TOKEN: ..." \
@@ -126,7 +126,7 @@ curl -X POST https://paradocks.local:8444/api/available-slots \
 # Use tomorrow's date (should be rejected)
 DATE=$(date -d "+1 day" +%Y-%m-%d)
 
-curl -X POST https://paradocks.local:8444/api/available-slots \
+curl -X POST https://paradocks.local:8444/booking/available-slots \
   -H "Content-Type: application/json" \
   -H "Cookie: XSRF-TOKEN=...; laravel_session=..." \
   -H "X-CSRF-TOKEN: ..." \
@@ -165,10 +165,10 @@ curl -X POST https://paradocks.local:8444/api/available-slots \
 3. On Step 2, select **valid date** (2+ days ahead)
 4. **Open browser DevTools** → Network tab
 5. Select the date
-6. Observe AJAX request to `/api/available-slots`
+6. Observe AJAX request to `/booking/available-slots`
 
 **Expected Results:**
-- ✅ POST request sent to `/api/available-slots`
+- ✅ POST request sent to `/booking/available-slots`
 - ✅ Request payload contains `service_id` and `date`
 - ✅ Response status `200 OK`
 - ✅ Response contains `slots` array with time options
@@ -236,7 +236,7 @@ curl -X POST https://paradocks.local:8444/api/available-slots \
 # Test exactly 2 days ahead
 DATE=$(date -d "+2 days" +%Y-%m-%d)
 
-curl -X POST https://paradocks.local:8444/api/available-slots \
+curl -X POST https://paradocks.local:8444/booking/available-slots \
   -H "Content-Type: application/json" \
   -H "Cookie: ..." \
   -H "X-CSRF-TOKEN: ..." \
@@ -384,7 +384,7 @@ public function test_get_available_slots_rejects_invalid_date()
     $invalidDate = now()->addDay()->format('Y-m-d');
 
     $response = $this->actingAs($user)
-        ->postJson('/api/available-slots', [
+        ->postJson('/booking/available-slots', [
             'service_id' => $service->id,
             'date' => $invalidDate,
         ]);
@@ -406,7 +406,7 @@ public function test_get_available_slots_accepts_valid_date()
     $validDate = now()->addDays(3)->format('Y-m-d');
 
     $response = $this->actingAs($user)
-        ->postJson('/api/available-slots', [
+        ->postJson('/booking/available-slots', [
             'service_id' => $service->id,
             'date' => $validDate,
         ]);
@@ -541,7 +541,7 @@ Track these after deployment:
 
 | Metric | Target | How to Measure |
 |--------|--------|----------------|
-| Booking Errors | <0.5% | Monitor `/api/available-slots` responses with `reason: 'advance_booking_not_met'` |
+| Booking Errors | <0.5% | Monitor `/booking/available-slots` responses with `reason: 'advance_booking_not_met'` |
 | User Confusion | <1 support ticket/week | Track support requests about "no available dates" |
 | Conversion Rate | Maintain or improve | Compare bookings/visits ratio before/after |
 | API Load | Reduce by 10%+ | Frontend pre-filtering reduces invalid requests |

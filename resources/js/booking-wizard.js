@@ -776,7 +776,7 @@
         }
 
         try {
-            const response = await fetch('/api/available-slots', {
+            const response = await fetch('/booking/available-slots', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1280,13 +1280,11 @@
     }
 
     /**
-     * Fetch car brands filtered by vehicle type
+     * Fetch all car brands (no vehicle type filtering)
      */
     async function fetchCarBrands() {
-        if (!state.vehicle.type_id) return;
-
         try {
-            const url = `/api/car-brands?vehicle_type_id=${state.vehicle.type_id}`;
+            const url = `/api/car-brands`;
             const response = await fetch(url);
             const data = await response.json();
 
@@ -1346,13 +1344,13 @@
     }
 
     /**
-     * Fetch car models filtered by brand and vehicle type
+     * Fetch car models filtered by brand only (no vehicle type filtering)
      */
     async function fetchCarModels() {
         if (!state.vehicle.brand_id) return;
 
         try {
-            const url = `/api/car-models?car_brand_id=${state.vehicle.brand_id}&vehicle_type_id=${state.vehicle.type_id}`;
+            const url = `/api/car-models?car_brand_id=${state.vehicle.brand_id}`;
             const response = await fetch(url);
             const data = await response.json();
 
