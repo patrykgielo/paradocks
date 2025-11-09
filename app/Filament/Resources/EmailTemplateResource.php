@@ -9,6 +9,7 @@ use App\Models\EmailTemplate;
 use App\Services\Email\EmailService;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -91,6 +92,16 @@ class EmailTemplateResource extends Resource
                             ->placeholder('Hello {{user_name}}...')
                             ->helperText('Plain text version for email clients that don\'t support HTML'),
                     ]),
+
+                Forms\Components\Section::make('Available Variables')
+                    ->schema([
+                        Forms\Components\Placeholder::make('variable_legend')
+                            ->label('')
+                            ->content(fn (Get $get): HtmlString => self::getVariableLegendForKey($get('key')))
+                            ->helperText('Copy these variable names into your template using {{variable_name}} syntax'),
+                    ])
+                    ->description('Variables you can use in the subject, HTML body, and text body')
+                    ->collapsible(),
 
                 Forms\Components\Section::make('Advanced Settings')
                     ->schema([
@@ -209,10 +220,11 @@ class EmailTemplateResource extends Resource
 
                             // Send test email with example data
                             $result = $emailService->sendFromTemplate(
-                                $record->key,
-                                $data['email'],
-                                self::getExampleData($record),
-                                $record->language
+                                templateKey: $record->key,
+                                language: $record->language,
+                                recipient: $data['email'],
+                                data: self::getExampleData($record),
+                                metadata: []
                             );
 
                             if ($result) {
@@ -287,7 +299,7 @@ class EmailTemplateResource extends Resource
         // Template-specific variables
         $specificData = match ($template->key) {
             'user-registered' => [
-                'verification_url' => route('verification.notice'),
+                'verification_url' => url('/email/verify'),
             ],
             'password-reset' => [
                 'reset_url' => url('/reset-password/token123'),
@@ -343,5 +355,106 @@ class EmailTemplateResource extends Resource
     public static function canDelete($record): bool
     {
         return auth()->user()?->can('manage email templates') ?? false;
+    }
+
+    /**
+     * Get variable legend HTML for a specific template key.
+     *
+     * Displays available variables that can be used in the email template,
+     * including both common variables (app_name, user_name, etc.) and
+     * template-specific variables (appointment_date, verification_url, etc.).
+     *
+     * @param string|null $key Template key (e.g., 'user-registered', 'appointment-created')
+     * @return \Illuminate\Support\HtmlString HTML content showing variable list
+     */
+    protected static function getVariableLegendForKey(?string $key): HtmlString
+    {
+        if (!$key) {
+            return new HtmlString('<p class="text-sm text-gray-500">Select a template key to see available variables</p>');
+        }
+
+        // Common variables available in ALL templates
+        $commonVariables = [
+            'app_name' => 'Application name (from config)',
+            'app_url' => 'Application URL',
+            'user_name' => 'User\'s full name (first_name + last_name)',
+            'user_email' => 'User\'s email address',
+            'customer_name' => 'Customer\'s full name (alias for user_name)',
+            'current_year' => 'Current year (e.g., 2025)',
+            'contact_email' => 'Support email address',
+            'contact_phone' => 'Support phone number',
+        ];
+
+        // Template-specific variables
+        $specificVariables = match ($key) {
+            'user-registered' => [
+                'verification_url' => 'Email verification link',
+            ],
+            'password-reset' => [
+                'reset_url' => 'Password reset link',
+                'expires_in' => 'Link expiration time (e.g., "60 minutes")',
+            ],
+            'appointment-created', 'appointment-rescheduled', 'appointment-reminder-24h', 'appointment-reminder-2h' => [
+                'appointment_date' => 'Appointment date (Y-m-d format)',
+                'appointment_time' => 'Appointment time (H:i format)',
+                'service_name' => 'Service name',
+                'location_address' => 'Service location address',
+            ],
+            'appointment-cancelled' => [
+                'appointment_date' => 'Appointment date',
+                'appointment_time' => 'Appointment time',
+                'service_name' => 'Service name',
+                'cancellation_reason' => 'Reason for cancellation',
+            ],
+            'appointment-followup' => [
+                'appointment_date' => 'Appointment date',
+                'service_name' => 'Service name',
+                'feedback_url' => 'Feedback form link',
+            ],
+            'admin-daily-digest' => [
+                'date' => 'Report date',
+                'total_appointments' => 'Total appointments',
+                'pending_appointments' => 'Pending appointments count',
+                'completed_appointments' => 'Completed appointments count',
+            ],
+            default => [],
+        };
+
+        // Build HTML output
+        $html = '<div class="space-y-4">';
+
+        // Common variables section
+        $html .= '<div>';
+        $html .= '<h4 class="text-sm font-semibold text-gray-700 mb-2">Common Variables (Available in all templates)</h4>';
+        $html .= '<div class="bg-gray-50 rounded-lg p-3 space-y-1">';
+        foreach ($commonVariables as $var => $description) {
+            $html .= sprintf(
+                '<div class="flex items-start"><code class="text-xs bg-gray-200 px-2 py-1 rounded font-mono text-blue-600 mr-2">{{%s}}</code><span class="text-xs text-gray-600">%s</span></div>',
+                $var,
+                $description
+            );
+        }
+        $html .= '</div>';
+        $html .= '</div>';
+
+        // Template-specific variables section
+        if (!empty($specificVariables)) {
+            $html .= '<div>';
+            $html .= '<h4 class="text-sm font-semibold text-gray-700 mb-2">Template-Specific Variables</h4>';
+            $html .= '<div class="bg-blue-50 rounded-lg p-3 space-y-1">';
+            foreach ($specificVariables as $var => $description) {
+                $html .= sprintf(
+                    '<div class="flex items-start"><code class="text-xs bg-blue-200 px-2 py-1 rounded font-mono text-blue-700 mr-2">{{%s}}</code><span class="text-xs text-gray-600">%s</span></div>',
+                    $var,
+                    $description
+                );
+            }
+            $html .= '</div>';
+            $html .= '</div>';
+        }
+
+        $html .= '</div>';
+
+        return new HtmlString($html);
     }
 }

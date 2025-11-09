@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Events\UserRegistered;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Foundation\Auth\RegistersUsers;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
@@ -70,5 +73,27 @@ class RegisterController extends Controller
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
         ]);
+    }
+
+    /**
+     * The user has been registered.
+     *
+     * This method is called by the RegistersUsers trait after a user is created
+     * and logged in. We use it to assign the 'customer' role and dispatch the
+     * UserRegistered event for welcome email notification.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\User  $user
+     * @return void
+     */
+    protected function registered(Request $request, User $user)
+    {
+        // Assign 'customer' role to newly registered user
+        // This must happen before any other operations that check user permissions
+        $user->assignRole('customer');
+
+        // Dispatch UserRegistered event
+        // This triggers the welcome email notification via UserRegisteredNotification
+        event(new UserRegistered($user));
     }
 }
