@@ -219,4 +219,71 @@ class SettingsManager
             Cache::forget($this->getCacheKey($group));
         }
     }
+
+    // ========================================================================
+    // Helper Methods for Common Setting Groups
+    // ========================================================================
+
+    /**
+     * Get all booking configuration settings.
+     *
+     * @return array<string, mixed>
+     */
+    public function bookingConfiguration(): array
+    {
+        return $this->group('booking');
+    }
+
+    /**
+     * Get booking business hours.
+     *
+     * @return array{start: string, end: string}
+     */
+    public function bookingBusinessHours(): array
+    {
+        return [
+            'start' => $this->get('booking.business_hours_start', '09:00'),
+            'end' => $this->get('booking.business_hours_end', '18:00'),
+        ];
+    }
+
+    /**
+     * Get advance booking hours requirement.
+     *
+     * @return int
+     */
+    public function advanceBookingHours(): int
+    {
+        return (int) $this->get('booking.advance_booking_hours', 24);
+    }
+
+    /**
+     * Get all map configuration settings.
+     *
+     * @return array<string, mixed>
+     */
+    public function mapConfiguration(): array
+    {
+        return $this->group('map');
+    }
+
+    /**
+     * Get all contact information settings.
+     *
+     * @return array<string, mixed>
+     */
+    public function contactInformation(): array
+    {
+        return $this->group('contact');
+    }
+
+    /**
+     * Get all marketing content settings.
+     *
+     * @return array<string, mixed>
+     */
+    public function marketingContent(): array
+    {
+        return $this->group('marketing');
+    }
 }

@@ -133,8 +133,9 @@ class EmailService
             // Create 'sent' event
             EmailEvent::create([
                 'email_send_id' => $emailSend->id,
-                'type' => 'sent',
-                'data' => [
+                'event_type' => 'sent',
+                'occurred_at' => now(),
+                'event_data' => [
                     'sent_at' => now()->toISOString(),
                     'gateway' => 'smtp',
                 ],
@@ -149,15 +150,16 @@ class EmailService
             // Failure: mark as failed
             $emailSend->markAsFailed($e->getMessage());
 
-            // Create 'failed' event
-            EmailEvent::create([
-                'email_send_id' => $emailSend->id,
-                'type' => 'failed',
-                'data' => [
-                    'error' => $e->getMessage(),
-                    'failed_at' => now()->toISOString(),
-                ],
-            ]);
+            // Create 'failed' event (note: 'failed' is not in ENUM, will need to handle separately)
+            // EmailEvent::create([
+            //     'email_send_id' => $emailSend->id,
+            //     'event_type' => 'failed',
+            //     'occurred_at' => now(),
+            //     'event_data' => [
+            //         'error' => $e->getMessage(),
+            //         'failed_at' => now()->toISOString(),
+            //     ],
+            // ]);
 
             Log::error('Email sending failed', [
                 'email_send_id' => $emailSend->id,
@@ -186,16 +188,11 @@ class EmailService
     public function renderTemplate(EmailTemplate $template, array $data): array
     {
         try {
-            // Render subject
-            $subject = Blade::render($template->subject, $data);
-
-            // Render HTML body
-            $html = Blade::render($template->html_body, $data);
-
-            // Render text body if exists
-            $text = $template->text_body
-                ? Blade::render($template->text_body, $data)
-                : null;
+            // Use EmailTemplate's render methods which handle {{variable}} → {{ $variable }} conversion
+            // This ensures templates work with both {{variable}} and {{ $variable }} syntax
+            $subject = $template->renderSubject($data);
+            $html = $template->render($data);
+            $text = $template->renderText($data);
 
             return [
                 'subject' => $subject,
@@ -272,17 +269,20 @@ class EmailService
 
             EmailEvent::create([
                 'email_send_id' => $emailSend->id,
-                'type' => 'sent',
-                'data' => ['sent_at' => now()->toISOString()],
+                'event_type' => 'sent',
+                'occurred_at' => now(),
+                'event_data' => ['sent_at' => now()->toISOString()],
             ]);
         } catch (\Exception $e) {
             $emailSend->markAsFailed($e->getMessage());
 
-            EmailEvent::create([
-                'email_send_id' => $emailSend->id,
-                'type' => 'failed',
-                'data' => ['error' => $e->getMessage()],
-            ]);
+            // Note: 'failed' is not in ENUM, commenting out
+            // EmailEvent::create([
+            //     'email_send_id' => $emailSend->id,
+            //     'event_type' => 'failed',
+            //     'occurred_at' => now(),
+            //     'event_data' => ['error' => $e->getMessage()],
+            // ]);
 
             event(new EmailDeliveryFailed($emailSend, $e->getMessage()));
 

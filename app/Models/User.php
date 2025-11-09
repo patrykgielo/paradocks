@@ -71,6 +71,35 @@ class User extends Authenticatable implements FilamentUser, HasName
     }
 
     /**
+     * Get the user's full name via the 'name' attribute.
+     *
+     * This accessor provides a 'name' attribute by combining first_name and last_name.
+     * Used throughout the application by notifications, emails, Blade templates, and API responses.
+     *
+     * Background: The User model stores names in two separate fields (first_name, last_name)
+     * for flexibility, but many parts of the application expect a single 'name' property
+     * (notifications, email templates, legacy code). This accessor bridges that gap without
+     * requiring changes to all consuming code.
+     *
+     * @return string Full name (first_name + last_name)
+     *
+     * @example
+     * $user->name         // Returns "Jan Kowalski" (via this accessor)
+     * $user->full_name    // Returns "Jan Kowalski" (via getFullNameAttribute)
+     * $user->first_name   // Returns "Jan"
+     * $user->last_name    // Returns "Kowalski"
+     *
+     * @see getFullNameAttribute() - Canonical implementation of name concatenation
+     * @see getFilamentName() - Used by Filament admin panel (also calls getFullNameAttribute)
+     *
+     * @since November 2025 - Added to support email notifications and templates
+     */
+    public function getNameAttribute(): string
+    {
+        return $this->getFullNameAttribute();
+    }
+
+    /**
      * Get the name to display in Filament (avatar, menu, etc.)
      * Required by Filament\Models\Contracts\HasName interface.
      *
