@@ -24,19 +24,71 @@ class ServiceResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('name')
+                    ->label('Nazwa usługi')
                     ->required()
                     ->maxLength(255),
                 Forms\Components\Textarea::make('description')
+                    ->label('Opis')
                     ->columnSpanFull(),
-                Forms\Components\TextInput::make('duration_minutes')
-                    ->required()
-                    ->numeric()
-                    ->default(60),
+                Forms\Components\Grid::make(3)
+                    ->schema([
+                        Forms\Components\TextInput::make('duration_days')
+                            ->label('Dni')
+                            ->numeric()
+                            ->minValue(0)
+                            ->maxValue(0)
+                            ->default(0)
+                            ->suffix('dni')
+                            ->helperText('Usługi wielodniowe nie są obsługiwane')
+                            ->disabled()
+                            ->dehydrated(false),
+                        Forms\Components\TextInput::make('duration_hours')
+                            ->label('Godziny')
+                            ->numeric()
+                            ->minValue(0)
+                            ->maxValue(23)
+                            ->suffix('godz')
+                            ->live(onBlur: true)
+                            ->afterStateHydrated(function ($state, $set, $get, $record) {
+                                if ($record && $record->duration_minutes) {
+                                    $set('duration_hours', floor($record->duration_minutes / 60));
+                                }
+                            })
+                            ->afterStateUpdated(function ($state, $set, $get) {
+                                $hours = (int) ($state ?? 0);
+                                $minutes = (int) ($get('duration_mins') ?? 0);
+                                $set('duration_minutes', ($hours * 60) + $minutes);
+                            })
+                            ->dehydrated(false),
+                        Forms\Components\TextInput::make('duration_mins')
+                            ->label('Minuty')
+                            ->numeric()
+                            ->minValue(0)
+                            ->maxValue(59)
+                            ->step(15)
+                            ->suffix('min')
+                            ->live(onBlur: true)
+                            ->afterStateHydrated(function ($state, $set, $get, $record) {
+                                if ($record && $record->duration_minutes) {
+                                    $set('duration_mins', $record->duration_minutes % 60);
+                                }
+                            })
+                            ->afterStateUpdated(function ($state, $set, $get) {
+                                $hours = (int) ($get('duration_hours') ?? 0);
+                                $minutes = (int) ($state ?? 0);
+                                $set('duration_minutes', ($hours * 60) + $minutes);
+                            })
+                            ->dehydrated(false),
+                    ]),
+                Forms\Components\Hidden::make('duration_minutes')
+                    ->default(60)
+                    ->required(),
                 Forms\Components\TextInput::make('price')
+                    ->label('Cena')
                     ->required()
                     ->numeric()
                     ->default(0.00)
-                    ->prefix('$'),
+                    ->prefix('zł'),
                 Forms\Components\Toggle::make('is_active')
                     ->required(),
                 Forms\Components\TextInput::make('sort_order')
@@ -51,12 +103,16 @@ class ServiceResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
+                    ->label('Nazwa usługi')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('duration_minutes')
-                    ->numeric()
-                    ->sortable(),
+                Tables\Columns\TextColumn::make('formatted_duration')
+                    ->label('Czas trwania')
+                    ->sortable(query: function ($query, $direction) {
+                        return $query->orderBy('duration_minutes', $direction);
+                    }),
                 Tables\Columns\TextColumn::make('price')
-                    ->money()
+                    ->label('Cena')
+                    ->money('PLN')
                     ->sortable(),
                 Tables\Columns\IconColumn::make('is_active')
                     ->boolean(),

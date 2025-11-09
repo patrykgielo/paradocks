@@ -1,7 +1,34 @@
 <?php
 
+use App\Http\Controllers\Api\VehicleDataController;
+use App\Http\Controllers\AppointmentController;
+use App\Http\Controllers\BookingController;
+use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
+// Public routes
+Route::get('/', [HomeController::class, 'index'])->name('home');
+
+// Authentication routes
+Auth::routes();
+
+// Protected routes (require authentication)
+Route::middleware(['auth'])->group(function () {
+    // Booking
+    Route::get('/services/{service}/book', [BookingController::class, 'create'])->name('booking.create');
+
+    Route::post('/booking/available-slots', [BookingController::class, 'getAvailableSlots'])->name('booking.slots');
+
+    // Appointments
+    Route::get('/my-appointments', [AppointmentController::class, 'index'])->name('appointments.index');
+    Route::post('/appointments', [AppointmentController::class, 'store'])->name('appointments.store');
+    Route::post('/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel'])->name('appointments.cancel');
+});
+
+
+Route::prefix('api')->name('api.')->middleware(['auth'])->group(function () {
+    Route::get('/vehicle-types', [VehicleDataController::class, 'vehicleTypes'])->name('vehicle-types');
+    Route::get('/car-brands', [VehicleDataController::class, 'brands'])->name('car-brands');
+    Route::get('/car-models', [VehicleDataController::class, 'models'])->name('car-models');
+    Route::get('/vehicle-years', [VehicleDataController::class, 'years'])->name('vehicle-years');
 });

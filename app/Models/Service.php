@@ -44,4 +44,31 @@ class Service extends Model
     {
         return $query->orderBy('sort_order');
     }
+
+    // Accessors
+    public function getFormattedDurationAttribute(): string
+    {
+        $totalMinutes = $this->duration_minutes;
+
+        $days = floor($totalMinutes / 1440);
+        $remainingAfterDays = $totalMinutes % 1440;
+        $hours = floor($remainingAfterDays / 60);
+        $minutes = $remainingAfterDays % 60;
+
+        $parts = [];
+
+        if ($days > 0) {
+            $parts[] = $days . ' ' . ($days === 1 ? 'dzień' : 'dni');
+        }
+
+        if ($hours > 0) {
+            $parts[] = $hours . ' ' . ($hours === 1 ? 'godz' : 'godz');
+        }
+
+        if ($minutes > 0) {
+            $parts[] = $minutes . ' min';
+        }
+
+        return !empty($parts) ? implode(', ', $parts) : '0 min';
+    }
 }

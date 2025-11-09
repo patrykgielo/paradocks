@@ -1,0 +1,119 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Notifications;
+
+use App\Models\Appointment;
+use App\Services\Email\EmailService;
+use Carbon\Carbon;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\Log;
+
+/**
+ * Appointment Rescheduled Notification
+ *
+ * Sent when an appointment date/time is changed.
+ * Informs customer about the new schedule.
+ */
+class AppointmentRescheduledNotification extends Notification implements ShouldQueue, ShouldBeUnique
+{
+    use Queueable;
+
+    /**
+     * Create a new notification instance.
+     *
+     * @param \App\Models\Appointment $appointment
+     * @param \Carbon\Carbon $oldDate
+     * @param \Carbon\Carbon $newDate
+     * @param string $whoChanged 'customer' or 'staff'
+     */
+    public function __construct(
+        public Appointment $appointment,
+        public Carbon $oldDate,
+        public Carbon $newDate,
+        public string $whoChanged = 'staff'
+    ) {
+        $this->onQueue('emails');
+    }
+
+    /**
+     * Get the unique ID for the notification.
+     *
+     * @return string
+     */
+    public function uniqueId(): string
+    {
+        return 'appointment-rescheduled:' . $this->appointment->id . ':' . $this->newDate->timestamp;
+    }
+
+    /**
+     * Get the number of seconds the unique lock should be maintained.
+     *
+     * @return int
+     */
+    public function uniqueFor(): int
+    {
+        return 300; // 5 minutes
+    }
+
+    /**
+     * Get the notification's delivery channels.
+     *
+     * @param mixed $notifiable
+     * @return array<int, string>
+     */
+    public function via(object $notifiable): array
+    {
+        return ['mail'];
+    }
+
+    /**
+     * Get the mail representation of the notification.
+     *
+     * @param mixed $notifiable
+     * @return \Illuminate\Notifications\Messages\MailMessage
+     */
+    public function toMail(object $notifiable): MailMessage
+    {
+        $emailService = app(EmailService::class);
+        $language = $notifiable->preferred_language ?? 'pl';
+
+        // Load relationships
+        $appointment = $this->appointment->load(['service', 'customer']);
+
+        try {
+            $emailSend = $emailService->sendFromTemplate(
+                'appointment-rescheduled',
+                $language,
+                $notifiable->email,
+                [
+                    'customer_name' => $appointment->customer->name,
+                    'service_name' => $appointment->service->name,
+                    'old_date' => $this->oldDate->format('Y-m-d H:i'),
+                    'new_date' => $this->newDate->format('Y-m-d H:i'),
+                    'who_changed' => $this->whoChanged,
+                ],
+                [
+                    'appointment_id' => $appointment->id,
+                    'notification' => 'AppointmentRescheduledNotification',
+                ]
+            );
+
+            return (new MailMessage)
+                ->subject($emailSend->subject)
+                ->line('Appointment reschedule notification sent successfully via EmailService.');
+        } catch (\Exception $e) {
+            Log::error('AppointmentRescheduledNotification failed', [
+                'appointment_id' => $appointment->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw $e;
+        }
+    }
+}
