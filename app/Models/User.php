@@ -33,6 +33,7 @@ class User extends Authenticatable implements FilamentUser, HasName
         'city',
         'postal_code',
         'access_notes',
+        'preferred_language',
     ];
 
     /**
@@ -78,6 +79,16 @@ class User extends Authenticatable implements FilamentUser, HasName
     public function getFilamentName(): string
     {
         return $this->getFullNameAttribute();
+    }
+
+    /**
+     * Get user's preferred language with fallback.
+     *
+     * @return string
+     */
+    public function getPreferredLanguageAttribute(?string $value): string
+    {
+        return $value ?? 'pl';
     }
 
     public function canAccessPanel(Panel $panel): bool
