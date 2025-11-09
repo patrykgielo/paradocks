@@ -1,216 +1,222 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Support\Settings;
 
 use App\Models\Setting;
-use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Cache;
 
+/**
+ * SettingsManager Service
+ *
+ * Manages application settings with caching and dot notation support.
+ * Singleton service registered in AppServiceProvider.
+ */
 class SettingsManager
 {
     /**
-     * Cached settings values keyed by group name.
+     * Cache duration in seconds (1 hour).
      */
-    protected array $cache = [];
+    private const CACHE_TTL = 3600;
 
     /**
-     * Retrieve a full settings group merged with defaults.
+     * Cache key prefix.
      */
-    public function getGroup(string $key, array $defaults = []): array
+    private const CACHE_PREFIX = 'settings';
+
+    /**
+     * Get a setting value by dot notation path.
+     *
+     * Example: get('booking.business_hours_start', '09:00')
+     *
+     * @param string $path Dot notation path (group.key)
+     * @param mixed $default Default value if setting not found
+     * @return mixed
+     */
+    public function get(string $path, mixed $default = null): mixed
     {
-        if (array_key_exists($key, $this->cache)) {
-            return $this->cache[$key];
-        }
+        [$group, $key] = $this->parsePath($path);
 
-        $setting = Setting::query()->where('key', $key)->first();
+        $cacheKey = $this->getCacheKey($group, $key);
 
-        $values = $setting?->value ?? [];
-        if (! is_array($values)) {
-            $values = [];
-        }
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($group, $key, $default) {
+            $setting = Setting::group($group)->key($key)->first();
 
-        return $this->cache[$key] = array_replace_recursive($defaults, $values);
+            if (!$setting) {
+                return $default;
+            }
+
+            // If value is an array with single element, return the element
+            // Otherwise return the full array/value
+            $value = $setting->value;
+
+            if (is_array($value) && count($value) === 1 && isset($value[0])) {
+                return $value[0];
+            }
+
+            return $value;
+        });
     }
 
     /**
-     * Persist a full group of settings.
+     * Set a setting value by dot notation path.
+     *
+     * Example: set('booking.business_hours_start', '10:00')
+     *
+     * @param string $path Dot notation path (group.key)
+     * @param mixed $value Value to store
+     * @return bool
      */
-    public function setGroup(string $key, array $values): void
+    public function set(string $path, mixed $value): bool
     {
-        Setting::query()->updateOrCreate(
-            ['key' => $key],
-            [
-                'group' => $key,
-                'value' => $values,
-            ]
+        [$group, $key] = $this->parsePath($path);
+
+        // Wrap scalar values in array for JSON storage
+        $jsonValue = is_array($value) ? $value : [$value];
+
+        Setting::updateOrCreate(
+            ['group' => $group, 'key' => $key],
+            ['value' => $jsonValue]
         );
 
-        $this->cache[$key] = $values;
+        // Clear cache for this setting
+        $this->clearCache($group, $key);
+
+        return true;
     }
 
     /**
-     * Update multiple groups in one call.
+     * Bulk update multiple groups of settings.
+     *
+     * Example: updateGroups(['booking' => ['business_hours_start' => '10:00'], 'email' => [...]])
+     *
+     * @param array<string, array<string, mixed>> $groups Associative array of groups and their key-value pairs
+     * @return bool
      */
-    public function updateGroups(array $groups): void
+    public function updateGroups(array $groups): bool
     {
-        foreach ($groups as $key => $values) {
-            $this->setGroup($key, $values);
-        }
-    }
-
-    public function bookingConfiguration(): array
-    {
-        return $this->getGroup('booking', $this->defaultBookingConfiguration());
-    }
-
-    public function bookingBusinessHours(): array
-    {
-        $config = $this->bookingConfiguration();
-
-        return [
-            'start' => Arr::get($config, 'business_hours_start', config('booking.business_hours.start')),
-            'end' => Arr::get($config, 'business_hours_end', config('booking.business_hours.end')),
-        ];
-    }
-
-    public function advanceBookingHours(): int
-    {
-        return (int) Arr::get(
-            $this->bookingConfiguration(),
-            'advance_booking_hours',
-            config('booking.advance_booking_hours', 24)
-        );
-    }
-
-    public function cancellationHours(): int
-    {
-        return (int) Arr::get(
-            $this->bookingConfiguration(),
-            'cancellation_hours',
-            config('booking.cancellation_hours', 24)
-        );
-    }
-
-    public function slotIntervalMinutes(): int
-    {
-        return (int) Arr::get(
-            $this->bookingConfiguration(),
-            'slot_interval_minutes',
-            config('booking.slot_interval_minutes', 15)
-        );
-    }
-
-    public function maxServiceDurationMinutes(): int
-    {
-        return (int) Arr::get(
-            $this->bookingConfiguration(),
-            'max_service_duration_minutes',
-            config('booking.max_service_duration_minutes', 540)
-        );
-    }
-
-    public function mapConfiguration(): array
-    {
-        return $this->getGroup('map', $this->defaultMapConfiguration());
-    }
-
-    public function contactInformation(): array
-    {
-        return $this->getGroup('contact', $this->defaultContactInformation());
-    }
-
-    public function marketingContent(): array
-    {
-        $defaults = $this->defaultMarketingContent();
-        $marketing = $this->getGroup('marketing', $defaults);
-
-        // Ensure features array is normalised with defaults to avoid missing indexes.
-        $features = Arr::get($marketing, 'features', []);
-        if (! is_array($features)) {
-            $features = [];
+        foreach ($groups as $group => $settings) {
+            foreach ($settings as $key => $value) {
+                $this->set("{$group}.{$key}", $value);
+            }
         }
 
-        $defaultFeatures = Arr::get($defaults, 'features', []);
-        $marketing['features'] = array_values(array_replace($defaultFeatures, $features));
+        return true;
+    }
 
-        // Normalise important info points.
-        $points = Arr::get($marketing, 'important_info_points', []);
-        if (! is_array($points)) {
-            $points = [];
+    /**
+     * Get all settings grouped by group.
+     *
+     * Returns: ['booking' => ['business_hours_start' => '09:00', ...], 'email' => [...]]
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    public function all(): array
+    {
+        $settings = Setting::all();
+
+        $grouped = [];
+
+        foreach ($settings as $setting) {
+            $value = $setting->value;
+
+            // Unwrap single-element arrays
+            if (is_array($value) && count($value) === 1 && isset($value[0])) {
+                $value = $value[0];
+            }
+
+            $grouped[$setting->group][$setting->key] = $value;
         }
-        $marketing['important_info_points'] = array_values(array_filter(
-            array_map('strval', $points),
-            static fn (string $point) => $point !== ''
-        ));
 
-        return array_replace_recursive($defaults, $marketing);
+        return $grouped;
     }
 
-    protected function defaultBookingConfiguration(): array
+    /**
+     * Get all settings for a specific group.
+     *
+     * Example: group('booking') returns ['business_hours_start' => '09:00', ...]
+     *
+     * @param string $group Group name
+     * @return array<string, mixed>
+     */
+    public function group(string $group): array
     {
-        return [
-            'business_hours_start' => config('booking.business_hours.start', '09:00'),
-            'business_hours_end' => config('booking.business_hours.end', '18:00'),
-            'advance_booking_hours' => config('booking.advance_booking_hours', 24),
-            'cancellation_hours' => config('booking.cancellation_hours', 24),
-            'slot_interval_minutes' => config('booking.slot_interval_minutes', 15),
-            'max_service_duration_minutes' => config('booking.max_service_duration_minutes', 540),
-        ];
+        $cacheKey = $this->getCacheKey($group);
+
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($group) {
+            $settings = Setting::group($group)->get();
+
+            $result = [];
+
+            foreach ($settings as $setting) {
+                $value = $setting->value;
+
+                // Unwrap single-element arrays
+                if (is_array($value) && count($value) === 1 && isset($value[0])) {
+                    $value = $value[0];
+                }
+
+                $result[$setting->key] = $value;
+            }
+
+            return $result;
+        });
     }
 
-    protected function defaultMapConfiguration(): array
+    /**
+     * Parse dot notation path into group and key.
+     *
+     * @param string $path Dot notation path (e.g., 'booking.business_hours_start')
+     * @return array{0: string, 1: string} [group, key]
+     * @throws \InvalidArgumentException
+     */
+    private function parsePath(string $path): array
     {
-        return [
-            'default_latitude' => 52.2297,
-            'default_longitude' => 21.0122,
-            'default_zoom' => 15,
-            'country_code' => 'pl',
-            'debug_panel_enabled' => true,
-            'map_id' => config('services.google_maps.map_id'),
-        ];
+        $parts = explode('.', $path, 2);
+
+        if (count($parts) !== 2) {
+            throw new \InvalidArgumentException(
+                "Invalid setting path: {$path}. Expected format: 'group.key'"
+            );
+        }
+
+        return $parts;
     }
 
-    protected function defaultContactInformation(): array
+    /**
+     * Generate cache key for a setting.
+     *
+     * @param string $group Group name
+     * @param string|null $key Setting key (optional)
+     * @return string
+     */
+    private function getCacheKey(string $group, ?string $key = null): string
     {
-        return [
-            'email' => 'kontakt@example.com',
-            'phone' => '+48 123 456 789',
-            'address_line' => 'ul. Przykładowa 1',
-            'city' => 'Warszawa',
-            'postal_code' => '00-000',
-        ];
+        if ($key === null) {
+            return self::CACHE_PREFIX . ":{$group}";
+        }
+
+        return self::CACHE_PREFIX . ":{$group}:{$key}";
     }
 
-    protected function defaultMarketingContent(): array
+    /**
+     * Clear cache for a specific setting or entire group.
+     *
+     * @param string $group Group name
+     * @param string|null $key Setting key (optional, clears entire group if null)
+     * @return void
+     */
+    private function clearCache(string $group, ?string $key = null): void
     {
-        return [
-            'hero_title' => 'Profesjonalne Czyszczenie i Detailing Samochodów',
-            'hero_subtitle' => 'Zarezerwuj wizytę online w kilku prostych krokach. Gwarantujemy najwyższą jakość usług i satysfakcję klientów.',
-            'services_heading' => 'Nasze Usługi Detailingowe',
-            'services_subheading' => 'Wybierz pakiet dopasowany do potrzeb Twojego pojazdu. Wszystkie usługi wykonujemy z najwyższą starannością.',
-            'features_heading' => 'Dlaczego Warto Nas Wybrać',
-            'features_subheading' => 'Oferujemy najwyższy standard obsługi i jakości wykonanych usług',
-            'features' => [
-                [
-                    'title' => 'Łatwa Rezerwacja Online',
-                    'description' => 'Zarezerwuj wizytę w kilku kliknięciach, 24/7 dostępność systemu rezerwacji.',
-                ],
-                [
-                    'title' => 'Natychmiastowe Potwierdzenie',
-                    'description' => 'Otrzymasz potwierdzenie rezerwacji od razu po dokonaniu zapisu.',
-                ],
-                [
-                    'title' => 'Elastyczne Godziny',
-                    'description' => 'Wybierz termin dopasowany do Twojego harmonogramu.',
-                ],
-            ],
-            'cta_heading' => 'Gotowy na Profesjonalny Detailing?',
-            'cta_subheading' => 'Dołącz do setek zadowolonych klientów. Zarejestruj się i zarezerwuj swoją pierwszą wizytę już dziś.',
-            'important_info_heading' => 'Ważne Informacje',
-            'important_info_points' => [
-                'Prosimy o przybycie 5 minut przed umówionym terminem.',
-                'W przypadku spóźnienia powyżej 15 minut rezerwacja może zostać anulowana.',
-                'Możesz anulować wizytę do :hours godzin przed terminem.',
-            ],
-        ];
+        if ($key === null) {
+            // Clear entire group cache
+            Cache::forget($this->getCacheKey($group));
+        } else {
+            // Clear specific setting cache
+            Cache::forget($this->getCacheKey($group, $key));
+            // Also clear group cache as it contains this setting
+            Cache::forget($this->getCacheKey($group));
+        }
     }
 }

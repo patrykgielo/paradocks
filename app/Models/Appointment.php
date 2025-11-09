@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Events\AppointmentCancelled;
+use App\Events\AppointmentCreated;
+use App\Events\AppointmentRescheduled;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -9,6 +12,40 @@ class Appointment extends Model
 {
     /** @use HasFactory<\Database\Factories\AppointmentFactory> */
     use HasFactory;
+
+    /**
+     * The event map for the model.
+     *
+     * Automatically dispatches events on model lifecycle
+     *
+     * @var array<string, class-string>
+     */
+    protected $dispatchesEvents = [
+        'created' => AppointmentCreated::class,
+    ];
+
+    /**
+     * The "booted" method of the model.
+     *
+     * Register model event listeners for status changes
+     */
+    protected static function booted(): void
+    {
+        // Detect appointment reschedule (date/time change)
+        static::updating(function (Appointment $appointment) {
+            if ($appointment->isDirty(['appointment_date', 'start_time', 'end_time'])) {
+                // Only dispatch if appointment is not cancelled
+                if ($appointment->status !== 'cancelled') {
+                    event(new AppointmentRescheduled($appointment));
+                }
+            }
+
+            // Detect appointment cancellation (status change to 'cancelled')
+            if ($appointment->isDirty('status') && $appointment->status === 'cancelled') {
+                event(new AppointmentCancelled($appointment));
+            }
+        });
+    }
 
     protected $fillable = [
         'service_id',
@@ -31,6 +68,9 @@ class Appointment extends Model
         'vehicle_year',
         'vehicle_custom_brand',
         'vehicle_custom_model',
+        'sent_24h_reminder',
+        'sent_2h_reminder',
+        'sent_followup',
     ];
 
     protected $casts = [
@@ -38,6 +78,9 @@ class Appointment extends Model
         'start_time' => 'datetime:H:i',
         'end_time' => 'datetime:H:i',
         'location_components' => 'array',
+        'sent_24h_reminder' => 'boolean',
+        'sent_2h_reminder' => 'boolean',
+        'sent_followup' => 'boolean',
     ];
 
     // Relationships

@@ -1,324 +1,510 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Pages;
 
 use App\Support\Settings\SettingsManager;
-use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Section;
-use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TimePicker;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Illuminate\Support\Facades\Mail;
 
+/**
+ * System Settings Page
+ *
+ * Filament admin page for managing application-wide settings.
+ * Settings are grouped into tabs: Booking, Map, Contact, Marketing, Email.
+ */
 class SystemSettings extends Page implements HasForms
 {
     use InteractsWithForms;
 
+    /**
+     * Page view.
+     */
     protected static ?string $navigationIcon = 'heroicon-o-cog-8-tooth';
 
+    /**
+     * Navigation group.
+     */
     protected static ?string $navigationGroup = 'Settings';
 
-    protected static ?int $navigationSort = 1;
-
+    /**
+     * Navigation label.
+     */
     protected static ?string $navigationLabel = 'System Settings';
 
+    /**
+     * Page title.
+     */
     protected static string $view = 'filament.pages.system-settings';
 
-    protected static ?string $slug = 'system-settings';
+    /**
+     * Permission required to access this page.
+     */
+    protected static ?string $permission = 'manage settings';
 
-    protected static ?string $title = 'System Settings';
-
+    /**
+     * Form state data.
+     *
+     * @var array<string, mixed>|null
+     */
     public ?array $data = [];
 
-    public static function canAccess(): bool
-    {
-        return auth()->user()?->can('manage settings') ?? false;
-    }
-
-    protected function getFormDefaults(): array
-    {
-        $settings = app(SettingsManager::class);
-
-        $booking = $settings->bookingConfiguration();
-        $map = $settings->mapConfiguration();
-        $contact = $settings->contactInformation();
-        $marketing = $settings->marketingContent();
-
-        return [
-            'booking' => $booking,
-            'map' => $map,
-            'contact' => $contact,
-            'marketing' => [
-                'hero_title' => $marketing['hero_title'] ?? '',
-                'hero_subtitle' => $marketing['hero_subtitle'] ?? '',
-                'services_heading' => $marketing['services_heading'] ?? '',
-                'services_subheading' => $marketing['services_subheading'] ?? '',
-                'features_heading' => $marketing['features_heading'] ?? '',
-                'features_subheading' => $marketing['features_subheading'] ?? '',
-                'feature_one_title' => $marketing['features'][0]['title'] ?? '',
-                'feature_one_description' => $marketing['features'][0]['description'] ?? '',
-                'feature_two_title' => $marketing['features'][1]['title'] ?? '',
-                'feature_two_description' => $marketing['features'][1]['description'] ?? '',
-                'feature_three_title' => $marketing['features'][2]['title'] ?? '',
-                'feature_three_description' => $marketing['features'][2]['description'] ?? '',
-                'cta_heading' => $marketing['cta_heading'] ?? '',
-                'cta_subheading' => $marketing['cta_subheading'] ?? '',
-                'important_info_heading' => $marketing['important_info_heading'] ?? '',
-                'important_info_points' => implode(PHP_EOL, $marketing['important_info_points'] ?? []),
-            ],
-        ];
-    }
-
+    /**
+     * Mount the page and load settings.
+     */
     public function mount(): void
     {
-        abort_unless(static::canAccess(), 403);
+        $settingsManager = app(SettingsManager::class);
+        $allSettings = $settingsManager->all();
 
-        $this->form->fill($this->getFormDefaults());
+        // Flatten settings for form
+        $this->form->fill($allSettings);
     }
 
+    /**
+     * Define the form schema.
+     */
     public function form(Form $form): Form
     {
         return $form
             ->schema([
-                Section::make('Harmonogram rezerwacji')
-                    ->schema([
-                        Grid::make(3)->schema([
-                            TimePicker::make('booking.business_hours_start')
-                                ->label('Godzina rozpoczęcia')
-                                ->seconds(false)
-                                ->required(),
-                            TimePicker::make('booking.business_hours_end')
-                                ->label('Godzina zakończenia')
-                                ->seconds(false)
-                                ->required(),
-                            TextInput::make('booking.slot_interval_minutes')
-                                ->label('Interwał slotów (min)')
-                                ->numeric()
-                                ->minValue(5)
-                                ->maxValue(180)
-                                ->required(),
-                        ]),
-                        Grid::make(3)->schema([
-                            TextInput::make('booking.advance_booking_hours')
-                                ->label('Minimalne wyprzedzenie (h)')
-                                ->numeric()
-                                ->minValue(0)
-                                ->maxValue(168)
-                                ->required(),
-                            TextInput::make('booking.cancellation_hours')
-                                ->label('Limit anulacji (h)')
-                                ->numeric()
-                                ->minValue(0)
-                                ->maxValue(168)
-                                ->required(),
-                            TextInput::make('booking.max_service_duration_minutes')
-                                ->label('Maksymalny czas usługi (min)')
-                                ->numeric()
-                                ->minValue(30)
-                                ->maxValue(1440)
-                                ->required(),
-                        ]),
-                    ])->columns(1),
-                Section::make('Mapa i lokalizacja')
-                    ->schema([
-                        Grid::make(2)->schema([
-                            TextInput::make('map.default_latitude')
-                                ->label('Domyślna szerokość')
-                                ->numeric()
-                                ->step(0.000001)
-                                ->required(),
-                            TextInput::make('map.default_longitude')
-                                ->label('Domyślna długość')
-                                ->numeric()
-                                ->step(0.000001)
-                                ->required(),
-                            TextInput::make('map.default_zoom')
-                                ->label('Poziom przybliżenia')
-                                ->numeric()
-                                ->minValue(0)
-                                ->maxValue(20)
-                                ->required(),
-                            TextInput::make('map.country_code')
-                                ->label('Kod kraju (ISO)')
-                                ->maxLength(2)
-                                ->required(),
-                        ]),
-                        Grid::make(2)->schema([
-                            TextInput::make('map.map_id')
-                                ->label('Google Map ID')
-                                ->helperText('Pozostaw puste aby użyć wartości z konfiguracji .env'),
-                            Toggle::make('map.debug_panel_enabled')
-                                ->label('Panel debugowania mapy')
-                                ->inline(false),
-                        ]),
-                    ])->columns(1),
-                Section::make('Dane kontaktowe')
-                    ->schema([
-                        Grid::make(2)->schema([
-                            TextInput::make('contact.email')
-                                ->label('Adres e-mail')
-                                ->email()
-                                ->required(),
-                            TextInput::make('contact.phone')
-                                ->label('Telefon kontaktowy')
-                                ->required(),
-                            TextInput::make('contact.address_line')
-                                ->label('Ulica i numer')
-                                ->required(),
-                            TextInput::make('contact.city')
-                                ->label('Miasto')
-                                ->required(),
-                            TextInput::make('contact.postal_code')
-                                ->label('Kod pocztowy')
-                                ->required(),
-                        ]),
-                    ])->columns(1),
-                Section::make('Treści marketingowe')
-                    ->schema([
-                        TextInput::make('marketing.hero_title')
-                            ->label('Hero - tytuł')
-                            ->required(),
-                        Textarea::make('marketing.hero_subtitle')
-                            ->label('Hero - opis')
-                            ->rows(3)
-                            ->required(),
-                        TextInput::make('marketing.services_heading')
-                            ->label('Sekcja usług - tytuł')
-                            ->required(),
-                        Textarea::make('marketing.services_subheading')
-                            ->label('Sekcja usług - opis')
-                            ->rows(3)
-                            ->required(),
-                        TextInput::make('marketing.features_heading')
-                            ->label('Sekcja korzyści - tytuł')
-                            ->required(),
-                        Textarea::make('marketing.features_subheading')
-                            ->label('Sekcja korzyści - opis')
-                            ->rows(3)
-                            ->required(),
-                        Grid::make(3)->schema([
-                            TextInput::make('marketing.feature_one_title')
-                                ->label('Korzyść 1 - tytuł')
-                                ->required(),
-                            TextInput::make('marketing.feature_two_title')
-                                ->label('Korzyść 2 - tytuł')
-                                ->required(),
-                            TextInput::make('marketing.feature_three_title')
-                                ->label('Korzyść 3 - tytuł')
-                                ->required(),
-                        ]),
-                        Grid::make(3)->schema([
-                            Textarea::make('marketing.feature_one_description')
-                                ->label('Korzyść 1 - opis')
-                                ->rows(3)
-                                ->required(),
-                            Textarea::make('marketing.feature_two_description')
-                                ->label('Korzyść 2 - opis')
-                                ->rows(3)
-                                ->required(),
-                            Textarea::make('marketing.feature_three_description')
-                                ->label('Korzyść 3 - opis')
-                                ->rows(3)
-                                ->required(),
-                        ]),
-                        TextInput::make('marketing.cta_heading')
-                            ->label('CTA - tytuł')
-                            ->required(),
-                        Textarea::make('marketing.cta_subheading')
-                            ->label('CTA - opis')
-                            ->rows(3)
-                            ->required(),
-                        TextInput::make('marketing.important_info_heading')
-                            ->label('Sekcja informacji - tytuł')
-                            ->required(),
-                        Textarea::make('marketing.important_info_points')
-                            ->label('Punkty informacji (każdy w osobnej linii)')
-                            ->rows(4)
-                            ->helperText('Każda linia zostanie wyświetlona jako osobny punkt listy'),
-                    ])->columns(1),
+                Tabs::make('Settings')
+                    ->tabs([
+                        $this->bookingTab(),
+                        $this->mapTab(),
+                        $this->contactTab(),
+                        $this->marketingTab(),
+                        $this->emailTab(),
+                    ])
+                    ->columnSpanFull(),
             ])
             ->statePath('data');
     }
 
+    /**
+     * Booking settings tab.
+     */
+    private function bookingTab(): Tabs\Tab
+    {
+        return Tabs\Tab::make('Booking')
+            ->schema([
+                Section::make('Business Hours')
+                    ->description('Configure your business operating hours')
+                    ->schema([
+                        TextInput::make('booking.business_hours_start')
+                            ->label('Business Hours Start')
+                            ->type('time')
+                            ->required()
+                            ->helperText('Opening time (HH:MM format)'),
+
+                        TextInput::make('booking.business_hours_end')
+                            ->label('Business Hours End')
+                            ->type('time')
+                            ->required()
+                            ->helperText('Closing time (HH:MM format)'),
+                    ])
+                    ->columns(2),
+
+                Section::make('Booking Rules')
+                    ->description('Configure booking and cancellation policies')
+                    ->schema([
+                        TextInput::make('booking.slot_interval_minutes')
+                            ->label('Slot Interval (minutes)')
+                            ->numeric()
+                            ->required()
+                            ->minValue(15)
+                            ->maxValue(120)
+                            ->helperText('Time interval between available slots'),
+
+                        TextInput::make('booking.advance_booking_hours')
+                            ->label('Advance Booking (hours)')
+                            ->numeric()
+                            ->required()
+                            ->minValue(1)
+                            ->helperText('Minimum hours in advance for booking'),
+
+                        TextInput::make('booking.cancellation_hours')
+                            ->label('Cancellation Window (hours)')
+                            ->numeric()
+                            ->required()
+                            ->minValue(1)
+                            ->helperText('Hours before appointment for free cancellation'),
+
+                        TextInput::make('booking.max_service_duration_minutes')
+                            ->label('Max Service Duration (minutes)')
+                            ->numeric()
+                            ->required()
+                            ->minValue(60)
+                            ->helperText('Maximum duration for a single service'),
+                    ])
+                    ->columns(2),
+            ]);
+    }
+
+    /**
+     * Map settings tab.
+     */
+    private function mapTab(): Tabs\Tab
+    {
+        return Tabs\Tab::make('Map')
+            ->schema([
+                Section::make('Google Maps Configuration')
+                    ->description('Configure Google Maps integration')
+                    ->schema([
+                        TextInput::make('map.default_latitude')
+                            ->label('Default Latitude')
+                            ->numeric()
+                            ->required()
+                            ->helperText('Default map center latitude'),
+
+                        TextInput::make('map.default_longitude')
+                            ->label('Default Longitude')
+                            ->numeric()
+                            ->required()
+                            ->helperText('Default map center longitude'),
+
+                        TextInput::make('map.default_zoom')
+                            ->label('Default Zoom Level')
+                            ->numeric()
+                            ->required()
+                            ->minValue(1)
+                            ->maxValue(20)
+                            ->helperText('Default map zoom (1-20)'),
+
+                        TextInput::make('map.country_code')
+                            ->label('Country Code')
+                            ->maxLength(2)
+                            ->required()
+                            ->helperText('Two-letter country code (e.g., "pl")'),
+
+                        TextInput::make('map.map_id')
+                            ->label('Map ID')
+                            ->maxLength(255)
+                            ->helperText('Google Cloud Map ID (optional)'),
+
+                        Toggle::make('map.debug_panel_enabled')
+                            ->label('Debug Panel Enabled')
+                            ->helperText('Show debug panel in booking wizard'),
+                    ])
+                    ->columns(2),
+            ]);
+    }
+
+    /**
+     * Contact settings tab.
+     */
+    private function contactTab(): Tabs\Tab
+    {
+        return Tabs\Tab::make('Contact')
+            ->schema([
+                Section::make('Business Contact Information')
+                    ->description('Your business contact details')
+                    ->schema([
+                        TextInput::make('contact.email')
+                            ->label('Contact Email')
+                            ->email()
+                            ->required()
+                            ->helperText('Public contact email'),
+
+                        TextInput::make('contact.phone')
+                            ->label('Phone Number')
+                            ->tel()
+                            ->required()
+                            ->helperText('Contact phone number'),
+
+                        TextInput::make('contact.address_line')
+                            ->label('Address Line')
+                            ->required()
+                            ->helperText('Street address'),
+
+                        TextInput::make('contact.city')
+                            ->label('City')
+                            ->required(),
+
+                        TextInput::make('contact.postal_code')
+                            ->label('Postal Code')
+                            ->required(),
+                    ])
+                    ->columns(2),
+            ]);
+    }
+
+    /**
+     * Marketing settings tab.
+     */
+    private function marketingTab(): Tabs\Tab
+    {
+        return Tabs\Tab::make('Marketing')
+            ->schema([
+                Section::make('Hero Section')
+                    ->description('Homepage hero section content')
+                    ->schema([
+                        TextInput::make('marketing.hero_title')
+                            ->label('Hero Title')
+                            ->required()
+                            ->maxLength(100),
+
+                        Textarea::make('marketing.hero_subtitle')
+                            ->label('Hero Subtitle')
+                            ->required()
+                            ->maxLength(200)
+                            ->rows(2),
+                    ]),
+
+                Section::make('Services Section')
+                    ->description('Services section headings')
+                    ->schema([
+                        TextInput::make('marketing.services_heading')
+                            ->label('Services Heading')
+                            ->required(),
+
+                        TextInput::make('marketing.services_subheading')
+                            ->label('Services Subheading')
+                            ->required(),
+                    ])
+                    ->columns(2),
+
+                Section::make('Features Section')
+                    ->description('Features section content')
+                    ->schema([
+                        TextInput::make('marketing.features_heading')
+                            ->label('Features Heading')
+                            ->required(),
+
+                        TextInput::make('marketing.features_subheading')
+                            ->label('Features Subheading')
+                            ->required(),
+
+                        Repeater::make('marketing.features')
+                            ->label('Features')
+                            ->schema([
+                                TextInput::make('title')
+                                    ->label('Feature Title')
+                                    ->required(),
+
+                                Textarea::make('description')
+                                    ->label('Feature Description')
+                                    ->required()
+                                    ->rows(2),
+                            ])
+                            ->columns(2)
+                            ->defaultItems(3)
+                            ->addActionLabel('Add Feature')
+                            ->collapsible(),
+                    ]),
+
+                Section::make('Call to Action')
+                    ->description('CTA section content')
+                    ->schema([
+                        TextInput::make('marketing.cta_heading')
+                            ->label('CTA Heading')
+                            ->required(),
+
+                        TextInput::make('marketing.cta_subheading')
+                            ->label('CTA Subheading')
+                            ->required(),
+                    ])
+                    ->columns(2),
+
+                Section::make('Important Information')
+                    ->description('Important info section')
+                    ->schema([
+                        TextInput::make('marketing.important_info_heading')
+                            ->label('Important Info Heading')
+                            ->required(),
+
+                        Repeater::make('marketing.important_info_points')
+                            ->label('Info Points')
+                            ->simple(
+                                TextInput::make('point')
+                                    ->label('Info Point')
+                                    ->required()
+                            )
+                            ->defaultItems(3)
+                            ->addActionLabel('Add Point'),
+                    ]),
+            ]);
+    }
+
+    /**
+     * Email settings tab.
+     */
+    private function emailTab(): Tabs\Tab
+    {
+        return Tabs\Tab::make('Email')
+            ->schema([
+                Section::make('SMTP Configuration')
+                    ->description('Configure SMTP server for sending emails')
+                    ->schema([
+                        TextInput::make('email.smtp_host')
+                            ->label('SMTP Host')
+                            ->required()
+                            ->helperText('SMTP server hostname (e.g., smtp.gmail.com)'),
+
+                        TextInput::make('email.smtp_port')
+                            ->label('SMTP Port')
+                            ->numeric()
+                            ->required()
+                            ->helperText('SMTP port (587 for TLS, 465 for SSL)'),
+
+                        Select::make('email.smtp_encryption')
+                            ->label('Encryption')
+                            ->options([
+                                'tls' => 'TLS',
+                                'ssl' => 'SSL',
+                            ])
+                            ->required()
+                            ->helperText('Encryption protocol'),
+
+                        TextInput::make('email.smtp_username')
+                            ->label('SMTP Username')
+                            ->helperText('SMTP authentication username (usually email)'),
+
+                        TextInput::make('email.smtp_password')
+                            ->label('SMTP Password')
+                            ->password()
+                            ->revealable()
+                            ->helperText('SMTP authentication password'),
+                    ])
+                    ->columns(2),
+
+                Section::make('Email Settings')
+                    ->description('Configure sender information and retry behavior')
+                    ->schema([
+                        TextInput::make('email.from_name')
+                            ->label('From Name')
+                            ->required()
+                            ->helperText('Display name for outgoing emails'),
+
+                        TextInput::make('email.from_address')
+                            ->label('From Address')
+                            ->email()
+                            ->required()
+                            ->helperText('Email address for outgoing emails'),
+
+                        TextInput::make('email.retry_attempts')
+                            ->label('Retry Attempts')
+                            ->numeric()
+                            ->required()
+                            ->minValue(1)
+                            ->maxValue(5)
+                            ->helperText('Number of retry attempts for failed emails'),
+
+                        TextInput::make('email.backoff_seconds')
+                            ->label('Backoff Seconds')
+                            ->numeric()
+                            ->required()
+                            ->minValue(30)
+                            ->helperText('Seconds to wait between retry attempts'),
+                    ])
+                    ->columns(2),
+
+                Section::make('Notification Settings')
+                    ->description('Enable or disable specific email notifications')
+                    ->schema([
+                        Toggle::make('email.reminder_24h_enabled')
+                            ->label('24-Hour Reminder Enabled')
+                            ->helperText('Send reminder 24 hours before appointment'),
+
+                        Toggle::make('email.reminder_2h_enabled')
+                            ->label('2-Hour Reminder Enabled')
+                            ->helperText('Send reminder 2 hours before appointment'),
+
+                        Toggle::make('email.followup_enabled')
+                            ->label('Follow-up Enabled')
+                            ->helperText('Send follow-up email after appointment'),
+
+                        Toggle::make('email.admin_digest_enabled')
+                            ->label('Admin Digest Enabled')
+                            ->helperText('Send daily digest to admins'),
+                    ])
+                    ->columns(2),
+            ]);
+    }
+
+    /**
+     * Submit form and save settings.
+     */
     public function submit(): void
     {
-        $state = $this->form->getState();
+        $data = $this->form->getState();
 
-        $booking = [
-            'business_hours_start' => $state['booking']['business_hours_start'],
-            'business_hours_end' => $state['booking']['business_hours_end'],
-            'slot_interval_minutes' => (int) $state['booking']['slot_interval_minutes'],
-            'advance_booking_hours' => (int) $state['booking']['advance_booking_hours'],
-            'cancellation_hours' => (int) $state['booking']['cancellation_hours'],
-            'max_service_duration_minutes' => (int) $state['booking']['max_service_duration_minutes'],
-        ];
-
-        $map = [
-            'default_latitude' => (float) $state['map']['default_latitude'],
-            'default_longitude' => (float) $state['map']['default_longitude'],
-            'default_zoom' => (int) $state['map']['default_zoom'],
-            'country_code' => strtolower($state['map']['country_code']),
-            'map_id' => $state['map']['map_id'] ?: null,
-            'debug_panel_enabled' => (bool) $state['map']['debug_panel_enabled'],
-        ];
-
-        $contact = [
-            'email' => trim($state['contact']['email']),
-            'phone' => trim($state['contact']['phone']),
-            'address_line' => trim($state['contact']['address_line']),
-            'city' => trim($state['contact']['city']),
-            'postal_code' => trim($state['contact']['postal_code']),
-        ];
-
-        $marketing = [
-            'hero_title' => trim($state['marketing']['hero_title']),
-            'hero_subtitle' => trim($state['marketing']['hero_subtitle']),
-            'services_heading' => trim($state['marketing']['services_heading']),
-            'services_subheading' => trim($state['marketing']['services_subheading']),
-            'features_heading' => trim($state['marketing']['features_heading']),
-            'features_subheading' => trim($state['marketing']['features_subheading']),
-            'features' => [
-                [
-                    'title' => trim($state['marketing']['feature_one_title']),
-                    'description' => trim($state['marketing']['feature_one_description']),
-                ],
-                [
-                    'title' => trim($state['marketing']['feature_two_title']),
-                    'description' => trim($state['marketing']['feature_two_description']),
-                ],
-                [
-                    'title' => trim($state['marketing']['feature_three_title']),
-                    'description' => trim($state['marketing']['feature_three_description']),
-                ],
-            ],
-            'cta_heading' => trim($state['marketing']['cta_heading']),
-            'cta_subheading' => trim($state['marketing']['cta_subheading']),
-            'important_info_heading' => trim($state['marketing']['important_info_heading']),
-            'important_info_points' => $this->splitImportantInfoPoints($state['marketing']['important_info_points'] ?? ''),
-        ];
-
-        app(SettingsManager::class)->updateGroups([
-            'booking' => $booking,
-            'map' => $map,
-            'contact' => $contact,
-            'marketing' => $marketing,
-        ]);
+        $settingsManager = app(SettingsManager::class);
+        $settingsManager->updateGroups($data);
 
         Notification::make()
-            ->title('Zapisano ustawienia')
+            ->title('Settings saved successfully')
             ->success()
             ->send();
     }
 
-    protected function splitImportantInfoPoints(string $value): array
+    /**
+     * Test email connection.
+     */
+    public function testEmailConnection(): void
     {
-        $lines = preg_split('/\r\n|\r|\n/', $value) ?: [];
+        try {
+            $user = auth()->user();
 
-        return array_values(array_filter(array_map('trim', $lines), fn (string $line) => $line !== ''));
+            if (!$user || !$user->email) {
+                Notification::make()
+                    ->title('No user email found')
+                    ->danger()
+                    ->send();
+                return;
+            }
+
+            // Send test email
+            Mail::raw('This is a test email from Paradocks system settings.', function ($message) use ($user) {
+                $message->to($user->email)
+                    ->subject('Test Email - Paradocks');
+            });
+
+            Notification::make()
+                ->title('Test email sent successfully')
+                ->body("Check your inbox at {$user->email}")
+                ->success()
+                ->send();
+        } catch (\Exception $e) {
+            Notification::make()
+                ->title('Email test failed')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
+        }
+    }
+
+    /**
+     * Get form actions.
+     */
+    protected function getFormActions(): array
+    {
+        return [
+            \Filament\Actions\Action::make('save')
+                ->label('Save Settings')
+                ->submit('submit')
+                ->keyBindings(['mod+s']),
+
+            \Filament\Actions\Action::make('testEmail')
+                ->label('Test Email Connection')
+                ->color('gray')
+                ->action('testEmailConnection')
+                ->requiresConfirmation()
+                ->modalHeading('Test Email Connection')
+                ->modalDescription('This will send a test email to your account. Continue?')
+                ->modalSubmitActionLabel('Send Test Email'),
+        ];
     }
 }
