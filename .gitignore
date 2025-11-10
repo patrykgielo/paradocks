@@ -28,3 +28,18 @@ Thumbs.db
 /php/
 /old_config/
 *.tar.xz
+
+# ============================================================================
+# Docker SSL Certificates (Self-signed - Development Only)
+# ============================================================================
+docker/ssl/*.pem
+docker/ssl/*.key
+docker/ssl/*.crt
+docker/ssl/*.csr
+
+# ============================================================================
+# Database Backups (Never commit to Git)
+# ============================================================================
+backups/
+*.sql
+*.sql.gz

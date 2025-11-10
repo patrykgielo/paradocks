@@ -1955,3 +1955,349 @@ To re-enable in the future:
 - [Gmail App Passwords](https://support.google.com/accounts/answer/185833)
 - [Gmail SMTP Settings](https://support.google.com/mail/answer/7126229)
 
+
+---
+
+## Docker Configuration & VPS Deployment
+
+### Overview
+The project includes complete Docker configuration for both development and production environments, with automated deployment scripts for VPS servers.
+
+**Implemented:** November 2025
+**Status:** ✅ Production Ready
+
+### Directory Structure
+
+```
+/var/www/projects/paradocks/
+├── app/                                # Laravel application root
+│   ├── .env.production.example         # Production environment template
+│   └── (all Laravel files)
+│
+├── docker/                             # Docker configuration hub
+│   ├── nginx/
+│   │   ├── app.conf                    # Development Nginx config
+│   │   └── app.prod.conf               # Production Nginx config (HTTPS, Let's Encrypt)
+│   ├── node/
+│   │   └── Dockerfile                  # Node.js 20 Alpine
+│   ├── ssl/
+│   │   ├── generate-certificates.sh    # Self-signed cert generator (dev)
+│   │   ├── README.md                   # SSL setup instructions
+│   │   ├── cert.pem                    # Generated (gitignored)
+│   │   └── key.pem                     # Generated (gitignored)
+│   └── mysql/                          # MySQL init scripts (optional)
+│
+├── scripts/                            # VPS deployment automation
+│   ├── deploy-init.sh                  # First-time VPS setup
+│   ├── deploy-update.sh                # Zero-downtime updates
+│   └── backup-database.sh              # MySQL backup with rotation
+│
+├── Dockerfile                          # PHP 8.2-FPM (used by both dev & prod)
+├── docker-compose.dev.yml              # Development environment
+├── docker-compose.prod.yml             # Production environment (VPS-ready)
+├── DEPLOYMENT.md                       # Complete VPS deployment guide
+└── .gitignore                          # Root gitignore (SSL certs, backups)
+```
+
+### Docker Environments
+
+#### Development Environment (`docker-compose.dev.yml`)
+- **Services**: app, nginx, mysql, redis, node, mailpit, queue, scheduler
+- **Ports Exposed**: 8081 (HTTP), 8444 (HTTPS), 5173 (Vite), 8025 (Mailpit)
+- **SSL**: Self-signed certificates (generated automatically)
+- **Database**: MySQL 8.0 with exposed port 3306
+- **Email**: Mailpit for local testing
+- **Usage**: `docker compose -f docker-compose.dev.yml up -d`
+
+#### Production Environment (`docker-compose.prod.yml`)
+- **Services**: app, nginx, mysql, redis, horizon, scheduler
+- **Ports Exposed**: 80 (HTTP→HTTPS redirect), 443 (HTTPS only)
+- **SSL**: Let's Encrypt certificates (Certbot)
+- **Database**: MySQL 8.0 (NOT exposed, internal network only)
+- **Email**: Real SMTP (Gmail/SendGrid/AWS SES)
+- **Queue**: Laravel Horizon with dashboard
+- **Healthchecks**: All services have health monitoring
+- **Usage**: `docker compose -f docker-compose.prod.yml up -d`
+
+### Quick Commands
+
+#### Development
+```bash
+# Start development environment
+docker compose -f docker-compose.dev.yml up -d
+
+# View logs
+docker compose -f docker-compose.dev.yml logs -f
+
+# Run artisan commands
+docker compose -f docker-compose.dev.yml exec app php artisan migrate
+
+# Access MySQL
+docker compose -f docker-compose.dev.yml exec mysql mysql -u paradocks -ppassword
+
+# Stop containers
+docker compose -f docker-compose.dev.yml down
+```
+
+#### Production
+```bash
+# First deployment (requires root/sudo)
+sudo ./scripts/deploy-init.sh
+
+# Regular updates (zero-downtime)
+sudo ./scripts/deploy-update.sh
+
+# Manual backup
+sudo ./scripts/backup-database.sh
+
+# View production logs
+docker compose -f docker-compose.prod.yml logs -f app
+
+# Check container status
+docker compose -f docker-compose.prod.yml ps
+```
+
+### VPS Deployment
+
+#### Prerequisites
+- Ubuntu 22.04 LTS (recommended)
+- Docker 24+ and Docker Compose v2+
+- Domain name with DNS configured
+- Ports 80 and 443 open in firewall
+- SSL certificate from Let's Encrypt
+
+#### First-Time Deployment
+```bash
+# 1. Clone repository to VPS
+cd /var/www
+git clone <repository-url> paradocks
+cd paradocks
+
+# 2. Create production .env
+cp app/.env.production.example app/.env
+nano app/.env  # Update all CHANGE_ME values
+
+# 3. Run automated deployment script
+sudo ./scripts/deploy-init.sh
+```
+
+**The script will**:
+- Validate prerequisites (Docker, Certbot, domain)
+- Generate Laravel APP_KEY
+- Create Let's Encrypt SSL certificates
+- Build and start Docker containers
+- Run migrations and seed database
+- Create admin user
+- Optimize Laravel caches
+
+**Duration**: 10-15 minutes
+
+See `DEPLOYMENT.md` for detailed instructions.
+
+#### Regular Updates
+```bash
+# Pull latest code and restart services
+sudo ./scripts/deploy-update.sh
+
+# Options:
+--skip-backup       # Skip database backup
+--skip-migrations   # Skip DB migrations
+--skip-build        # Skip Docker rebuild
+--force             # No confirmations
+```
+
+### Backup & Recovery
+
+#### Automated Backups
+```bash
+# Test backup manually
+sudo ./scripts/backup-database.sh
+
+# Setup cron for daily backups (2 AM)
+crontab -e
+```
+
+Add to crontab:
+```cron
+# Daily database backup
+0 2 * * * /var/www/paradocks/scripts/backup-database.sh
+
+# SSL certificate renewal
+0 3 * * * certbot renew --quiet && docker compose -f /var/www/paradocks/docker-compose.prod.yml restart nginx
+```
+
+#### Backup Options
+```bash
+--retention-days 60      # Keep backups for 60 days (default: 30)
+--backup-dir /path       # Custom backup location
+--upload-s3              # Upload to S3 bucket
+--s3-bucket NAME         # S3 bucket name
+```
+
+#### Restore from Backup
+```bash
+# List backups
+ls -lh /var/backups/paradocks/
+
+# Restore (decompress + import)
+gunzip -c /var/backups/paradocks/backup_file.sql.gz | \
+docker compose -f docker-compose.prod.yml exec -T mysql \
+mysql -u paradocks -p paradocks
+```
+
+### Production Configuration
+
+#### Nginx Production Config (`docker/nginx/app.prod.conf`)
+- **SSL**: Let's Encrypt certificates with OCSP stapling
+- **Security Headers**: HSTS, X-Frame-Options, CSP
+- **Performance**: Gzip compression, static asset caching (1 year)
+- **Health Check**: `/health` endpoint for monitoring
+- **ACME Challenge**: `/.well-known/acme-challenge/` for cert renewal
+
+#### Environment Variables (`.env`)
+**Critical production settings**:
+```bash
+APP_ENV=production
+APP_DEBUG=false
+DB_PASSWORD=STRONG_32_CHAR_PASSWORD
+REDIS_PASSWORD=STRONG_32_CHAR_PASSWORD
+MAIL_PASSWORD=gmail_app_password  # 16 characters, no spaces
+GOOGLE_MAPS_API_KEY=production_key  # With HTTP referrer restrictions
+```
+
+Generate strong passwords:
+```bash
+openssl rand -base64 24  # 32-character password
+```
+
+### Security Best Practices
+
+1. **Never expose MySQL/Redis ports** in production
+2. **Use strong, unique passwords** (32+ characters)
+3. **Apply HTTP referrer restrictions** to Google Maps API key
+4. **Enable Gmail 2FA** and use App Password for SMTP
+5. **Keep Docker images updated** (`docker compose pull`)
+6. **Review firewall rules** (only 80, 443 open)
+7. **Rotate passwords quarterly**
+8. **Monitor failed logins** (`/var/log/auth.log`)
+9. **Setup error monitoring** (Sentry/Slack)
+10. **Enable automatic security updates** on VPS
+
+### Monitoring
+
+#### Application Logs
+```bash
+# Laravel logs
+docker compose -f docker-compose.prod.yml exec app tail -f storage/logs/laravel.log
+
+# Nginx access log
+docker compose -f docker-compose.prod.yml logs nginx
+
+# All services
+docker compose -f docker-compose.prod.yml logs -f
+```
+
+#### Queue Monitoring
+- **Dashboard**: `https://yourdomain.com/horizon`
+- **CLI**: `docker compose -f docker-compose.prod.yml exec app php artisan horizon:status`
+
+#### Resource Usage
+```bash
+# Container stats
+docker stats
+
+# Disk usage
+df -h
+
+# Database size
+docker compose -f docker-compose.prod.yml exec mysql \
+mysql -u paradocks -p -e "SELECT table_schema, ROUND(SUM(data_length + index_length) / 1024 / 1024, 2) AS 'Size (MB)' FROM information_schema.TABLES GROUP BY table_schema;"
+```
+
+### Troubleshooting
+
+#### Container won't start
+```bash
+# Check logs
+docker compose -f docker-compose.prod.yml logs <service_name>
+
+# Check .env file syntax
+docker compose -f docker-compose.prod.yml config
+
+# Rebuild without cache
+docker compose -f docker-compose.prod.yml build --no-cache
+docker compose -f docker-compose.prod.yml up -d
+```
+
+#### SSL certificate errors
+```bash
+# Check certificate
+sudo certbot certificates
+
+# Force renewal
+sudo certbot renew --force-renewal
+
+# Restart Nginx
+docker compose -f docker-compose.prod.yml restart nginx
+```
+
+#### Queue jobs not processing
+```bash
+# Check Horizon status
+docker compose -f docker-compose.prod.yml exec app php artisan horizon:status
+
+# Restart Horizon
+docker compose -f docker-compose.prod.yml restart horizon
+
+# Check failed jobs
+docker compose -f docker-compose.prod.yml exec app php artisan queue:failed
+
+# Retry all
+docker compose -f docker-compose.prod.yml exec app php artisan queue:retry all
+```
+
+### Files Overview
+
+**Docker Configuration**:
+- `Dockerfile` - PHP 8.2-FPM with all required extensions
+- `docker-compose.dev.yml` - Development environment
+- `docker-compose.prod.yml` - Production environment
+- `docker/nginx/app.conf` - Development Nginx config (self-signed SSL)
+- `docker/nginx/app.prod.conf` - Production Nginx config (Let's Encrypt)
+- `docker/node/Dockerfile` - Node.js 20 Alpine for Vite
+
+**Deployment Scripts**:
+- `scripts/deploy-init.sh` - First-time VPS deployment (interactive)
+- `scripts/deploy-update.sh` - Zero-downtime updates (automated)
+- `scripts/backup-database.sh` - MySQL backup with rotation and S3 upload
+
+**Documentation**:
+- `DEPLOYMENT.md` - Complete VPS deployment guide
+- `.gitignore` (root) - Ignores SSL certs, backups, secrets
+- `app/.env.production.example` - Production environment template
+
+### Migration from Old Setup
+
+If migrating from previous Docker configuration:
+
+1. **Backup everything** (database, `.env` file, uploaded files)
+2. **Update docker-compose paths**:
+   - Old: `docker-compose.yml` → New: `docker-compose.dev.yml`
+   - Old: `app/docker-compose.prod.yml` → New: `docker-compose.prod.yml` (root)
+3. **Update Nginx volume mount** in `docker-compose.prod.yml`:
+   - Old: `./docker/nginx:/etc/nginx/conf.d`
+   - New: `./docker/nginx/app.prod.conf:/etc/nginx/conf.d/default.conf:ro`
+4. **Test locally** with `docker compose -f docker-compose.prod.yml config`
+5. **Deploy** using `deploy-update.sh` (will handle migration automatically)
+
+### References
+- [Docker Compose Documentation](https://docs.docker.com/compose/)
+- [Let's Encrypt Certbot](https://certbot.eff.org/)
+- [Laravel Deployment](https://laravel.com/docs/deployment)
+- [Nginx Configuration](https://nginx.org/en/docs/)
+- [MySQL Docker Hub](https://hub.docker.com/_/mysql)
+
+---
+
+**Last Updated**: 2025-01-10
+**Maintainer**: Paradocks Development Team
