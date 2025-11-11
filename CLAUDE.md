@@ -13,7 +13,9 @@ Laravel 12 car detailing booking application with:
 
 **Local URL:** https://paradocks.local:8444
 
-📚 **Complete Documentation:** [docs/README.md](docs/README.md)
+📚 **Complete Documentation:** [app/docs/README.md](app/docs/README.md)
+
+⚠️ **CRITICAL:** Documentation is in `app/docs/`, NOT `/docs/` in repository root!
 
 ## Quick Start
 
@@ -39,7 +41,7 @@ https://paradocks.local:8444
 https://paradocks.local:8444/admin
 ```
 
-**See:** [Quick Start Guide](docs/guides/quick-start.md)
+**See:** [Quick Start Guide](app/docs/guides/quick-start.md)
 
 ## Essential Commands
 
@@ -74,7 +76,7 @@ docker compose exec app php artisan db:seed --class=EmailTemplateSeeder
 docker compose exec app php artisan db:seed --class=SettingSeeder
 ```
 
-**See:** [Commands Reference](docs/guides/commands.md)
+**See:** [Commands Reference](app/docs/guides/commands.md)
 
 ## Architecture Overview
 
@@ -85,17 +87,20 @@ app/
 ├── app/              # Core application code
 ├── config/           # Configuration files
 ├── database/         # Migrations, seeders, factories
+├── docs/             # ⚠️ Complete documentation (NOT /docs/ in root!)
+│   ├── environments/ # Staging/production live docs
+│   ├── deployment/   # Deployment guides & ADRs
+│   ├── architecture/ # Database schema, models
+│   ├── features/     # Feature-specific docs
+│   ├── guides/       # How-to guides
+│   └── decisions/    # Architecture Decision Records
 ├── resources/        # Blade views, CSS, JavaScript
 ├── routes/           # Route definitions
 ├── tests/            # PHPUnit tests
 └── storage/          # Logs, cache, uploads
-
-docs/                 # Complete documentation
-├── architecture/     # Database schema, models
-├── features/         # Feature-specific docs
-├── guides/           # How-to guides
-└── decisions/        # Architecture Decision Records
 ```
+
+**⚠️ CRITICAL:** Documentation is in `app/docs/`, NOT `/docs/` in repository root!
 
 ### Key Technologies
 
@@ -106,7 +111,7 @@ docs/                 # Complete documentation
 - **Permissions:** Spatie Laravel Permission
 - **Styling:** Tailwind CSS 4.0 (⚠️ plugin order matters!)
 
-**See:** [Database Schema](docs/architecture/database-schema.md)
+**See:** [Database Schema](app/docs/architecture/database-schema.md)
 
 ## Docker Quick Reference
 
@@ -135,7 +140,7 @@ docker compose down
 - Horizon: https://paradocks.local:8444/horizon
 - Vite: http://paradocks.local:5173
 
-**See:** [Docker Guide](docs/guides/docker.md)
+**See:** [Docker Guide](app/docs/guides/docker.md)
 
 ## Filament Admin Panel
 
@@ -194,7 +199,7 @@ Complete transactional email system with queue-based delivery (PL/EN templates).
 - **Jobs:** Reminders (24h, 2h), Follow-ups, Daily digest
 - **Admin:** Filament resources for templates, logs, events, suppressions
 
-**See:** [Email System](docs/features/email-system/README.md)
+**See:** [Email System](app/docs/features/email-system/README.md)
 
 ### Vehicle Management
 
@@ -205,7 +210,7 @@ Capture vehicle information (type, brand, model, year) for service preparation.
 - **API:** Vehicle data endpoints for booking wizard
 - **Policy:** Customer declaration only (no DB constraints)
 
-**See:** [Vehicle Management](docs/features/vehicle-management/README.md)
+**See:** [Vehicle Management](app/docs/features/vehicle-management/README.md)
 
 ### Google Maps Integration
 
@@ -216,7 +221,7 @@ Places Autocomplete for accurate location capture in booking wizard.
 - **Captures:** Address, lat/lng, place_id, address_components
 - **Map:** AdvancedMarkerElement with DROP animation
 
-**See:** [Google Maps Integration](docs/features/google-maps/README.md)
+**See:** [Google Maps Integration](app/docs/features/google-maps/README.md)
 
 ### Settings System
 
@@ -227,7 +232,7 @@ Centralized settings management via Filament admin panel.
 - **Admin:** Custom Filament page at `/admin/system-settings`
 - **⚠️ Gotcha:** Use `app()` helper, NOT constructor injection in Livewire
 
-**See:** [Settings System](docs/features/settings-system/README.md)
+**See:** [Settings System](app/docs/features/settings-system/README.md)
 
 ### Booking System
 
@@ -238,7 +243,7 @@ Multi-step wizard for appointment booking with validation.
 - **Validation:** Frontend (JS) + Backend (Laravel)
 - **Status:** pending → confirmed → in_progress → completed/cancelled
 
-**See:** [Booking System](docs/features/booking-system/README.md)
+**See:** [Booking System](app/docs/features/booking-system/README.md)
 
 ## Production Build
 
@@ -274,7 +279,7 @@ resources/css/app.css:
 @source '../**/*.blade.php';
 ```
 
-**See:** [Production Build Guide](docs/guides/production-build.md)
+**See:** [Production Build Guide](app/docs/guides/production-build.md)
 
 ## User Model Pattern
 
@@ -288,22 +293,26 @@ $user->last_name   // Returns "Kowalski"
 
 **Why?** Email templates, Blade views, and third-party packages expect `$user->name`.
 
-**See:** [User Model Documentation](docs/architecture/user-model.md)
+**See:** [User Model Documentation](app/docs/architecture/user-model.md)
 
 ## Documentation
 
-📚 **Start here:** [docs/README.md](docs/README.md)
+📚 **Start here:** [app/docs/README.md](app/docs/README.md)
+
+**⚠️ IMPORTANT:** All documentation is in `app/docs/` directory, NOT `/docs/` in repository root!
 
 **Key Documentation:**
-- [Project Map](docs/project_map.md) - System topology, modules, key files
-- [Quick Start](docs/guides/quick-start.md) - Complete setup guide
-- [Commands](docs/guides/commands.md) - All available commands
-- [Docker](docs/guides/docker.md) - Container architecture
-- [Troubleshooting](docs/guides/troubleshooting.md) - Common issues
-- [Database Schema](docs/architecture/database-schema.md) - Complete DB structure
-- [Architecture Decisions](docs/decisions/) - ADR records
+- [Project Map](app/docs/project_map.md) - System topology, modules, key files
+- [Staging Server Docs](app/docs/environments/staging/) - Live staging documentation
+- [Deployment ADRs](app/docs/deployment/) - Infrastructure decisions (ADR-007 to 009)
+- [Quick Start](app/docs/guides/quick-start.md) - Complete setup guide
+- [Commands](app/docs/guides/commands.md) - All available commands
+- [Docker](app/docs/guides/docker.md) - Container architecture
+- [Troubleshooting](app/docs/guides/troubleshooting.md) - Common issues
+- [Database Schema](app/docs/architecture/database-schema.md) - Complete DB structure
+- [Architecture Decisions](app/docs/decisions/) - Application ADRs
 
-**Polish Note:** Zawsze sprawdzaj `@docs/` przed skanowaniem projektu, żeby nie tracić tokenów na kolejną analizę. Zawsze aktualizuj dokumentację po implementacji nowych rzeczy.
+**Polish Note:** Zawsze sprawdzaj `@app/docs/` przed skanowaniem projektu, żeby nie tracić tokenów na kolejną analizę. Dokumentacja jest TYLKO w `app/docs/`, NIE w root `/docs/`. Zawsze aktualizuj dokumentację po implementacji nowych rzeczy.
 
 ## Troubleshooting
 
@@ -342,7 +351,7 @@ docker compose exec app php artisan queue:retry all
 https://paradocks.local:8444/horizon/failed
 ```
 
-**See:** [Troubleshooting Guide](docs/guides/troubleshooting.md)
+**See:** [Troubleshooting Guide](app/docs/guides/troubleshooting.md)
 
 ## Testing
 
@@ -359,7 +368,7 @@ cd app && ./vendor/bin/pint
 
 ## Getting Help
 
-1. **Check documentation:** [docs/README.md](docs/README.md)
-2. **Search feature docs:** [docs/features/](docs/features/)
+1. **Check documentation:** [docs/README.md](app/docs/README.md)
+2. **Search feature docs:** [docs/features/](app/docs/features/)
 3. **Check logs:** `docker compose logs -f` or `storage/logs/laravel.log`
 4. **Enable debug mode:** Set `APP_DEBUG=true` in `.env` (development only)

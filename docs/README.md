@@ -108,13 +108,80 @@ Multi-step appointment booking wizard (4 steps, vanilla JavaScript).
 
 ---
 
+## 🚀 Deployment & Operations
+
+### Environment Documentation
+
+Comprehensive "live" documentation for each deployed environment, reflecting **actual state** with real configurations, credentials, and workarounds.
+
+#### Staging Environment
+
+- **[00-SERVER-INFO.md](./environments/staging/00-SERVER-INFO.md)** - Quick reference (IP: 72.60.17.138, SSH, emergency commands)
+- **[01-DEPLOYMENT-LOG.md](./environments/staging/01-DEPLOYMENT-LOG.md)** - Complete deployment history (2025-11-11)
+- **[02-CONFIGURATIONS.md](./environments/staging/02-CONFIGURATIONS.md)** - All configs (Docker, Nginx, PHP, MySQL, Redis)
+- **[03-CREDENTIALS.md](./environments/staging/03-CREDENTIALS.md)** - Passwords & secrets (⚠️ EXCLUDED FROM GIT)
+- **[04-SERVICES.md](./environments/staging/04-SERVICES.md)** - Docker service management (6 containers)
+- **[05-ISSUES-WORKAROUNDS.md](./environments/staging/05-ISSUES-WORKAROUNDS.md)** - 6 deployment issues & solutions
+- **[06-MAINTENANCE.md](./environments/staging/06-MAINTENANCE.md)** - Daily/weekly/monthly procedures
+- **[07-NEXT-STEPS.md](./environments/staging/07-NEXT-STEPS.md)** - Pending tasks (SSL, SMTP, backups)
+
+**Quick Access:**
+```bash
+# SSH to staging
+ssh ubuntu@72.60.17.138
+
+# Check services status
+docker-compose -f docker-compose.prod.yml ps
+
+# View application logs
+docker-compose -f docker-compose.prod.yml logs -f app
+```
+
+**Server Status:**
+- **Environment:** Staging VPS (Ubuntu 24.04 LTS)
+- **Hostname:** srv1117368.hstgr.cloud
+- **Services:** MySQL 8.0, Redis 7.2, PHP 8.2, Nginx 1.25, Horizon, Scheduler (all healthy ✅)
+- **Deployed:** 2025-11-11
+- **Branch:** staging
+
+**Critical Workarounds Documented:**
+- UFW-Docker security integration (prevents Docker bypassing firewall)
+- Storage volume removal (permission issues resolved)
+- Vite manifest symlink (Laravel asset helper compatibility)
+- MySQL password reset procedure
+- Nginx config without paradocks-node references
+
+**Production Environment:**
+Documentation will follow the same structure when deployed.
+
+---
+
+## 📐 Architecture
+
+### Technology Stack
+
+Complete technology stack with versions: [architecture/technology-stack.md](./architecture/technology-stack.md)
+
+**Backend:** Laravel 12.32.5, PHP 8.2.29, MySQL 8.0, Redis 7.2
+**Frontend:** Vite 7.1.9, Tailwind CSS 4.0, Livewire 3.6.4
+**Admin:** Filament v3.3.42
+**DevOps:** Docker 29.0.0, Compose 2.40.3, Ubuntu 24.04 LTS
+
+---
+
 ## 📝 Decisions (ADRs)
 
 Architecture Decision Records documenting major technical choices:
 
-**New ADRs** (October/November 2025):
+**Deployment ADRs** (November 2025 - Staging VPS):
+- **[ADR-007: UFW-Docker Security Integration](./deployment/ADR-007-ufw-docker-security.md)** - Firewall integration to prevent Docker bypass
+- **[ADR-008: Storage Volume Removal](./deployment/ADR-008-storage-volume-removal.md)** - Resolved permission issues by removing bind mounts
+- **[ADR-009: Vite Manifest Symlink](./deployment/ADR-009-vite-manifest-symlink.md)** - Laravel asset helper compatibility with Vite 7
+
+**Application ADRs** (October/November 2025):
 - **[ADR-004: Automatic Staff Assignment](./decisions/ADR-004-automatic-staff-assignment.md)** - Removed manual staff selection
 - **[ADR-005: Business Hours Configuration](./decisions/ADR-005-business-hours-config.md)** - Centralized booking rules
+- **[ADR-006: User Model Name Accessor](./decisions/ADR-006-user-model-name-accessor.md)** - first_name + last_name → name
 
 **Original ADRs** (2025-10-12):
 - **[ADR-001: Service Layer Architecture](./decision_log/ADR-001-service-layer-architecture.md)** - Business logic extraction
