@@ -1,0 +1,382 @@
+# Database Schema
+
+**Last Updated:** November 2025
+**Database:** MySQL 8.0 (Docker)
+**Connection:** `paradocks-mysql`
+
+## Overview
+
+This document describes the complete database structure for the Paradocks application. The schema supports user authentication, appointment booking, vehicle management, email system, and system settings.
+
+## Connection Details
+
+```php
+// .env configuration
+DB_CONNECTION=mysql
+DB_HOST=paradocks-mysql
+DB_PORT=3306
+DB_DATABASE=paradocks
+DB_USERNAME=paradocks
+DB_PASSWORD=password
+```
+
+## Quick MySQL Access
+
+```bash
+# Interactive MySQL shell
+docker compose exec mysql mysql -u paradocks -ppassword paradocks
+
+# Check table structure
+docker compose exec mysql mysql -u paradocks -ppassword -e "DESCRIBE table_name;" paradocks
+
+# Run query
+docker compose exec mysql mysql -u paradocks -ppassword -e "SELECT * FROM users LIMIT 5;" paradocks
+```
+
+## Core Tables
+
+### Users Table
+
+```sql
+users (
+  id: bigint primary key,
+  first_name: varchar(100),
+  last_name: varchar(100),
+  email: varchar(255) unique,
+  email_verified_at: timestamp nullable,
+  password: varchar(255),
+  remember_token: varchar(100) nullable,
+  created_at: timestamp,
+  updated_at: timestamp
+)
+```
+
+**Important:** No `name` column exists. Use `name` accessor in User model which concatenates `first_name` and `last_name`.
+
+**Indexes:**
+- `PRIMARY KEY (id)`
+- `UNIQUE KEY email (email)`
+
+**See Also:** [User Model Documentation](./user-model.md)
+
+### Appointments Table
+
+```sql
+appointments (
+  id: bigint primary key,
+  user_id: bigint FK → users.id,
+  service_id: bigint FK → services.id,
+  vehicle_type_id: bigint FK → vehicle_types.id nullable,
+  car_brand_id: bigint FK → car_brands.id nullable,
+  car_model_id: bigint FK → car_models.id nullable,
+  vehicle_year: year nullable,
+  vehicle_custom_brand: varchar(100) nullable,
+  vehicle_custom_model: varchar(100) nullable,
+
+  -- Legacy address fields (pre-Google Maps integration)
+  street_name: varchar(255) nullable,
+  city: varchar(100) nullable,
+  postal_code: varchar(20) nullable,
+
+  -- Google Maps location fields (November 2025)
+  location_address: varchar(500) nullable,
+  location_latitude: double(10,8) nullable,
+  location_longitude: double(11,8) nullable,
+  location_place_id: varchar(255) nullable,
+  location_components: json nullable,
+
+  scheduled_at: datetime,
+  completed_at: datetime nullable,
+  status: enum('pending', 'confirmed', 'in_progress', 'completed', 'cancelled'),
+  notes: text nullable,
+
+  -- Email reminder tracking (November 2025)
+  reminder_24h_sent_at: datetime nullable,
+  reminder_2h_sent_at: datetime nullable,
+
+  created_at: timestamp,
+  updated_at: timestamp,
+  deleted_at: timestamp nullable
+)
+```
+
+**Indexes:**
+- `PRIMARY KEY (id)`
+- `INDEX user_id (user_id)`
+- `INDEX service_id (service_id)`
+- `INDEX vehicle_type_id (vehicle_type_id)`
+- `INDEX location_coords_index (location_latitude, location_longitude)`
+- `INDEX scheduled_at (scheduled_at)`
+- `INDEX status (status)`
+- `INDEX deleted_at (deleted_at)` (soft deletes)
+
+## Vehicle Management Tables
+
+### Vehicle Types Table
+
+```sql
+vehicle_types (
+  id: bigint primary key,
+  name: varchar(100),
+  slug: varchar(100) unique,
+  description: text nullable,
+  examples: text nullable,
+  sort_order: int default 0,
+  is_active: boolean default true,
+  created_at: timestamp,
+  updated_at: timestamp
+)
+```
+
+**Seeded Data:** 5 types (city_car, small_car, medium_car, large_car, delivery_van)
+
+### Car Brands Table
+
+```sql
+car_brands (
+  id: bigint primary key,
+  name: varchar(100),
+  slug: varchar(100) unique,
+  status: enum('pending', 'active', 'inactive') default 'active',
+  created_at: timestamp,
+  updated_at: timestamp
+)
+```
+
+### Car Models Table
+
+```sql
+car_models (
+  id: bigint primary key,
+  car_brand_id: bigint FK → car_brands.id,
+  name: varchar(100),
+  slug: varchar(100),
+  year_from: int nullable,
+  year_to: int nullable,
+  status: enum('pending', 'active', 'inactive') default 'active',
+  created_at: timestamp,
+  updated_at: timestamp
+)
+```
+
+**Indexes:**
+- `INDEX car_brand_id (car_brand_id)`
+- `UNIQUE KEY slug_per_brand (car_brand_id, slug)`
+
+### Vehicle Type - Car Model Pivot Table
+
+```sql
+vehicle_type_car_model (
+  id: bigint primary key,
+  vehicle_type_id: bigint FK → vehicle_types.id,
+  car_model_id: bigint FK → car_models.id,
+  created_at: timestamp,
+  updated_at: timestamp
+)
+```
+
+**Indexes:**
+- `INDEX vehicle_type_id (vehicle_type_id)`
+- `INDEX car_model_id (car_model_id)`
+- `UNIQUE KEY unique_assignment (vehicle_type_id, car_model_id)`
+
+**Relationship:** Many-to-Many between VehicleType and CarModel
+
+## Email System Tables
+
+### Email Templates Table
+
+```sql
+email_templates (
+  id: bigint primary key,
+  key: varchar(100),
+  language: varchar(10) default 'pl',
+  subject: varchar(255),
+  html_body: text,
+  text_body: text nullable,
+  blade_path: varchar(255) nullable,
+  variables: json nullable,
+  is_active: boolean default true,
+  created_at: timestamp,
+  updated_at: timestamp
+)
+```
+
+**Indexes:**
+- `UNIQUE KEY key_language (key, language)`
+
+**Seeded Data:** 18 templates (9 types × PL/EN)
+
+### Email Sends Table
+
+```sql
+email_sends (
+  id: bigint primary key,
+  template_key: varchar(100),
+  recipient_email: varchar(255),
+  recipient_name: varchar(255) nullable,
+  subject: varchar(500),
+  html_body: text,
+  text_body: text nullable,
+  metadata: json nullable,
+  message_key: varchar(64) unique,
+  status: enum('pending', 'sent', 'failed', 'bounced') default 'pending',
+  sent_at: timestamp nullable,
+  error_message: text nullable,
+  created_at: timestamp,
+  updated_at: timestamp
+)
+```
+
+**Indexes:**
+- `INDEX template_key (template_key)`
+- `INDEX recipient_email (recipient_email)`
+- `INDEX status (status)`
+- `INDEX sent_at (sent_at)`
+- `UNIQUE KEY message_key (message_key)`
+
+**GDPR:** Logs older than 90 days are automatically deleted
+
+### Email Events Table
+
+```sql
+email_events (
+  id: bigint primary key,
+  email_send_id: bigint FK → email_sends.id,
+  event_type: enum('sent', 'delivered', 'bounced', 'complained', 'opened', 'clicked'),
+  event_data: json nullable,
+  occurred_at: timestamp,
+  created_at: timestamp,
+  updated_at: timestamp
+)
+```
+
+**Indexes:**
+- `INDEX email_send_id (email_send_id)`
+- `INDEX event_type (event_type)`
+- `INDEX occurred_at (occurred_at)`
+
+### Email Suppressions Table
+
+```sql
+email_suppressions (
+  id: bigint primary key,
+  email: varchar(255) unique,
+  reason: enum('bounced', 'complained', 'unsubscribed', 'manual'),
+  notes: text nullable,
+  created_at: timestamp,
+  updated_at: timestamp
+)
+```
+
+**Indexes:**
+- `UNIQUE KEY email (email)`
+
+**GDPR:** Never deleted (unsubscribe compliance)
+
+## Settings Table
+
+```sql
+settings (
+  id: bigint primary key,
+  group: varchar(255),
+  key: varchar(255),
+  value: json,
+  created_at: timestamp,
+  updated_at: timestamp
+)
+```
+
+**Indexes:**
+- `INDEX group (group)`
+- `INDEX key (key)`
+- `UNIQUE KEY group_key (group, key)`
+
+**Groups:**
+- `booking` - Business hours, slot intervals, advance booking rules
+- `map` - Google Maps default coordinates, zoom, country code
+- `contact` - Email, phone, address
+- `marketing` - Hero text, features, CTA content
+
+## Services Table
+
+```sql
+services (
+  id: bigint primary key,
+  name: varchar(100),
+  description: text nullable,
+  duration_minutes: int,
+  price: decimal(10,2),
+  is_active: boolean default true,
+  created_at: timestamp,
+  updated_at: timestamp
+)
+```
+
+## Relationships
+
+### User → Appointments
+- One-to-Many
+- User can have multiple appointments
+- Foreign key: `appointments.user_id → users.id`
+
+### Service → Appointments
+- One-to-Many
+- Service can be used in multiple appointments
+- Foreign key: `appointments.service_id → services.id`
+
+### Vehicle Relationships
+```
+VehicleType (1) ←→ (N) vehicle_type_car_model (N) ←→ (1) CarModel (N) ←→ (1) CarBrand
+     ↓                                                     ↓                    ↓
+Appointment                                           Appointment          Appointment
+```
+
+### Email System Relationships
+```
+EmailTemplate (1) ← (N) EmailSend (1) ← (N) EmailEvent
+                           ↓
+                   EmailSuppression (check before sending)
+```
+
+## Migration Commands
+
+```bash
+# Run migrations (ALWAYS use docker compose exec app)
+docker compose exec app php artisan migrate
+
+# Rollback last migration
+docker compose exec app php artisan migrate:rollback
+
+# Fresh migrations with seeding
+docker compose exec app php artisan migrate:fresh --seed
+
+# ⚠️ CRITICAL: migrate:fresh --seed only runs DatabaseSeeder!
+# You MUST manually run these additional seeders:
+docker compose exec app php artisan db:seed --class=VehicleTypeSeeder
+docker compose exec app php artisan db:seed --class=RolePermissionSeeder
+docker compose exec app php artisan db:seed --class=ServiceAvailabilitySeeder
+docker compose exec app php artisan db:seed --class=EmailTemplateSeeder
+docker compose exec app php artisan db:seed --class=SettingSeeder
+
+# Then recreate admin user
+docker compose exec app php artisan make:filament-user
+```
+
+## Database Backups
+
+```bash
+# Backup database
+docker compose exec mysql mysqldump -u paradocks -ppassword paradocks > backup_$(date +%Y%m%d).sql
+
+# Restore database
+docker compose exec -T mysql mysql -u paradocks -ppassword paradocks < backup_20251110.sql
+```
+
+## See Also
+
+- [User Model](./user-model.md) - User model name accessor pattern
+- [Vehicle Management](../features/vehicle-management/README.md) - Vehicle tables usage
+- [Email System](../features/email-system/README.md) - Email tables usage
+- [Settings System](../features/settings-system/README.md) - Settings table usage
+- [Google Maps Integration](../features/google-maps/README.md) - Location fields usage
