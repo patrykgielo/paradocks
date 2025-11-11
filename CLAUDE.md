@@ -4,2300 +4,362 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Laravel 12 application using PHP 8.2+ with Vite for frontend asset bundling and Tailwind CSS for styling. The application uses SQLite as the default database and includes full Docker support with HTTPS at `paradocks.local`.
+Laravel 12 car detailing booking application with:
+- **Backend:** Laravel 12, PHP 8.2+, MySQL 8.0
+- **Frontend:** Vite 7+, Tailwind CSS 4.0
+- **Admin Panel:** Filament v3.3+
+- **Queue:** Redis with Laravel Horizon
+- **Containerization:** Docker Compose (8 services)
 
-## Development Commands
+**Local URL:** https://paradocks.local:8444
 
-### Backend Development
+📚 **Complete Documentation:** [docs/README.md](docs/README.md)
+
+## Quick Start
+
 ```bash
-# Install PHP dependencies
-cd app && composer install
+# One-command setup
+./docker-init.sh
 
-# Start development server with all services (recommended)
-cd app && composer run dev
+# Add domain to hosts
+sudo ./add-hosts-entry.sh
 
-# Start individual services
-cd app && php artisan serve                    # Laravel development server
-cd app && php artisan queue:listen --tries=1  # Queue worker
-cd app && php artisan pail --timeout=0        # Real-time log viewer
-
-# Database operations
-cd app && php artisan migrate                  # Run migrations
-cd app && php artisan migrate:fresh --seed    # Fresh migrations with seeders
-cd app && php artisan tinker                  # Interactive shell
-
-# IMPORTANT: After migrate:fresh ALWAYS run these seeders (development only)
+# Run required seeders (⚠️ CRITICAL - always after migrate:fresh)
 docker compose exec app php artisan db:seed --class=VehicleTypeSeeder
 docker compose exec app php artisan db:seed --class=RolePermissionSeeder
 docker compose exec app php artisan db:seed --class=ServiceAvailabilitySeeder
-# Then create admin user: php artisan make:filament-user
+docker compose exec app php artisan db:seed --class=EmailTemplateSeeder
+docker compose exec app php artisan db:seed --class=SettingSeeder
+
+# Create admin user
+docker compose exec app php artisan make:filament-user
+
+# Access application
+https://paradocks.local:8444
+https://paradocks.local:8444/admin
 ```
 
-### Frontend Development
+**See:** [Quick Start Guide](docs/guides/quick-start.md)
+
+## Essential Commands
+
+### Development
+
 ```bash
-# Install Node.js dependencies
-cd app && npm install
+# Start all services (Laravel + Queue + Logs + Vite)
+cd app && composer run dev
 
-# Frontend asset compilation
-cd app && npm run dev    # Development server with hot reload
-cd app && npm run build  # Production build
-```
+# Frontend dev server only
+cd app && npm run dev
 
-### Production Build
-
-**IMPORTANT**: This project uses **Tailwind CSS 4.0** with `@tailwindcss/vite` plugin. The configuration is optimized for production builds.
-
-#### Build Process
-```bash
-# Build production assets (generates public/build/ with manifest.json)
+# Production build
 cd app && npm run build
-
-# Verify build output
-ls -la app/public/build/
-cat app/public/build/.vite/manifest.json
 ```
 
-**Expected Output** (Vite 7+):
-- `public/build/assets/app-[hash].css` - Minified CSS with Tailwind styles
-- `public/build/assets/app-[hash].js` - Minified JavaScript bundle
-- `public/build/.vite/manifest.json` - Asset manifest for Laravel (Vite 7+ location)
-
-#### Key Configuration Files
-
-**vite.config.js** (Optimized for Tailwind v4.0):
-```javascript
-import { defineConfig } from 'vite';
-import laravel from 'laravel-vite-plugin';
-import tailwindcss from '@tailwindcss/vite';
-
-export default defineConfig({
-    plugins: [
-        tailwindcss(), // MUST be before laravel plugin for v4.0
-        laravel({
-            input: ['resources/css/app.css', 'resources/js/app.js'],
-            refresh: true,
-        }),
-    ],
-    build: {
-        manifest: true,
-        outDir: 'public/build',
-    },
-});
-```
-
-**resources/css/app.css** (Tailwind v4.0 Syntax):
-```css
-@import 'tailwindcss';
-
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
-
-@theme {
-    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
-    /* Custom theme tokens... */
-}
-```
-
-**IMPORTANT**:
-- Use `@import 'tailwindcss'` (NOT `@tailwind` directives - old v3 syntax)
-- Use `@source` for content detection (NOT `tailwind.config.js` content array)
-- Plugin order matters: `tailwindcss()` BEFORE `laravel()`
-
-#### Production Mode in Docker
-
-To test production mode locally:
+### Database
 
 ```bash
-# 1. Build assets on host
-cd app && npm run build
-
-# 2. Set production environment in .env
-APP_ENV=production
-APP_DEBUG=false
-
-# 3. Restart containers
-docker compose down && docker compose up -d
-
-# 4. Clear Laravel cache
-docker compose exec app php artisan optimize:clear
-```
-
-**Note**: Docker setup uses unified configuration. Switch between dev/production via `.env` file.
-
-#### Troubleshooting Production Build
-
-**Problem**: `npm run build` fails or doesn't generate manifest.json
-
-**Solutions**:
-1. Check plugin order in `vite.config.js` - `tailwindcss()` must be BEFORE `laravel()`
-2. Verify Node.js version >= 20.19 (run `node --version`)
-3. Clear Vite cache: `rm -rf app/node_modules/.vite`
-4. Check for syntax errors in `resources/css/app.css`
-
-**Problem**: Tailwind styles not applied in production
-
-**Solutions**:
-1. Ensure using `@import 'tailwindcss'` (NOT `@tailwind base/components/utilities`)
-2. Verify `@source` directives point to correct template paths
-3. Check browser DevTools for 404 on CSS files
-4. Verify `@vite()` directive in Blade layout
-
-**Problem**: Docker build fails at asset compilation stage
-
-**Solutions**:
-1. Check Docker logs: `docker compose -f docker-compose.prod.yml logs nginx`
-2. Verify `package.json` has all dependencies
-3. Ensure Docker uses `npm ci` (NOT `npm ci --only=production`) - build tools are in devDependencies
-4. Test build locally first: `cd app && npm run build`
-
-#### Best Practices
-
-1. **Always run `npm run build` before production deployment**
-2. **Verify `manifest.json` exists** - Laravel requires it to load assets
-3. **Use Docker multi-stage builds** - compile in Node container, copy to Nginx
-4. **Version control**: Commit `package-lock.json` for reproducible builds
-5. **Cache busting**: Vite automatically hashes filenames (no manual versioning needed)
-6. **Environment**: Set `APP_ENV=production` and `APP_DEBUG=false` in production `.env`
-
-### Testing and Quality
-```bash
-# Run tests
-cd app && composer run test
-# OR
-cd app && php artisan test
-
-# Code formatting (Laravel Pint)
-cd app && ./vendor/bin/pint
-
-# Run specific test suites
-cd app && php artisan test --testsuite=Unit
-cd app && php artisan test --testsuite=Feature
-```
-
-## Architecture
-
-### Directory Structure
-- `app/app/` - Core application code (Models, Controllers, Providers)
-- `app/config/` - Configuration files
-- `app/database/` - Migrations, factories, seeders, SQLite database
-- `app/resources/` - Views (Blade templates), CSS, and JavaScript assets
-- `app/routes/` - Route definitions (web.php for web routes)
-- `app/tests/` - PHPUnit tests (Feature and Unit)
-- `app/storage/` - Application storage (logs, cache, sessions)
-
-### Key Technologies
-- **Backend**: Laravel 12, PHP 8.2+
-- **Frontend**: Vite, Tailwind CSS 4.0
-- **Database**: MySQL 8.0 (Docker - **USED IN PRODUCTION**)
-- **Testing**: PHPUnit 11.5+
-- **Queue**: Configurable (sync by default)
-- **Containerization**: Docker with Nginx, PHP-FPM, MySQL, and Node.js
-- **Admin Panel**: Laravel Filament v3.3+
-- **Permissions**: Spatie Laravel Permission v6.21
-- **Calendar**: Guava Calendar v1.14.2
-
-### PHP Extensions (Docker)
-The PHP-FPM container includes:
-- `pdo_mysql`, `pdo_sqlite` - Database drivers
-- `mbstring` - Multibyte string support
-- `exif` - Image metadata reading
-- `pcntl` - Process control
-- `bcmath` - Arbitrary precision mathematics
-- `gd` - Image processing
-- `zip` - ZIP archive handling
-- `intl` - Internationalization functions (required for Laravel number/date formatting)
-
-### Configuration
-- Environment configuration via `.env` file
-- **Database: MySQL 8.0 in Docker** (`DB_CONNECTION=mysql`, host: `paradocks-mysql`)
-  - Database name: `paradocks`
-  - Username: `paradocks`
-  - Password: `password`
-  - Quick MySQL access: `docker compose exec mysql mysql -u paradocks -ppassword paradocks`
-  - Table structure check: `docker compose exec mysql mysql -u paradocks -ppassword -e "DESCRIBE table_name;" paradocks`
-- The `composer run dev` command starts a concurrent development environment with server, queue worker, log viewer, and Vite
-
-### Important Files
-- `app/artisan` - Laravel command-line interface
-- `app/composer.json` - PHP dependencies and custom scripts
-- `app/package.json` - Node.js dependencies and build scripts
-- `app/vite.config.js` - Vite configuration with Laravel plugin
-- `app/phpunit.xml` - PHPUnit test configuration
-
-### Quick Database Commands
-```bash
-# Check table structure
-docker compose exec mysql mysql -u paradocks -ppassword -e "DESCRIBE table_name;" paradocks
-
-# Run query
-docker compose exec mysql mysql -u paradocks -ppassword -e "SELECT * FROM users LIMIT 5;" paradocks
-
-# Interactive MySQL shell
-docker compose exec mysql mysql -u paradocks -ppassword paradocks
-
-# Run migrations (ALWAYS use docker compose exec app)
+# Run migrations
 docker compose exec app php artisan migrate
 
-# Rollback last migration
-docker compose exec app php artisan migrate:rollback
-
-# Fresh migrations with seeding (⚠️ IMPORTANT: See note below!)
+# Fresh migrations with seeding
 docker compose exec app php artisan migrate:fresh --seed
 
 # ⚠️ CRITICAL: migrate:fresh --seed only runs DatabaseSeeder!
-# You MUST manually run these additional seeders in development:
+# You MUST manually run these seeders afterward:
 docker compose exec app php artisan db:seed --class=VehicleTypeSeeder
 docker compose exec app php artisan db:seed --class=RolePermissionSeeder
 docker compose exec app php artisan db:seed --class=ServiceAvailabilitySeeder
-# Then recreate admin: docker compose exec app php artisan make:filament-user
+docker compose exec app php artisan db:seed --class=EmailTemplateSeeder
+docker compose exec app php artisan db:seed --class=SettingSeeder
 ```
 
-## Docker Development
+**See:** [Commands Reference](docs/guides/commands.md)
 
-### Quick Start
-```bash
-# One-command setup (generates SSL certs, builds containers, runs migrations)
-./docker-init.sh
+## Architecture Overview
 
-# Add domain to hosts file
-sudo ./add-hosts-entry.sh
+### Directory Structure
 
-# Access application at https://paradocks.local:8443
+```
+app/
+├── app/              # Core application code
+├── config/           # Configuration files
+├── database/         # Migrations, seeders, factories
+├── resources/        # Blade views, CSS, JavaScript
+├── routes/           # Route definitions
+├── tests/            # PHPUnit tests
+└── storage/          # Logs, cache, uploads
+
+docs/                 # Complete documentation
+├── architecture/     # Database schema, models
+├── features/         # Feature-specific docs
+├── guides/           # How-to guides
+└── decisions/        # Architecture Decision Records
 ```
 
-### Docker Commands
+### Key Technologies
+
+- **Database:** MySQL 8.0 (Docker container: `paradocks-mysql`)
+- **Queue:** Redis with Horizon dashboard (`/horizon`)
+- **Email:** Queue-based with Gmail SMTP App Password
+- **Maps:** Google Maps Places Autocomplete API (Modern JS API, NOT Web Components)
+- **Permissions:** Spatie Laravel Permission
+- **Styling:** Tailwind CSS 4.0 (⚠️ plugin order matters!)
+
+**See:** [Database Schema](docs/architecture/database-schema.md)
+
+## Docker Quick Reference
+
 ```bash
 # Start all containers
 docker compose up -d
 
 # View logs
-docker compose logs -f
+docker compose logs -f [service]
 
 # Run artisan commands
 docker compose exec app php artisan <command>
 
-# Run composer commands
-docker compose exec app composer <command>
-
-# Run npm commands
-docker compose exec node npm <command>
-
-# Access MySQL database
-docker compose exec mysql mysql -u paradocks -p
+# Access MySQL shell
+docker compose exec mysql mysql -u paradocks -ppassword paradocks
 
 # Stop containers
 docker compose down
-
-# Rebuild containers
-docker compose up -d --build
 ```
 
-### Docker Services
-- **app**: PHP 8.2-FPM with Laravel application
-- **nginx**: Reverse proxy with SSL termination (ports 8081/8444)
-- **mysql**: MySQL 8.0 database with persistent storage
-- **node**: Node.js 20 for Vite development server (port 5173)
+**Services:** app (PHP-FPM), nginx (reverse proxy), mysql, node (Vite), redis, queue, horizon, scheduler
 
-### URLs
-- **Main application**: https://paradocks.local:8444
-- **HTTP (redirects to HTTPS)**: http://paradocks.local:8081
-- **Filament Admin Panel**: https://paradocks.local:8444/admin
-- **Vite dev server**: http://paradocks.local:5173
+**URLs:**
+- App: https://paradocks.local:8444
+- Admin: https://paradocks.local:8444/admin
+- Horizon: https://paradocks.local:8444/horizon
+- Vite: http://paradocks.local:5173
 
-### SSL Certificates
-- Self-signed certificates generated automatically
-- Located in `docker/ssl/`
-- See `docker/ssl/README.md` for browser trust instructions
+**See:** [Docker Guide](docs/guides/docker.md)
 
-## Laravel Filament
+## Filament Admin Panel
 
-### Admin Panel Access
-- **URL**: https://paradocks.local:8444/admin
-- **Default Admin**: admin@example.com / password
+**URL:** https://paradocks.local:8444/admin
+**Default Credentials:** admin@example.com / password
 
-### Filament Development Commands
 ```bash
 # Create new Filament resource
 docker compose exec app php artisan make:filament-resource ModelName
 
-# Create new Filament page
-docker compose exec app php artisan make:filament-page PageName
-
-# Create new Filament widget
-docker compose exec app php artisan make:filament-widget WidgetName
-
 # Create new admin user
 docker compose exec app php artisan make:filament-user
 
-# Optimize Filament for production
+# Optimize for production
 docker compose exec app php artisan filament:optimize
 ```
 
-### Configuration
-- **Panel Provider**: `app/Providers/Filament/AdminPanelProvider.php`
-- **User Access Control**: Implemented in `app/Models/User.php` via `canAccessPanel()` method
-- **Current Access Rule**: Users with `@example.com` email domain and verified email
-- **Assets**: Published to `public/css/filament/` and `public/js/filament/`
-- Zawsze gdy szukasz wiedzy sprawdzaj @docs/ czy nie ma tam wszystkich potrzebvnych informacji, żeby nie tracić tokenów na kolejna analizę.
-- Zawsze na koniec implementacji nowych rzeczy aktualizuj dokumentację aby w przyszłości korzystać z tej wiedzy a nie skanować projekt od nowa i tracić tokeny
+**Access Control:** `app/Models/User.php` → `canAccessPanel()` method
 
-## User Model & Authentication
+## Configuration
 
-### Overview
-The User model (`app/Models/User.php`) stores user data with **separate first_name and last_name fields** for flexibility, but provides a **`name` accessor** for backward compatibility and Laravel conventions.
-
-**Key Pattern** (November 2025):
-```php
-$user->name        // Returns "Jan Kowalski" (via accessor)
-$user->full_name   // Returns "Jan Kowalski" (via getFullNameAttribute)
-$user->first_name  // Returns "Jan"
-$user->last_name   // Returns "Kowalski"
-```
-
-### Name Accessor Pattern
-
-**Why This Matters:**
-- Email notifications use `$user->name` in templates
-- Blade views expect `$user->name` for display
-- Third-party packages assume `$user->name` exists
-- API responses often include `name` field
-
-**Implementation** (app/Models/User.php:73-100):
-```php
-/**
- * Get the user's full name via the 'name' attribute.
- *
- * @return string Full name (first_name + last_name)
- */
-public function getNameAttribute(): string
-{
-    return $this->getFullNameAttribute();
-}
-```
-
-**Usage Examples:**
-```php
-// In Notifications
-public function toMail($notifiable)
-{
-    return (new MailMessage)
-        ->greeting('Hello ' . $notifiable->name);  // ✅ Works via accessor
-}
-
-// In Blade Templates
-<p>Welcome, {{ $user->name }}!</p>  {{-- ✅ Clean and simple --}}
-
-// In API Resources
-public function toArray($request)
-{
-    return [
-        'name' => $this->name,  // ✅ Accessor handles concatenation
-    ];
-}
-```
-
-### Important: Don't Use Direct Database Field Access
-
-**❌ WRONG:**
-```php
-// Don't access first_name/last_name directly for display
-$userName = $user->first_name . ' ' . $user->last_name;
-
-// Don't expect 'name' column in database queries
-User::where('name', 'Jan Kowalski')->first(); // ❌ 'name' is not a column
-```
-
-**✅ CORRECT:**
-```php
-// Use the accessor for all display purposes
-$userName = $user->name;
-
-// For database queries, search by first_name or last_name
-User::where('first_name', 'Jan')->where('last_name', 'Kowalski')->first();
-// OR use full-text search if needed
-```
-
-### Troubleshooting
-
-**Error:** `Property [name] does not exist on this collection instance`
-- **Cause:** Trying to access `$user->name` before accessor was added (October 2025)
-- **Fix:** Accessor added November 2025, error should not occur anymore
-- **See:** ADR-006 for full context and decision rationale
-
-**Error:** `Undefined variable: customer_name` in email templates
-- **Cause:** Email template uses `{{ $customer_name }}` but data not passed
-- **Fix:** Pass `'customer_name' => $user->name` in notification data array
-- **See:** `docs/features/email-system/templates.md` for variable reference
-
-### Related Documentation
-
-- **ADR-006**: User Model Name Accessor Pattern (decision rationale)
-- **Email Templates**: `docs/features/email-system/templates.md`
-- **Troubleshooting**: `docs/features/email-system/troubleshooting.md`
-
-## System Settings
-
-### Overview
-The application includes a centralized settings management system that allows administrators to configure various aspects of the application from the Filament admin panel without modifying code or environment files.
-
-**Implemented:** November 2025
-**Status:** ✅ Production Ready
-
-### Architecture
-
-**Components:**
-1. **SettingsManager** (`app/Support/Settings/SettingsManager.php`) - Singleton service providing settings API
-2. **Setting Model** (`app/Models/Setting.php`) - Eloquent model for database persistence
-3. **SystemSettings Page** (`app/Filament/Pages/SystemSettings.php`) - Filament custom page with forms
-4. **SettingSeeder** (`database/seeders/SettingSeeder.php`) - Seeds default settings
-
-### Settings Groups
-
-**1. Booking Configuration** (`booking` group):
-```php
-- business_hours_start: string (time)        // "09:00"
-- business_hours_end: string (time)          // "18:00"
-- slot_interval_minutes: int                 // 30
-- advance_booking_hours: int                 // 24
-- cancellation_hours: int                    // 24
-- max_service_duration_minutes: int          // 480
-```
-
-**2. Map Configuration** (`map` group):
-```php
-- default_latitude: float                    // 52.2297
-- default_longitude: float                   // 21.0122
-- default_zoom: int                          // 13
-- country_code: string                       // "pl"
-- map_id: string|null                        // Google Map ID (optional)
-- debug_panel_enabled: bool                  // false
-```
-
-**3. Contact Information** (`contact` group):
-```php
-- email: string                              // "contact@example.com"
-- phone: string                              // "+48123456789"
-- address_line: string                       // "ul. Marszałkowska 1"
-- city: string                               // "Warszawa"
-- postal_code: string                        // "00-001"
-```
-
-**4. Marketing Content** (`marketing` group):
-```php
-- hero_title: string
-- hero_subtitle: string
-- services_heading: string
-- services_subheading: string
-- features_heading: string
-- features_subheading: string
-- features: array[3] (title, description)
-- cta_heading: string
-- cta_subheading: string
-- important_info_heading: string
-- important_info_points: array
-```
-
-### Usage in Code
-
-**Accessing Settings:**
-```php
-// Via dependency injection (Controllers, Services)
-public function __construct(protected SettingsManager $settings) {}
-
-$bookingConfig = $this->settings->bookingConfiguration();
-$mapConfig = $this->settings->mapConfiguration();
-$contact = $this->settings->contactInformation();
-$marketing = $this->settings->marketingContent();
-
-// Via app() helper (Blade views, one-off access)
-$settings = app(\App\Support\Settings\SettingsManager::class);
-$email = $settings->get('contact.email', 'default@example.com');
-```
-
-**In Blade Templates:**
-```php
-@php($marketing = app(\App\Support\Settings\SettingsManager::class)->marketingContent())
-<h1>{{ $marketing['hero_title'] }}</h1>
-```
-
-**Updating Settings:**
-```php
-// Single value
-$settings->set('booking.advance_booking_hours', 48);
-
-// Multiple values in a group
-$settings->updateGroups([
-    'booking' => [
-        'advance_booking_hours' => 48,
-        'cancellation_hours' => 12,
-    ],
-]);
-```
-
-### Admin Panel Access
-
-**URL:** `/admin/system-settings`
-**Navigation:** Settings → System Settings
-**Permission:** `manage settings` (requires Spatie permission)
-**Icon:** heroicon-o-cog-8-tooth
-
-### Important: Livewire Component Constructor Injection
-
-**⚠️ CRITICAL GOTCHA:** Filament Pages are Livewire components and **CANNOT use constructor dependency injection**.
-
-**❌ WRONG (will cause ArgumentCountError):**
-```php
-class SystemSettings extends Page
-{
-    public function __construct(protected SettingsManager $settings)
-    {
-        parent::__construct();
-    }
-}
-```
-
-**✅ CORRECT (use app() helper):**
-```php
-class SystemSettings extends Page
-{
-    public function mount(): void
-    {
-        $settings = app(SettingsManager::class);
-        $this->form->fill($settings->all());
-    }
-
-    public function submit(): void
-    {
-        $data = $this->form->getState();
-        app(SettingsManager::class)->updateGroups($data);
-    }
-}
-```
-
-**Why?** Livewire instantiates components via `new ComponentClass()` without arguments. Services cannot be serialized across HTTP requests. Use `app()` helper or inject into `mount()` method parameters (but don't store in properties - they won't hydrate).
-
-### Database Schema
-
-**Table:** `settings`
-```sql
-id: bigint primary key
-group: varchar(255) indexed
-key: varchar(255) indexed
-value: json
-created_at, updated_at
-UNIQUE(group, key)
-```
-
-### Seeding
-
-**Development:**
-```bash
-docker compose exec app php artisan db:seed --class=SettingSeeder
-```
-
-**Migration includes seeder call:**
-```php
-// database/migrations/*_create_settings_table.php
-public function up() {
-    Schema::create('settings', ...);
-    Artisan::call('db:seed', ['--class' => 'SettingSeeder']);
-}
-```
-
-### Files
-
-- **Service:** `app/Support/Settings/SettingsManager.php`
-- **Model:** `app/Models/Setting.php`
-- **Filament Page:** `app/Filament/Pages/SystemSettings.php`
-- **Blade View:** `resources/views/filament/pages/system-settings.blade.php`
-- **Migration:** `database/migrations/2025_11_01_000000_create_settings_table.php`
-- **Seeder:** `database/seeders/SettingSeeder.php`
-- **Service Provider:** `app/Providers/AppServiceProvider.php` (registers SettingsManager as singleton)
-
-### Integration Points
-
-Settings are used in:
-- **BookingController** - passes `bookingConfig`, `mapConfig`, `marketingContent` to views
-- **HomeController** - passes `marketingContent` to homepage
-- **AppointmentService** - uses booking configuration for slot generation
-- **Blade Templates** - `home.blade.php`, `booking/create.blade.php` use marketing content
-
-### Troubleshooting
-
-**Problem:** ArgumentCountError in SystemSettings
-**Cause:** Constructor dependency injection in Livewire component
-**Solution:** Use `app(SettingsManager::class)` instead of constructor injection
-
-**Problem:** Settings not updating
-**Cause:** Cached configuration
-**Solution:** `php artisan optimize:clear`
-
-**Problem:** Form validation fails
-**Cause:** Required fields missing in form schema
-**Solution:** Check `SystemSettings::form()` matches SettingsManager default values
-
-## Google Maps Integration
-
-### Overview
-The booking system integrates Google Maps Places Autocomplete to capture accurate service location data. Customers use autocomplete to select their address, and the system automatically captures coordinates, place ID, and structured address components.
-
-**CRITICAL**: This project uses **Modern JavaScript API** (`google.maps.places.Autocomplete`), NOT Web Components. Web Components (`<gmp-place-autocomplete>`) are buggy and not recommended for production.
-
-### Current Implementation (January 2025)
-
-**What we use:**
-- ✅ `google.maps.places.Autocomplete` class - Modern, stable, production-ready
-- ✅ `google.maps.importLibrary("places")` - Modern module loading
-- ✅ `google.maps.marker.AdvancedMarkerElement` - Latest marker API
-- ✅ Regular `<input>` element with Autocomplete attached
-- ✅ Event: `place_changed` listener
-
-**What we DON'T use:**
-- ❌ `<gmp-place-autocomplete>` Web Component - Buggy, poor map integration
-- ❌ `gmp-placeselect` event - Unreliable
-- ❌ `place.fetchFields()` - Unnecessary complexity
-- ❌ Legacy `google.maps.Marker` - Deprecated
-
-### Setup & Configuration
-
-#### 1. Get Google Maps API Key
-1. Visit [Google Cloud Console](https://console.cloud.google.com/google/maps-apis/)
-2. Create a new project or select existing one
-3. Enable the following APIs:
-   - **Maps JavaScript API**
-   - **Places API (New)** - Required!
-4. Create credentials → API Key
-5. Apply HTTP referrer restrictions:
-   - Development: `localhost:*`, `paradocks.local:*`
-   - Production: `yourdomain.com/*`, `*.yourdomain.com/*`
-6. Set daily quota limits (recommended: 10,000 requests/day)
-
-#### 2. Configure Environment
-Add to `.env`:
-```bash
-GOOGLE_MAPS_API_KEY=AIzaSy...your_key_here
-GOOGLE_MAPS_MAP_ID=your_map_id_here  # Required for AdvancedMarkerElement
-```
-
-The API key is configured in `config/services.php`:
-```php
-'google_maps' => [
-    'api_key' => env('GOOGLE_MAPS_API_KEY'),
-    'map_id' => env('GOOGLE_MAPS_MAP_ID'),
-],
-```
-
-### Database Schema
-
-Location data is stored in the `appointments` table:
-
-```sql
-location_address      VARCHAR(500)   NULL  -- Full formatted address from Google
-location_latitude     DOUBLE(10,8)   NULL  -- Latitude coordinate
-location_longitude    DOUBLE(11,8)   NULL  -- Longitude coordinate
-location_place_id     VARCHAR(255)   NULL  -- Google Place ID
-location_components   JSON           NULL  -- Structured address components
-
-INDEX location_coords_index (location_latitude, location_longitude)
-```
-
-**Key Points**:
-- All fields are **nullable** for backward compatibility
-- `location_components` stores JSON with street, city, postal code, country, etc.
-- Coordinate index enables geospatial queries (e.g., find appointments within radius)
-- Double precision (10,8) and (11,8) for lat/lng is industry standard
-
-### How It Works
-
-#### Frontend Flow (Vanilla JavaScript - No Frameworks!)
-1. **Step 3** of booking form displays regular `<input>` with Google Maps Autocomplete attached
-2. User types address → Google suggests matching places in dropdown
-3. User selects address from suggestions → `place_changed` event fires
-4. System immediately captures (no async `fetchFields()` needed!):
-   - Full formatted address
-   - Latitude and longitude coordinates (directly from `place.geometry.location`)
-   - Google Place ID
-   - Structured address components (street, city, postal code, country)
-5. **Google Map updates automatically** with marker at selected location
-6. Legacy address fields (street_name, city, postal_code) auto-filled for convenience
-7. **Step 4** submits all location data via hidden form fields
-
-#### Technical Implementation
-
-**Modern Autocomplete API** (January 2025 - Production Ready):
-```javascript
-// Import library (modern way)
-const { Autocomplete } = await google.maps.importLibrary("places");
-
-// Create autocomplete on regular input
-const autocomplete = new Autocomplete(inputElement, {
-    fields: ['place_id', 'geometry', 'formatted_address', 'address_components', 'name'],
-    componentRestrictions: { country: 'pl' },
-    types: ['address']
-});
-
-// Listen for place selection - IMMEDIATE data access
-autocomplete.addListener('place_changed', () => {
-    const place = autocomplete.getPlace();
-
-    // NO fetchFields() needed! Data is immediately available
-    if (place.geometry && place.geometry.location) {
-        const lat = place.geometry.location.lat();
-        const lng = place.geometry.location.lng();
-        // Update map marker, save to state, etc.
-    }
-});
-```
-
-**Key Advantages:**
-- ✅ **Synchronous data access** - no `await` needed
-- ✅ **Reliable event handling** - `place_changed` is rock-solid
-- ✅ **Direct property access** - `place.geometry.location` works immediately
-- ✅ **Better map integration** - seamless communication
-- ✅ **15+ years of production use** - battle-tested
-
-**Map Display:**
-- Google Maps initialized with `importLibrary("maps")`
-- Map visible from start of Step 3
-- AdvancedMarkerElement (latest marker API) with DROP animation
-- Marker updates on place selection
-- Centered and zoomed (level 17) on selected location
-- Responsive height (384px desktop, 300px mobile)
-
-**Vanilla JavaScript Architecture:**
-- `setupPlaceAutocomplete()` - creates Autocomplete instance, adds listener
-- `initializeMap()` - lazy initializes Google Maps when entering Step 3
-- `updateMapMarker()` - updates marker position and centers map
-- `state` object - plain JavaScript state management (no reactivity framework)
-- Event delegation with data attributes for navigation
-
-#### Backend Processing
-- `AppointmentController` validates location data:
-  - `location_address`: max 500 characters
-  - `location_latitude`: between -90 and 90
-  - `location_longitude`: between -180 and 180
-  - `location_place_id`: max 255 characters
-  - `location_components`: valid JSON
-- Data stored in `appointments` table
-- Accessible in Filament admin panel for staff
-
-#### Files Modified
-- **View**: `resources/views/booking/create.blade.php` - Regular `<input>` for autocomplete + Map UI
-- **JavaScript**: `resources/js/booking-wizard.js` - Vanilla JS with Google Maps Autocomplete API
-- **JavaScript**: `resources/js/app.js` - Entry point (imports booking-wizard.js)
-- **Model**: `app/Models/Appointment.php` - Location fields, JSON casting, accessor
-- **Controller**: `app/Http/Controllers/AppointmentController.php` - Validation and storage
-- **Migration**: `database/migrations/*_add_location_fields_to_appointments_table.php`
-- **Filament**: `app/Filament/Resources/AppointmentResource.php` - Location display in admin
-
-### Usage
-
-#### Accessing Location Data in Code
-```php
-// Get appointment with location
-$appointment = Appointment::find($id);
-
-// Access location fields
-$address = $appointment->location_address;
-$lat = $appointment->location_latitude;
-$lng = $appointment->location_longitude;
-$placeId = $appointment->location_place_id;
-$components = $appointment->location_components; // Array (auto-cast from JSON)
-
-// Use formatted location accessor (falls back to legacy fields)
-$location = $appointment->formatted_location;
-
-// Extract specific address components
-$city = $appointment->location_components['locality']['long_name'] ?? null;
-$postalCode = $appointment->location_components['postal_code']['long_name'] ?? null;
-$street = $appointment->location_components['route']['long_name'] ?? null;
-```
-
-#### Geospatial Queries (Future)
-```php
-// Find appointments within 10km radius of coordinates
-$appointments = Appointment::query()
-    ->whereNotNull('location_latitude')
-    ->whereNotNull('location_longitude')
-    ->selectRaw('*,
-        (6371 * acos(cos(radians(?)) * cos(radians(location_latitude)) *
-        cos(radians(location_longitude) - radians(?)) +
-        sin(radians(?)) * sin(radians(location_latitude)))) AS distance',
-        [$lat, $lng, $lat])
-    ->having('distance', '<', 10)
-    ->orderBy('distance')
-    ->get();
-```
-
-### Security & Best Practices
-
-1. **API Key Security**:
-   - Never commit API key to version control
-   - Always use `.env` file for API key storage
-   - Apply HTTP referrer restrictions in Google Cloud Console
-   - Enable only required APIs (Maps JavaScript + Places)
-   - Set daily quota limits to prevent unexpected charges
-
-2. **Cost Optimization**:
-   - Free tier: 28,000 map loads per month
-   - After free tier: ~$7 per 1,000 loads
-   - Using `setFields()` reduces cost by ~60% (already implemented)
-   - Cached geocoded results in database (no repeated API calls for same address)
-
-3. **Validation**:
-   - Frontend validates location selection before form submission
-   - Backend validates coordinate ranges and data types
-   - All location fields nullable for backward compatibility
-
-4. **Accessibility**:
-   - WCAG 2.2 AA compliant
-   - Keyboard navigation supported (Tab, Enter, Escape)
-   - Screen reader compatible with proper ARIA attributes
-   - Clear error messages and help text
-
-### Troubleshooting
-
-#### Understanding the Deprecation Warning
-If you see this console warning:
-```
-As of March 1st, 2025, google.maps.places.Autocomplete is not available to new customers.
-```
-
-**THIS IS MISLEADING!** The warning refers to **new Google Cloud customers**, not existing projects.
-
-**Our implementation is CORRECT and modern**:
-- We use `google.maps.places.Autocomplete` class (NOT deprecated for existing customers)
-- We use `importLibrary()` for loading (modern approach)
-- We use `AdvancedMarkerElement` (latest marker API)
-- This is the **recommended production pattern** for 2025
-
-**DO NOT migrate to Web Components** - they are buggy and unreliable.
-
-#### Autocomplete Not Working
-```bash
-# 1. Check if API key is set
-docker compose exec app php artisan tinker
->>> config('services.google_maps.api_key')
-
-# 2. Check browser console for errors
-# Common issues:
-# - API key not set in .env
-# - Places API (New) not enabled in Google Cloud Console
-# - Maps JavaScript API not enabled
-# - HTTP referrer restrictions blocking requests
-# - Billing not enabled in Google Cloud Console
-
-# 3. Verify script tag loads Places library
-# Should see in HTML: ?key=...&libraries=places&callback=...
-```
-
-#### Autocomplete Shows But No Map Update
-```bash
-# Check browser console for these errors:
-
-# Error: "place_changed event fired but no geometry"
-# → User typed address but didn't select from dropdown
-# → Add validation: if (!place.geometry) { show error }
-
-# Error: "Map not initialized"
-# → Map initialization failed on Step 3
-# → Check: state.mapInitialized should be true
-# → Check: elements.locationMap exists
-
-# Error: "Cannot read property 'lat' of undefined"
-# → place.geometry exists but place.geometry.location is undefined
-# → This shouldn't happen with modern API - check console logs
-```
-
-#### Map Not Displaying
-```bash
-# Check browser console for errors:
-# - "Map element not found" → Ensure <div id="location-map"> exists in Step 3
-# - "importLibrary is not a function" → Google Maps API not loaded
-# - "Cannot read property 'Map' of undefined" → Check script tag in blade file
-# - Map shows but marker doesn't appear → Check updateMapMarker() is called
-
-# Verify map container CSS:
-# - Must have explicit height: min-height: 384px
-# - Check: style="display: none" only on steps, not on map container
-```
-
-#### Address Components Not Parsing
-Modern Autocomplete API uses standard property names:
-- `component.long_name` - Full name (e.g., "Marszałkowska")
-- `component.short_name` - Abbreviated (e.g., "Marsz.")
-- `component.types` - Array of types (e.g., ["route"])
-
-Our code uses `long_name` and `short_name` (NOT `longText`/`shortText` from Web Components).
-
-**If parsing fails:**
-```javascript
-// Debug address components
-console.log('Address components:', place.address_components);
-place.address_components.forEach(c => {
-    console.log(c.types[0], ':', c.long_name);
-});
-```
-
-#### Check Location Data in Database
-```bash
-# View appointments with location data
-docker compose exec mysql mysql -u paradocks -ppassword -e \
-  "SELECT id, location_address, location_latitude, location_longitude FROM appointments WHERE location_address IS NOT NULL LIMIT 5;" \
-  paradocks
-
-# Check location_components JSON
-docker compose exec mysql mysql -u paradocks -ppassword -e \
-  "SELECT id, location_components FROM appointments WHERE location_components IS NOT NULL LIMIT 1\\G" \
-  paradocks
-```
-
-### Costs & Limits
-
-**Google Maps Pricing** (as of 2025):
-- **Free Tier**: $200 credit per month (~28,000 map loads)
-- **Maps JavaScript API**: $7 per 1,000 loads (after free tier)
-- **Places API (Autocomplete)**: $2.83 per 1,000 requests (after free tier)
-- **Cost Optimization**: Using `setFields()` reduces billing by limiting returned data
-
-**Recommended Limits**:
-- Daily quota: 10,000 requests (adjust based on traffic)
-- Monitor usage in Google Cloud Console
-- Set billing alerts for unexpected spikes
-
-### Why We Don't Use Web Components
-
-**IMPORTANT LESSON LEARNED**: Google's Web Components (`<gmp-place-autocomplete>`) were marketed as "the future" but are **NOT production-ready** (as of January 2025).
-
-#### Problems with Web Components We Encountered
-
-1. **Poor Map Integration**
-   - `<gmp-place-autocomplete>` and map don't communicate automatically
-   - Need manual event handling and state synchronization
-   - Events sometimes don't fire or fire inconsistently
-
-2. **Async Complexity**
-   - Requires `await place.fetchFields()` before accessing data
-   - More prone to race conditions and timing issues
-   - Harder to debug when things go wrong
-
-3. **Different Property Names**
-   - Uses `longText`/`shortText` instead of standard `long_name`/`short_name`
-   - Incompatible with existing code examples
-   - Confusing API surface
-
-4. **Immature Ecosystem**
-   - Few Stack Overflow answers
-   - Limited documentation
-   - Breaking changes still happening
-   - Not widely adopted in production
-
-#### What We Use Instead
-
-**Modern JavaScript API** (Production-Ready, Battle-Tested):
-```javascript
-// THIS is the correct, modern approach for 2025
-const { Autocomplete } = await google.maps.importLibrary("places");
-const autocomplete = new Autocomplete(inputElement, options);
-
-autocomplete.addListener('place_changed', () => {
-    const place = autocomplete.getPlace();
-    // Data immediately available - no fetchFields() needed!
-    if (place.geometry && place.geometry.location) {
-        updateMap(place.geometry.location);
-    }
-});
-```
-
-**Why This is Better:**
-- ✅ Synchronous data access (no async complexity)
-- ✅ Reliable event handling (`place_changed` is rock-solid)
-- ✅ Standard property names (`long_name`, `short_name`)
-- ✅ 15+ years of production use
-- ✅ Thousands of working examples online
-- ✅ Better debugging experience
-
-#### Migration History
-
-**October 2024**: Tried Web Components (`<gmp-place-autocomplete>`)
-- ❌ Map marker wouldn't update
-- ❌ Events inconsistent
-- ❌ Spent $20+ debugging
-- ❌ No clear documentation
-
-**January 2025**: Migrated to Modern JavaScript API
-- ✅ Everything works immediately
-- ✅ Map updates reliably
-- ✅ Clean, maintainable code
-- ✅ No more debugging issues
-
-**Lesson**: Don't fall for marketing hype. Use proven, battle-tested APIs in production.
-
-#### The Deprecation Warning Explained
-
-The warning "google.maps.places.Autocomplete is not available to new customers" is **misleading**:
-
-- It only affects **NEW Google Cloud accounts** created after March 1, 2025
-- Existing projects can continue using it indefinitely
-- It's still the **recommended approach** for production apps
-- Web Components are meant for simple demos, not complex integrations
-
-**Bottom Line**: If you have an existing Google Cloud project, ignore the warning and use the JavaScript API. It's superior in every way.
-
-### References
-- [Google Maps JavaScript API Docs](https://developers.google.com/maps/documentation/javascript)
-- [PlaceAutocompleteElement Documentation](https://developers.google.com/maps/documentation/javascript/reference/place-autocomplete-element)
-- [Places API Migration Guide](https://developers.google.com/maps/documentation/javascript/places-migration-overview)
-- [Google Maps Legacy Documentation](https://developers.google.com/maps/legacy)
-- [Google Maps API Security Best Practices](https://developers.google.com/maps/api-security-best-practices)
-
----
-
-## Vehicle Management System
-
-### Overview
-The booking system captures vehicle information (type, brand, model, year) to provide context for detailing services. This data helps staff prepare appropriate equipment and estimate service duration.
-
-**Implemented:** October 2025
-**Status:** ✅ Production Ready
-
-### Architecture
-
-#### Database Schema
-
-**4 Tables + 1 Pivot:**
-
-```sql
--- 1. Vehicle Types (5 seeded types)
-vehicle_types (
-  id, name, slug, description, examples, sort_order, is_active
-)
-
--- 2. Car Brands
-car_brands (
-  id, name, slug, status ENUM('pending', 'active', 'inactive')
-)
-
--- 3. Car Models
-car_models (
-  id, car_brand_id FK, name, slug, year_from, year_to,
-  status ENUM('pending', 'active', 'inactive')
-)
-
--- 4. Pivot: Many-to-Many (Model ↔ VehicleType)
-vehicle_type_car_model (
-  id, vehicle_type_id FK, car_model_id FK
-)
-
--- 5. Appointments (extended with vehicle fields)
-appointments (
-  ...,
-  vehicle_type_id FK,
-  car_brand_id FK,
-  car_model_id FK,
-  vehicle_year YEAR,
-  vehicle_custom_brand VARCHAR(100),  -- For unknown brands
-  vehicle_custom_model VARCHAR(100)   -- For unknown models
-)
-```
-
-**Relations:**
-```
-VehicleType (1) ←→ (N) Pivot (N) ←→ (1) CarModel (N) ←→ (1) CarBrand
-     ↓                                        ↓                ↓
-Appointment                              Appointment     Appointment
-```
-
-#### Models
-
-**VehicleType** (`app/Models/VehicleType.php`):
-- `belongsToMany(CarModel)` via `vehicle_type_car_model`
-- `hasMany(Appointment)`
-- Scopes: `active()`, `ordered()`
-- 5 types seeded: city_car, small_car, medium_car, large_car, delivery_van
-
-**CarBrand** (`app/Models/CarBrand.php`):
-- `hasMany(CarModel)`
-- `hasMany(Appointment)`
-- Scopes: `active()`, `pending()`, `status($status)`
-
-**CarModel** (`app/Models/CarModel.php`):
-- `belongsTo(CarBrand)`
-- `belongsToMany(VehicleType)` via pivot
-- `hasMany(Appointment)`
-- Accessor: `full_name` → "Toyota Corolla"
-- Scopes: `active()`, `forBrand($id)`, `forVehicleType($id)`
-
-**Appointment** (updated):
-- `belongsTo(VehicleType)`
-- `belongsTo(CarBrand)`
-- `belongsTo(CarModel)`
-- Accessor: `vehicle_display` → "Toyota Corolla (2020)" or custom values
-
-### Booking Wizard Integration (Step 3)
-
-#### User Flow
-1. User selects **Vehicle Type** (card with SVG icon)
-2. System shows brand/model/year fields
-3. User selects **Brand** from dropdown (all active brands - NO filtering by type)
-4. User selects **Model** from dropdown (all models for selected brand - NO filtering by type)
-5. User selects **Year** (1990-2025)
-6. Step 4 displays vehicle summary
-
-**Vehicle Type Declaration Policy:**
-- Vehicle type selection is the **customer's declaration** only
-- System does NOT enforce database-level constraints between vehicle types and models
-- **Rationale**: A car model can fit multiple size categories (e.g., Toyota Corolla can be small_car OR medium_car depending on generation)
-- Business accepts responsibility for customer accuracy
-- Simplifies admin workflow (no need to assign models to multiple types in database)
-
-#### Frontend Implementation
-
-**Blade Template** (`resources/views/booking/create.blade.php`):
-- Vehicle type cards with CSS styling
-- SELECT dropdowns for brand/model/year (NOT autocomplete)
-- Hidden form fields for submission
-- Vehicle summary in Step 4
-
-**JavaScript** (`resources/js/booking-wizard.js`):
-- `state.vehicle` object with type/brand/model/year data
-- `fetchVehicleTypes()` - loads 5 types from API
-- `selectVehicleType(type)` - shows brand/model fields
-- `handleBrandChange()` - fetches models for selected brand
-- `handleModelChange()` - saves model selection
-- `populateVehicleYears()` - generates 1990-2025 options
-- Validation: all fields required before Step 4
-
-#### API Endpoints
-
-```php
-GET /api/vehicle-types     → All active types
-GET /api/car-brands        → All active brands (NO vehicle type filtering)
-GET /api/car-models?car_brand_id → All models for brand (NO vehicle type filtering)
-GET /api/vehicle-years     → [2025...1990]
-```
-
-**Controller:** `App\Http\Controllers\Api\VehicleDataController`
-
-**Note:** The `vehicle_type_id` query parameter is no longer used for filtering brands or models. It may still be accepted for backward compatibility but is ignored.
-
-#### Backend Validation
-
-**AppointmentController@store** validates:
-```php
-'vehicle_type_id' => 'required|exists:vehicle_types,id',
-'car_brand_id' => 'nullable|exists:car_brands,id',
-'car_brand_name' => 'nullable|string|max:100',  // For custom
-'car_model_id' => 'nullable|exists:car_models,id',
-'car_model_name' => 'nullable|string|max:100',  // For custom
-'vehicle_year' => 'required|integer|min:1990|max:' . (date('Y') + 1),
-```
-
-**Logic:** If brand/model IDs provided → use them. Otherwise save custom names.
-
-### Filament Admin Panel
-
-**Navigation Group:** "Cars" (3 resources)
-
-#### 1. VehicleTypeResource
-- **Icon:** heroicon-o-tag
-- **Features:** Edit only (no Create - seeded data)
-- **Table:** name, slug, examples, sort_order, is_active
-- **Filters:** Active/Inactive toggle
-- **Bulk Actions:** Delete
-
-#### 2. CarBrandResource
-- **Icon:** heroicon-o-building-office
-- **Features:** Full CRUD
-- **Table:** name, models_count, status (badge)
-- **Filters:** Status (pending/active/inactive)
-- **Bulk Actions:** Delete, Approve (pending → active)
-- **Auto-slug:** Generated from name
-
-#### 3. CarModelResource
-- **Icon:** heroicon-o-truck
-- **Features:** Full CRUD with vehicle type assignment
-- **Table:** brand.name, name, vehicleTypes (badges), status
-- **Form:** brand (select), name, slug, vehicleTypes (checkboxes), year_from/to, status
-- **Filters:** Brand, Vehicle Type (many-to-many), Status
-- **Bulk Actions:** Delete, Approve
-- **Create Brand:** Quick-create modal in form
-
-#### 4. AppointmentResource (updated)
-- **New Section:** "Pojazd" (collapsed by default)
-- **Form Fields:** vehicle_type, car_brand, car_model, vehicle_year, custom_brand/model (read-only)
-- **Table Column:** vehicle_display (toggleable)
-- **Display:** Shows "Toyota Corolla (2020)" or custom values
-
-### Usage Examples
-
-#### Accessing Vehicle Data
-```php
-$appointment = Appointment::with(['vehicleType', 'carBrand', 'carModel'])->find($id);
-
-// Get formatted vehicle string
-echo $appointment->vehicle_display;  // "Toyota Corolla (2020)"
-
-// Get individual fields
-echo $appointment->vehicleType->name;  // "Auto średnie"
-echo $appointment->carBrand->name;     // "Toyota"
-echo $appointment->carModel->full_name; // "Toyota Corolla"
-echo $appointment->vehicle_year;        // 2020
-
-// Custom brand/model (when not in database)
-if ($appointment->vehicle_custom_brand) {
-    echo $appointment->vehicle_custom_brand;  // User-entered brand
-}
-```
-
-#### Querying Appointments by Vehicle
-```php
-// Find all appointments for specific vehicle type
-Appointment::whereHas('vehicleType', fn($q) =>
-    $q->where('slug', 'delivery_van')
-)->get();
-
-// Find appointments for specific brand
-Appointment::whereHas('carBrand', fn($q) =>
-    $q->where('name', 'Toyota')
-)->get();
-
-// Find appointments with custom vehicles (pending approval)
-Appointment::whereNotNull('vehicle_custom_brand')
-    ->orWhereNotNull('vehicle_custom_model')
-    ->get();
-```
-
-### Seeding Data
-
-**Vehicle Types** (5 pre-configured):
-```bash
-docker compose exec app php artisan db:seed --class=VehicleTypeSeeder
-```
-
-**Add Brands & Models Manually:**
-```php
-// In Tinker or Filament admin panel
-$toyota = CarBrand::create(['name' => 'Toyota', 'slug' => 'toyota', 'status' => 'active']);
-$corolla = CarModel::create([
-    'car_brand_id' => $toyota->id,
-    'name' => 'Corolla',
-    'slug' => 'corolla',
-    'year_from' => 1966,
-    'year_to' => null, // Still in production
-    'status' => 'active',
-]);
-
-// Assign to vehicle types
-$corolla->vehicleTypes()->attach([2, 3]); // small_car, medium_car
-```
-
-### Future Enhancements
-
-**Pricing Logic** (Next Iteration):
-- See `docs/features/vehicle-pricing-logic.md`
-- Dynamic pricing based on vehicle type
-- Price multipliers or fixed overrides
-- Real-time price updates in booking wizard
-
-**API Import** (Future):
-- Import brands/models from external automotive API
-- Scheduled task to sync new models
-- Admin approval workflow for imported data
-
-**NOT Planned:**
-- ❌ Vehicle images/logos
-- ❌ Engine specifications
-- ❌ Color/trim variations
-
-### Troubleshooting
-
-#### Vehicle Types Not Loading in Booking Wizard
-```bash
-# Check if types were seeded
-docker compose exec mysql mysql -u paradocks -ppassword -e "SELECT * FROM vehicle_types;" paradocks
-
-# Should show 5 types: city_car, small_car, medium_car, large_car, delivery_van
-```
-
-#### Brands Not Showing in Dropdown
-```bash
-# Check if brands exist
-docker compose exec mysql mysql -u paradocks -ppassword -e "SELECT * FROM car_brands WHERE status='active';" paradocks
-
-# Add sample brands via Tinker
-docker compose exec app php artisan tinker
->>> CarBrand::create(['name' => 'Toyota', 'slug' => 'toyota', 'status' => 'active']);
-```
-
-#### Models Empty After Brand Selection
-```bash
-# Check if models assigned to vehicle types
-docker compose exec mysql mysql -u paradocks -ppassword -e \
-  "SELECT cm.*, vt.name as type FROM car_models cm
-   LEFT JOIN vehicle_type_car_model vtcm ON cm.id = vtcm.car_model_id
-   LEFT JOIN vehicle_types vt ON vtcm.vehicle_type_id = vt.id;" \
-  paradocks
-
-# Models MUST be assigned to vehicle types via pivot table
-```
-
-#### Validation Fails: "Wybierz typ pojazdu"
-- Frontend validation in `validateStep3()` requires all vehicle fields
-- Check browser console for JavaScript errors
-- Verify `state.vehicle.type_id` is set after card click
-
-#### API Returns 403 Forbidden / Vehicle Selection Not Rendering
-**Symptoms:**
-- Browser console shows 403 errors on `/api/vehicle-types`, `/api/car-brands`, `/api/car-models`
-- Vehicle type cards don't render in Step 3
-- Brand/model dropdowns remain empty
-- JavaScript fetchVehicleTypes() fails
-
-**Root Cause:**
-Vehicle API endpoints have overly restrictive middleware (`role:super-admin`) that blocks regular authenticated users.
-
-**Check routes:**
-```bash
-php artisan route:list --path=api/vehicle
-php artisan route:list --path=api/car
-```
-
-**Fix in `routes/web.php`:**
-```php
-// ❌ WRONG - blocks regular users
-Route::prefix('api')->name('api.')->middleware(['auth', 'role:super-admin'])->group(function () {
-    Route::get('/vehicle-types', [VehicleDataController::class, 'vehicleTypes']);
-    // ...
-});
-
-// ✅ CORRECT - allows all authenticated users
-Route::prefix('api')->name('api.')->middleware(['auth'])->group(function () {
-    Route::get('/vehicle-types', [VehicleDataController::class, 'vehicleTypes']);
-    Route::get('/car-brands', [VehicleDataController::class, 'brands']);
-    Route::get('/car-models', [VehicleDataController::class, 'models']);
-    Route::get('/vehicle-years', [VehicleDataController::class, 'years']);
-});
-```
-
-**Why `auth` only is correct:**
-- These endpoints are **read-only** (no data modification)
-- They return public catalog data (vehicle types, brands, models)
-- Required for normal booking flow (all logged-in users create appointments)
-- Data is not sensitive (equivalent to public car catalogs)
-
-**After fix:**
-```bash
-php artisan optimize:clear  # Clear route cache
-# Refresh browser (Ctrl+F5)
-# Test as regular user (not super-admin)
-```
-
-### Quick Commands
+### Critical Environment Variables
 
 ```bash
-# Add sample data
-docker compose exec app php artisan tinker
->>> $vw = CarBrand::create(['name' => 'Volkswagen', 'slug' => 'volkswagen', 'status' => 'active']);
->>> $golf = CarModel::create(['car_brand_id' => $vw->id, 'name' => 'Golf', 'slug' => 'golf', 'status' => 'active']);
->>> $golf->vehicleTypes()->attach([2, 3]); // Assign to small_car + medium_car
+# Database (MySQL 8.0 in Docker)
+DB_CONNECTION=mysql
+DB_HOST=paradocks-mysql
+DB_DATABASE=paradocks
+DB_USERNAME=paradocks
+DB_PASSWORD=password
 
-# Check appointments with vehicles
-docker compose exec mysql mysql -u paradocks -ppassword -e \
-  "SELECT a.id, vt.name as type, cb.name as brand, cm.name as model, a.vehicle_year
-   FROM appointments a
-   LEFT JOIN vehicle_types vt ON a.vehicle_type_id = vt.id
-   LEFT JOIN car_brands cb ON a.car_brand_id = cb.id
-   LEFT JOIN car_models cm ON a.car_model_id = cm.id
-   WHERE a.vehicle_type_id IS NOT NULL;" \
-  paradocks
-```
----
-
-## Email System & Notifications
-
-### Overview
-Complete transactional email system with queue-based delivery, multi-language support (PL/EN), and Filament admin panel for management. Emails are sent asynchronously via Laravel queues using Redis backend.
-
-**Implemented:** November 2025
-**Status:** ✅ Production Ready
-
-### Architecture
-
-#### Core Components
-
-**1. Email Gateway (Interface + SMTP Implementation)**
-- `EmailGatewayInterface` - Abstraction layer for email delivery
-- `SmtpMailer` - SMTP implementation using Laravel Mail facade
-- Runtime config override from database settings
-- Gmail SMTP with App Password support
-
-**2. Email Service**
-- `EmailService` - Core service for template rendering and sending
-- Template rendering with Blade engine
-- Idempotency via unique `message_key` (MD5 hash)
-- Duplicate detection and prevention
-- Email suppression list integration
-
-**3. Database Schema (4 tables)**
-```sql
-email_templates     → Template storage (key, language, subject, body, variables)
-email_sends         → Delivery logs (recipient, status, sent_at, message_key)
-email_events        → Event tracking (sent, delivered, bounced, complained, opened, clicked)
-email_suppressions  → Bounce/complaint/unsubscribe list
-```
-
-**4. Domain Events (9 events)**
-- `UserRegistered` - User account creation
-- `AppointmentCreated` - New appointment booked
-- `AppointmentRescheduled` - Date/time changed
-- `AppointmentCancelled` - Appointment cancelled
-- `AppointmentReminder24h` - 24-hour reminder (job-triggered)
-- `AppointmentReminder2h` - 2-hour reminder (job-triggered)
-- `AppointmentFollowUp` - Post-service feedback (job-triggered)
-- `EmailDeliveryFailed` - SMTP error occurred
-
-**5. Notification Classes (8 queued notifications)**
-All implement `ShouldQueue` and `ShouldBeUnique` traits:
-- `UserRegisteredNotification` (queue: emails)
-- `PasswordResetNotification` (queue: emails)
-- `AppointmentCreatedNotification` (queue: emails)
-- `AppointmentRescheduledNotification` (queue: emails)
-- `AppointmentCancelledNotification` (queue: emails)
-- `AppointmentReminder24hNotification` (queue: reminders)
-- `AppointmentReminder2hNotification` (queue: reminders)
-- `AppointmentFollowUpNotification` (queue: emails)
-
-**6. Scheduled Jobs (4 jobs)**
-- `SendReminderEmailsJob` - Hourly, finds appointments 24h/2h ahead
-- `SendFollowUpEmailsJob` - Hourly, finds completed appointments from 24h ago
-- `SendAdminDigestJob` - Daily at 8:00 AM, sends stats to admins
-- `CleanupOldEmailLogsJob` - Daily at 2:00 AM, GDPR 90-day retention
-
-### Email Templates
-
-**18 Templates Total (9 types × PL/EN):**
-
-| Template Key              | Language | Purpose                          |
-|---------------------------|----------|----------------------------------|
-| user-registered           | PL, EN   | Welcome email after registration |
-| password-reset            | PL, EN   | Password reset link              |
-| appointment-created       | PL, EN   | Booking confirmation             |
-| appointment-rescheduled   | PL, EN   | Date/time change notification    |
-| appointment-cancelled     | PL, EN   | Cancellation confirmation        |
-| appointment-reminder-24h  | PL, EN   | 24-hour reminder                 |
-| appointment-reminder-2h   | PL, EN   | 2-hour reminder                  |
-| appointment-followup      | PL, EN   | Post-service feedback request    |
-| admin-daily-digest        | PL, EN   | Daily statistics for admins      |
-
-**Template Variables:**
-Templates use Blade syntax: `{{ $variable_name }}`
-
-Common variables:
-- `{{ $customer_name }}` - Customer full name
-- `{{ $appointment_date }}` - Date (Y-m-d)
-- `{{ $appointment_time }}` - Time (H:i)
-- `{{ $service_name }}` - Service name
-- `{{ $location_address }}` - Service location
-- `{{ $app_name }}` - Application name
-- `{{ $contact_email }}` - Support email
-- `{{ $contact_phone }}` - Support phone
-
-### Configuration
-
-#### Environment Variables (.env)
-```bash
-# Gmail SMTP with App Password (REQUIRED after May 2025)
+# Email (Gmail SMTP with App Password)
 MAIL_MAILER=smtp
 MAIL_HOST=smtp.gmail.com
 MAIL_PORT=587
 MAIL_USERNAME=your-email@gmail.com
 MAIL_PASSWORD=your-16-char-app-password
-MAIL_ENCRYPTION=tls
-MAIL_FROM_ADDRESS="your-email@gmail.com"
-MAIL_FROM_NAME="${APP_NAME}"
 
-# Queue Configuration
+# Queue (Redis)
 QUEUE_CONNECTION=redis
-REDIS_CLIENT=predis
 REDIS_HOST=redis
-REDIS_QUEUE=default
+
+# Google Maps
+GOOGLE_MAPS_API_KEY=AIzaSy...
+GOOGLE_MAPS_MAP_ID=your_map_id
 ```
 
-#### Gmail App Password Setup
-**IMPORTANT:** Google deprecated "Less Secure Apps" on May 1, 2025. App Passwords are now mandatory.
+## Feature Documentation
 
-1. Enable 2-Step Verification:
-   - https://myaccount.google.com/security
-   - Security → 2-Step Verification → Turn On
+### Email System
 
-2. Generate App Password:
-   - https://myaccount.google.com/apppasswords
-   - Select app: Mail, Device: Other (Laravel)
-   - Copy 16-character password (e.g., `abcd efgh ijkl mnop`)
-   - Remove spaces → `abcdefghijklmnop`
+Complete transactional email system with queue-based delivery (PL/EN templates).
 
-3. Update `.env`:
-   ```bash
-   MAIL_USERNAME=your-email@gmail.com
-   MAIL_PASSWORD=abcdefghijklmnop
-   ```
+- **Architecture:** EmailService, SmtpMailer, 4 database tables
+- **Templates:** 18 templates (9 types × 2 languages)
+- **Jobs:** Reminders (24h, 2h), Follow-ups, Daily digest
+- **Admin:** Filament resources for templates, logs, events, suppressions
 
-4. Update database settings:
-   - Admin Panel → Settings → Email tab
-   - Test connection with "Test Email Connection" button
+**See:** [Email System](docs/features/email-system/README.md)
 
-### Queue System
+### Vehicle Management
 
-#### Queue Architecture
-- **Backend:** Redis
-- **Monitor:** Laravel Horizon (https://paradocks.local:8444/horizon)
-- **Queues:** emails (priority), reminders, default
-- **Workers:** 3 max processes, auto-scaling
-- **Retries:** 3 attempts with exponential backoff
-- **Timeout:** 90 seconds per job
+Capture vehicle information (type, brand, model, year) for service preparation.
 
-#### Queue Commands
+- **Architecture:** 4 tables + pivot (vehicle_types, car_brands, car_models)
+- **Filament:** 3 resources with CRUD, filters, bulk actions
+- **API:** Vehicle data endpoints for booking wizard
+- **Policy:** Customer declaration only (no DB constraints)
+
+**See:** [Vehicle Management](docs/features/vehicle-management/README.md)
+
+### Google Maps Integration
+
+Places Autocomplete for accurate location capture in booking wizard.
+
+- **API:** Modern JavaScript API (NOT Web Components!)
+- **Database:** 5 location fields in appointments table
+- **Captures:** Address, lat/lng, place_id, address_components
+- **Map:** AdvancedMarkerElement with DROP animation
+
+**See:** [Google Maps Integration](docs/features/google-maps/README.md)
+
+### Settings System
+
+Centralized settings management via Filament admin panel.
+
+- **Groups:** booking, map, contact, marketing
+- **Service:** SettingsManager singleton
+- **Admin:** Custom Filament page at `/admin/system-settings`
+- **⚠️ Gotcha:** Use `app()` helper, NOT constructor injection in Livewire
+
+**See:** [Settings System](docs/features/settings-system/README.md)
+
+### Booking System
+
+Multi-step wizard for appointment booking with validation.
+
+- **Steps:** Service → DateTime → Vehicle/Location → Review
+- **Integration:** Vehicle management, Google Maps, settings
+- **Validation:** Frontend (JS) + Backend (Laravel)
+- **Status:** pending → confirmed → in_progress → completed/cancelled
+
+**See:** [Booking System](docs/features/booking-system/README.md)
+
+## Production Build
+
+**IMPORTANT:** This project uses Tailwind CSS 4.0 with `@tailwindcss/vite` plugin.
+
 ```bash
-# Start queue worker (development)
-docker compose exec app php artisan queue:work redis --queue=emails,reminders,default --tries=3
+# Build production assets
+cd app && npm run build
 
-# Start Horizon (production - preferred)
-docker compose exec app php artisan horizon
+# Verify output
+ls -la app/public/build/
+cat app/public/build/.vite/manifest.json
+```
 
-# Check queue status
-docker compose exec app php artisan queue:monitor redis:emails,redis:reminders
+**Expected Output:**
+- `public/build/assets/app-[hash].css` - Minified CSS
+- `public/build/assets/app-[hash].js` - Minified JavaScript
+- `public/build/.vite/manifest.json` - Asset manifest (Vite 7+)
 
-# Retry failed jobs
+**Critical Configuration:**
+
+vite.config.js:
+```javascript
+plugins: [
+    tailwindcss(), // ⚠️ MUST be BEFORE laravel() for v4.0
+    laravel({ ... }),
+]
+```
+
+resources/css/app.css:
+```css
+@import 'tailwindcss';  /* NOT @tailwind directives */
+@source '../**/*.blade.php';
+```
+
+**See:** [Production Build Guide](docs/guides/production-build.md)
+
+## User Model Pattern
+
+**Important:** User model has `first_name` and `last_name` fields, NOT `name` column.
+
+```php
+$user->name        // Returns "Jan Kowalski" (via accessor)
+$user->first_name  // Returns "Jan"
+$user->last_name   // Returns "Kowalski"
+```
+
+**Why?** Email templates, Blade views, and third-party packages expect `$user->name`.
+
+**See:** [User Model Documentation](docs/architecture/user-model.md)
+
+## Documentation
+
+📚 **Start here:** [docs/README.md](docs/README.md)
+
+**Key Documentation:**
+- [Project Map](docs/project_map.md) - System topology, modules, key files
+- [Quick Start](docs/guides/quick-start.md) - Complete setup guide
+- [Commands](docs/guides/commands.md) - All available commands
+- [Docker](docs/guides/docker.md) - Container architecture
+- [Troubleshooting](docs/guides/troubleshooting.md) - Common issues
+- [Database Schema](docs/architecture/database-schema.md) - Complete DB structure
+- [Architecture Decisions](docs/decisions/) - ADR records
+
+**Polish Note:** Zawsze sprawdzaj `@docs/` przed skanowaniem projektu, żeby nie tracić tokenów na kolejną analizę. Zawsze aktualizuj dokumentację po implementacji nowych rzeczy.
+
+## Troubleshooting
+
+### Build Issues
+
+```bash
+# CSS not loading
+cd app && npm run build
+docker compose exec app php artisan optimize:clear
+
+# Vite cache issues
+rm -rf app/node_modules/.vite
+cd app && npm ci
+```
+
+### Database Issues
+
+```bash
+# Connection refused
+docker compose restart mysql
+# Verify .env: DB_HOST=paradocks-mysql (NOT localhost!)
+
+# Migration fails
+docker compose exec app php artisan migrate:fresh --seed
+# Then run required seeders (see Quick Start)
+```
+
+### Queue Issues
+
+```bash
+# Emails not sending
+docker compose restart queue horizon
 docker compose exec app php artisan queue:retry all
-
-# Clear failed jobs
-docker compose exec app php artisan queue:flush
-```
-
-#### Docker Services
-```yaml
-# Queue worker (foreground)
-queue:
-  command: php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600 --queue=emails,reminders,default
-
-# Scheduler (runs schedule:run every minute)
-scheduler:
-  command: sh -c "while true; do php artisan schedule:run --verbose --no-interaction; sleep 60; done"
-
-# Horizon (queue dashboard)
-horizon:
-  command: php artisan horizon
-```
-
-### Filament Admin Panel
-
-#### Navigation Group: "Email"
-
-**1. Email Templates**
-- **Icon:** heroicon-o-envelope
-- **Permissions:** `manage email templates`
-- **Features:**
-  - Full CRUD for templates
-  - ~~Preview with sample data~~ *(Temporarily disabled - use Test Send instead)*
-  - Test Send action (send to any email)
-  - Filters: language, key, active status
-  - Form: key, language, subject, html_body, text_body, blade_path, variables, active
-
-**2. Email Sends (Logs)**
-- **Icon:** heroicon-o-paper-airplane
-- **Permissions:** `view email logs`
-- **Features:**
-  - Read-only logs of all sent emails
-  - View action (full email HTML preview in iframe)
-  - Resend action (creates new EmailSend + dispatches to queue)
-  - Export to CSV bulk action
-  - Filters: status, template_key, date range
-  - Status badges: sent (green), failed (red), bounced (yellow), pending (gray)
-
-**3. Email Events**
-- **Icon:** heroicon-o-chart-bar
-- **Permissions:** `view email events`
-- **Features:**
-  - Delivery event timeline (sent, delivered, bounced, complained, opened, clicked)
-  - View Email action (redirects to EmailSendResource)
-  - Add to Suppression action (only for bounced/complained)
-  - Filters: event_type, date range
-
-**4. Email Suppressions**
-- **Icon:** heroicon-o-no-symbol
-- **Permissions:** `manage suppressions`
-- **Features:**
-  - Full CRUD for suppression list
-  - Reasons: bounced, complained, unsubscribed, manual
-  - Delete action with confirmation ("Re-enable sending to this email?")
-  - Bulk unsuppress action
-
-#### Access Control (RolePermissionSeeder)
-```php
-// Permissions
-'manage email templates'   → super-admin, admin
-'view email logs'          → super-admin, admin, staff
-'view email events'        → super-admin, admin, staff
-'manage suppressions'      → super-admin, admin
-```
-
-### Usage
-
-#### Sending Email from Code
-```php
-use App\Services\Email\EmailService;
-
-$emailService = app(EmailService::class);
-
-// Send using template
-$emailSend = $emailService->sendFromTemplate(
-    templateKey: 'appointment-created',
-    language: 'pl',
-    recipient: 'customer@example.com',
-    data: [
-        'customer_name' => 'Jan Kowalski',
-        'appointment_date' => '2025-11-15',
-        'appointment_time' => '14:00',
-        'service_name' => 'Detailing zewnętrzny',
-        'location_address' => 'ul. Marszałkowska 1, Warszawa',
-        'app_name' => config('app.name'),
-    ],
-    metadata: [
-        'appointment_id' => 123,
-    ]
-);
-
-// Check if sent successfully
-if ($emailSend->status === 'sent') {
-    echo "Email sent at: {$emailSend->sent_at}";
-} else {
-    echo "Failed: {$emailSend->error_message}";
-}
-```
-
-#### Dispatching Events
-```php
-use App\Events\AppointmentCreated;
-use App\Models\Appointment;
-
-// Automatically dispatched by Appointment model on creation
-$appointment = Appointment::create([/* ... */]);
-
-// Manual dispatch (if needed)
-event(new AppointmentCreated($appointment));
-```
-
-#### Scheduling Jobs (routes/console.php)
-```php
-use App\Jobs\Email\SendReminderEmailsJob;
-
-// Jobs are already registered - no manual action needed
-// Check schedule:
-php artisan schedule:list
-
-// Test job manually:
-php artisan tinker
->>> SendReminderEmailsJob::dispatch();
-```
-
-### Testing
-
-#### Test Command
-```bash
-# Test complete flow
-php artisan email:test-flow --all
-
-# Test specific user
-php artisan email:test-flow --user=1
-
-# Test specific appointment
-php artisan email:test-flow --appointment=1
-```
-
-#### Monitor Queues
-```bash
-# Check Horizon dashboard
-https://paradocks.local:8444/horizon
-
-# Check Mailpit (development)
-http://localhost:8025
-
-# Check database logs
-docker compose exec mysql mysql -u paradocks -ppassword -e \
-  "SELECT id, template_key, recipient_email, status, sent_at FROM email_sends ORDER BY created_at DESC LIMIT 10;" \
-  paradocks
-```
-
-#### Manual Testing
-```bash
-# Send test email via Tinker
-docker compose exec app php artisan tinker
->>> $user = User::first();
->>> event(new \App\Events\UserRegistered($user));
->>> exit
-
-# Process queue immediately (for testing)
-docker compose exec app php artisan queue:work --once --queue=emails
-```
-
-### Troubleshooting
-
-#### Gmail SMTP Authentication Failed (535-5.7.8)
-**Error:** `535-5.7.8 Username and Password not accepted`
-
-**Cause:** Using regular Gmail password instead of App Password
-
-**Fix:**
-1. Check 2-Step Verification is enabled
-2. Generate new App Password at https://myaccount.google.com/apppasswords
-3. Update `.env` and database settings:
-   ```sql
-   UPDATE settings SET value = '["your-app-password"]' WHERE `group` = 'email' AND `key` = 'smtp_password';
-   ```
-4. Restart queue workers:
-   ```bash
-   docker compose restart queue horizon
-   ```
-
-#### Emails Not Sending (Queue Not Processing)
-```bash
-# Check if queue worker is running
-docker compose ps queue horizon
-
-# Check Horizon dashboard for failed jobs
-https://paradocks.local:8444/horizon/failed
-
-# Check logs
-docker compose logs -f queue
-docker compose exec app tail -f storage/logs/laravel.log | grep Email
-
-# Retry failed jobs
-docker compose exec app php artisan queue:retry all
-```
-
-#### Template Rendering Errors
-**Error:** `Undefined variable: variable_name`
-
-**Cause:** Template uses `{{ $variable_name }}` but data not provided
-
-**Fix:**
-1. Check template variables in `email_templates.variables` (JSON array)
-2. Ensure all variables passed in `$data` array when calling `sendFromTemplate()`
-3. Update template seeder if variables changed:
-   ```bash
-   docker compose exec app php artisan db:seed --class=EmailTemplateSeeder --force
-   ```
-
-#### Duplicate Emails Being Sent
-**Cause:** `message_key` idempotency not working
-
-**Check:**
-```sql
--- Find duplicates
-SELECT message_key, COUNT(*) as count FROM email_sends GROUP BY message_key HAVING count > 1;
-
--- Check idempotency logic
-SELECT * FROM email_sends WHERE message_key = 'your-message-key';
-```
-
-**Fix:** Ensure metadata includes unique identifier (e.g., `appointment_id`, `user_id`)
-
-#### Scheduler Not Running
-```bash
-# Check scheduler container
-docker compose ps scheduler
-
-# Check cron logs
-docker compose logs -f scheduler
-
-# Manually trigger schedule
-docker compose exec app php artisan schedule:run --verbose
-```
-
-#### Preview Button Disabled in Email Templates
-
-**Status:** ❌ Temporarily Disabled (November 2025)
-
-**Reason:** Livewire component stack bug causing "Undefined array key 0" error in ManagesComponents.php:124 during modal re-renders.
-
-**Root Cause:**
-- Livewire's ExtendedCompilerEngine doesn't maintain component stack during modal content rendering
-- The `@foreach` loop in `preview.blade.php` (lines 41-45) creates anonymous Blade components
-- These components attempt to access `$this->componentStack[0]` but the stack is empty
-- Error occurs in rendering infrastructure layer (before template code executes)
-
-**Workaround:**
-Use the **Test Send** action instead of Preview:
-1. Click "Test Send" on any template in Email Templates resource
-2. Enter your email address
-3. System sends rendered template with example data to your inbox
-4. Check email client to preview HTML and plain text versions
-
-**Code Location:**
-- File: `app/Filament/Resources/EmailTemplateResource.php`
-- Lines: 178-192 (commented out)
-- Blade view preserved: `resources/views/filament/resources/email-template/preview.blade.php`
-
-**Decision Rationale:**
-Non-critical feature with functional alternative (Test Send). Avoiding $20-30 debugging costs for Livewire/Filament framework issue that may be fixed in future releases.
-
-**For Developers:**
-To re-enable in the future:
-1. Uncomment lines 178-192 in `EmailTemplateResource.php`
-2. Test with latest Filament/Livewire versions
-3. If bug persists, consider rewriting `preview.blade.php` without `@foreach` loops (use plain HTML or `@forelse` with proper null checks)
-
----
-
-### Security & Best Practices
-
-**1. API Key Security:**
-- Never commit Gmail password/App Password to Git
-- Use `.env` for all sensitive credentials
-- Apply Gmail API restrictions (HTTP referrers)
-
-**2. Queue Security:**
-- Use `ShouldBeUnique` trait to prevent duplicate jobs
-- Set appropriate timeouts (90s default)
-- Monitor failed jobs in Horizon
-- Use `withoutOverlapping()` for scheduled jobs
-
-**3. GDPR Compliance:**
-- 90-day email log retention (CleanupOldEmailLogsJob)
-- EmailSuppression list never deleted (unsubscribe compliance)
-- Customer email addresses stored with consent
-
-**4. Rate Limiting:**
-- Gmail: 500 emails/day (free), 2,000/day (paid)
-- Monitor usage in Google Admin Console
-- Consider SendGrid/Mailgun for high volume
-
-**5. Template Security:**
-- Never render untrusted user input in templates
-- Use Blade's `{{ }}` (auto-escapes HTML) instead of `{!! !!}`
-- Validate all template variables before rendering
-
-### Cost & Limits
-
-**Gmail SMTP (Free Tier):**
-- 500 emails/day
-- No cost
-- Requires App Password (2FA)
-
-**Gmail SMTP (Google Workspace):**
-- 2,000 emails/day
-- $6/user/month
-- Better deliverability
-
-**Recommended for Production:**
-- SendGrid (100 emails/day free, then $15/month for 40k)
-- Mailgun ($35/month for 50k emails)
-- AWS SES ($0.10 per 1,000 emails)
-
-### Files Overview
-
-**Core Services:**
-- `app/Services/Email/EmailGatewayInterface.php` - Interface
-- `app/Services/Email/SmtpMailer.php` - SMTP implementation
-- `app/Services/Email/EmailService.php` - Core email service
-
-**Models:**
-- `app/Models/EmailTemplate.php`
-- `app/Models/EmailSend.php`
-- `app/Models/EmailEvent.php`
-- `app/Models/EmailSuppression.php`
-
-**Events:**
-- `app/Events/UserRegistered.php`
-- `app/Events/Appointment*.php` (Created, Rescheduled, Cancelled, Reminder*, FollowUp)
-- `app/Events/EmailDeliveryFailed.php`
-
-**Notifications:**
-- `app/Notifications/UserRegisteredNotification.php`
-- `app/Notifications/Appointment*Notification.php` (8 total)
-
-**Jobs:**
-- `app/Jobs/Email/SendReminderEmailsJob.php`
-- `app/Jobs/Email/SendFollowUpEmailsJob.php`
-- `app/Jobs/Email/SendAdminDigestJob.php`
-- `app/Jobs/Email/CleanupOldEmailLogsJob.php`
-
-**Filament Resources:**
-- `app/Filament/Resources/EmailTemplateResource.php`
-- `app/Filament/Resources/EmailSendResource.php`
-- `app/Filament/Resources/EmailEventResource.php`
-- `app/Filament/Resources/EmailSuppressionResource.php`
-
-**Commands:**
-- `app/Console/Commands/TestEmailCommand.php` - Simple test
-- `app/Console/Commands/TestEmailFlowCommand.php` - Full flow test
-
-**Migrations:**
-- `database/migrations/*_create_email_templates_table.php`
-- `database/migrations/*_create_email_sends_table.php`
-- `database/migrations/*_create_email_events_table.php`
-- `database/migrations/*_create_email_suppressions_table.php`
-- `database/migrations/*_add_reminder_tracking_to_appointments_table.php`
-
-**Seeders:**
-- `database/seeders/EmailTemplateSeeder.php` - 18 templates (PL/EN)
-
-**Configuration:**
-- `routes/console.php` - Scheduler registration
-
-### References
-- [Laravel Mail Documentation](https://laravel.com/docs/mail)
-- [Laravel Queues](https://laravel.com/docs/queues)
-- [Laravel Horizon](https://laravel.com/docs/horizon)
-- [Gmail App Passwords](https://support.google.com/accounts/answer/185833)
-- [Gmail SMTP Settings](https://support.google.com/mail/answer/7126229)
-
-
----
-
-## Docker Configuration & VPS Deployment
-
-### Overview
-The project includes complete Docker configuration for both development and production environments, with automated deployment scripts for VPS servers.
-
-**Implemented:** November 2025
-**Status:** ✅ Production Ready
-
-### Directory Structure
-
-```
-/var/www/projects/paradocks/
-├── app/                                # Laravel application root
-│   ├── .env.production.example         # Production environment template
-│   └── (all Laravel files)
-│
-├── docker/                             # Docker configuration hub
-│   ├── nginx/
-│   │   ├── app.conf                    # Development Nginx config
-│   │   └── app.prod.conf               # Production Nginx config (HTTPS, Let's Encrypt)
-│   ├── node/
-│   │   └── Dockerfile                  # Node.js 20 Alpine
-│   ├── ssl/
-│   │   ├── generate-certificates.sh    # Self-signed cert generator (dev)
-│   │   ├── README.md                   # SSL setup instructions
-│   │   ├── cert.pem                    # Generated (gitignored)
-│   │   └── key.pem                     # Generated (gitignored)
-│   └── mysql/                          # MySQL init scripts (optional)
-│
-├── scripts/                            # VPS deployment automation
-│   ├── deploy-init.sh                  # First-time VPS setup
-│   ├── deploy-update.sh                # Zero-downtime updates
-│   └── backup-database.sh              # MySQL backup with rotation
-│
-├── Dockerfile                          # PHP 8.2-FPM (used by both dev & prod)
-├── docker-compose.dev.yml              # Development environment
-├── docker-compose.prod.yml             # Production environment (VPS-ready)
-├── DEPLOYMENT.md                       # Complete VPS deployment guide
-└── .gitignore                          # Root gitignore (SSL certs, backups)
-```
-
-### Docker Environments
-
-#### Development Environment (`docker-compose.dev.yml`)
-- **Services**: app, nginx, mysql, redis, node, mailpit, queue, scheduler
-- **Ports Exposed**: 8081 (HTTP), 8444 (HTTPS), 5173 (Vite), 8025 (Mailpit)
-- **SSL**: Self-signed certificates (generated automatically)
-- **Database**: MySQL 8.0 with exposed port 3306
-- **Email**: Mailpit for local testing
-- **Usage**: `docker compose -f docker-compose.dev.yml up -d`
-
-#### Production Environment (`docker-compose.prod.yml`)
-- **Services**: app, nginx, mysql, redis, horizon, scheduler
-- **Ports Exposed**: 80 (HTTP→HTTPS redirect), 443 (HTTPS only)
-- **SSL**: Let's Encrypt certificates (Certbot)
-- **Database**: MySQL 8.0 (NOT exposed, internal network only)
-- **Email**: Real SMTP (Gmail/SendGrid/AWS SES)
-- **Queue**: Laravel Horizon with dashboard
-- **Healthchecks**: All services have health monitoring
-- **Usage**: `docker compose -f docker-compose.prod.yml up -d`
-
-### Quick Commands
-
-#### Development
-```bash
-# Start development environment
-docker compose -f docker-compose.dev.yml up -d
-
-# View logs
-docker compose -f docker-compose.dev.yml logs -f
-
-# Run artisan commands
-docker compose -f docker-compose.dev.yml exec app php artisan migrate
-
-# Access MySQL
-docker compose -f docker-compose.dev.yml exec mysql mysql -u paradocks -ppassword
-
-# Stop containers
-docker compose -f docker-compose.dev.yml down
-```
-
-#### Production
-```bash
-# First deployment (requires root/sudo)
-sudo ./scripts/deploy-init.sh
-
-# Regular updates (zero-downtime)
-sudo ./scripts/deploy-update.sh
-
-# Manual backup
-sudo ./scripts/backup-database.sh
-
-# View production logs
-docker compose -f docker-compose.prod.yml logs -f app
-
-# Check container status
-docker compose -f docker-compose.prod.yml ps
-```
-
-### VPS Deployment
-
-#### Prerequisites
-- Ubuntu 22.04 LTS (recommended)
-- Docker 24+ and Docker Compose v2+
-- Domain name with DNS configured
-- Ports 80 and 443 open in firewall
-- SSL certificate from Let's Encrypt
-
-#### First-Time Deployment
-```bash
-# 1. Clone repository to VPS
-cd /var/www
-git clone <repository-url> paradocks
-cd paradocks
-
-# 2. Create production .env
-cp app/.env.production.example app/.env
-nano app/.env  # Update all CHANGE_ME values
-
-# 3. Run automated deployment script
-sudo ./scripts/deploy-init.sh
-```
-
-**The script will**:
-- Validate prerequisites (Docker, Certbot, domain)
-- Generate Laravel APP_KEY
-- Create Let's Encrypt SSL certificates
-- Build and start Docker containers
-- Run migrations and seed database
-- Create admin user
-- Optimize Laravel caches
-
-**Duration**: 10-15 minutes
-
-See `DEPLOYMENT.md` for detailed instructions.
-
-#### Regular Updates
-```bash
-# Pull latest code and restart services
-sudo ./scripts/deploy-update.sh
-
-# Options:
---skip-backup       # Skip database backup
---skip-migrations   # Skip DB migrations
---skip-build        # Skip Docker rebuild
---force             # No confirmations
-```
-
-### Backup & Recovery
-
-#### Automated Backups
-```bash
-# Test backup manually
-sudo ./scripts/backup-database.sh
-
-# Setup cron for daily backups (2 AM)
-crontab -e
-```
-
-Add to crontab:
-```cron
-# Daily database backup
-0 2 * * * /var/www/paradocks/scripts/backup-database.sh
-
-# SSL certificate renewal
-0 3 * * * certbot renew --quiet && docker compose -f /var/www/paradocks/docker-compose.prod.yml restart nginx
-```
-
-#### Backup Options
-```bash
---retention-days 60      # Keep backups for 60 days (default: 30)
---backup-dir /path       # Custom backup location
---upload-s3              # Upload to S3 bucket
---s3-bucket NAME         # S3 bucket name
-```
-
-#### Restore from Backup
-```bash
-# List backups
-ls -lh /var/backups/paradocks/
-
-# Restore (decompress + import)
-gunzip -c /var/backups/paradocks/backup_file.sql.gz | \
-docker compose -f docker-compose.prod.yml exec -T mysql \
-mysql -u paradocks -p paradocks
-```
-
-### Production Configuration
-
-#### Nginx Production Config (`docker/nginx/app.prod.conf`)
-- **SSL**: Let's Encrypt certificates with OCSP stapling
-- **Security Headers**: HSTS, X-Frame-Options, CSP
-- **Performance**: Gzip compression, static asset caching (1 year)
-- **Health Check**: `/health` endpoint for monitoring
-- **ACME Challenge**: `/.well-known/acme-challenge/` for cert renewal
-
-#### Environment Variables (`.env`)
-**Critical production settings**:
-```bash
-APP_ENV=production
-APP_DEBUG=false
-DB_PASSWORD=STRONG_32_CHAR_PASSWORD
-REDIS_PASSWORD=STRONG_32_CHAR_PASSWORD
-MAIL_PASSWORD=gmail_app_password  # 16 characters, no spaces
-GOOGLE_MAPS_API_KEY=production_key  # With HTTP referrer restrictions
-```
-
-Generate strong passwords:
-```bash
-openssl rand -base64 24  # 32-character password
-```
-
-### Security Best Practices
-
-1. **Never expose MySQL/Redis ports** in production
-2. **Use strong, unique passwords** (32+ characters)
-3. **Apply HTTP referrer restrictions** to Google Maps API key
-4. **Enable Gmail 2FA** and use App Password for SMTP
-5. **Keep Docker images updated** (`docker compose pull`)
-6. **Review firewall rules** (only 80, 443 open)
-7. **Rotate passwords quarterly**
-8. **Monitor failed logins** (`/var/log/auth.log`)
-9. **Setup error monitoring** (Sentry/Slack)
-10. **Enable automatic security updates** on VPS
-
-### Monitoring
-
-#### Application Logs
-```bash
-# Laravel logs
-docker compose -f docker-compose.prod.yml exec app tail -f storage/logs/laravel.log
-
-# Nginx access log
-docker compose -f docker-compose.prod.yml logs nginx
-
-# All services
-docker compose -f docker-compose.prod.yml logs -f
-```
-
-#### Queue Monitoring
-- **Dashboard**: `https://yourdomain.com/horizon`
-- **CLI**: `docker compose -f docker-compose.prod.yml exec app php artisan horizon:status`
-
-#### Resource Usage
-```bash
-# Container stats
-docker stats
-
-# Disk usage
-df -h
-
-# Database size
-docker compose -f docker-compose.prod.yml exec mysql \
-mysql -u paradocks -p -e "SELECT table_schema, ROUND(SUM(data_length + index_length) / 1024 / 1024, 2) AS 'Size (MB)' FROM information_schema.TABLES GROUP BY table_schema;"
-```
-
-### Troubleshooting
-
-#### Container won't start
-```bash
-# Check logs
-docker compose -f docker-compose.prod.yml logs <service_name>
-
-# Check .env file syntax
-docker compose -f docker-compose.prod.yml config
-
-# Rebuild without cache
-docker compose -f docker-compose.prod.yml build --no-cache
-docker compose -f docker-compose.prod.yml up -d
-```
-
-#### SSL certificate errors
-```bash
-# Check certificate
-sudo certbot certificates
-
-# Force renewal
-sudo certbot renew --force-renewal
-
-# Restart Nginx
-docker compose -f docker-compose.prod.yml restart nginx
-```
-
-#### Queue jobs not processing
-```bash
-# Check Horizon status
-docker compose -f docker-compose.prod.yml exec app php artisan horizon:status
-
-# Restart Horizon
-docker compose -f docker-compose.prod.yml restart horizon
 
 # Check failed jobs
-docker compose -f docker-compose.prod.yml exec app php artisan queue:failed
-
-# Retry all
-docker compose -f docker-compose.prod.yml exec app php artisan queue:retry all
+https://paradocks.local:8444/horizon/failed
 ```
 
-### Files Overview
+**See:** [Troubleshooting Guide](docs/guides/troubleshooting.md)
 
-**Docker Configuration**:
-- `Dockerfile` - PHP 8.2-FPM with all required extensions
-- `docker-compose.dev.yml` - Development environment
-- `docker-compose.prod.yml` - Production environment
-- `docker/nginx/app.conf` - Development Nginx config (self-signed SSL)
-- `docker/nginx/app.prod.conf` - Production Nginx config (Let's Encrypt)
-- `docker/node/Dockerfile` - Node.js 20 Alpine for Vite
+## Testing
 
-**Deployment Scripts**:
-- `scripts/deploy-init.sh` - First-time VPS deployment (interactive)
-- `scripts/deploy-update.sh` - Zero-downtime updates (automated)
-- `scripts/backup-database.sh` - MySQL backup with rotation and S3 upload
+```bash
+# Run all tests
+cd app && composer run test
 
-**Documentation**:
-- `DEPLOYMENT.md` - Complete VPS deployment guide
-- `.gitignore` (root) - Ignores SSL certs, backups, secrets
-- `app/.env.production.example` - Production environment template
+# Run specific suite
+cd app && php artisan test --testsuite=Feature
 
-### Migration from Old Setup
+# Code formatting
+cd app && ./vendor/bin/pint
+```
 
-If migrating from previous Docker configuration:
+## Getting Help
 
-1. **Backup everything** (database, `.env` file, uploaded files)
-2. **Update docker-compose paths**:
-   - Old: `docker-compose.yml` → New: `docker-compose.dev.yml`
-   - Old: `app/docker-compose.prod.yml` → New: `docker-compose.prod.yml` (root)
-3. **Update Nginx volume mount** in `docker-compose.prod.yml`:
-   - Old: `./docker/nginx:/etc/nginx/conf.d`
-   - New: `./docker/nginx/app.prod.conf:/etc/nginx/conf.d/default.conf:ro`
-4. **Test locally** with `docker compose -f docker-compose.prod.yml config`
-5. **Deploy** using `deploy-update.sh` (will handle migration automatically)
-
-### References
-- [Docker Compose Documentation](https://docs.docker.com/compose/)
-- [Let's Encrypt Certbot](https://certbot.eff.org/)
-- [Laravel Deployment](https://laravel.com/docs/deployment)
-- [Nginx Configuration](https://nginx.org/en/docs/)
-- [MySQL Docker Hub](https://hub.docker.com/_/mysql)
-
----
-
-**Last Updated**: 2025-01-10
-**Maintainer**: Paradocks Development Team
+1. **Check documentation:** [docs/README.md](docs/README.md)
+2. **Search feature docs:** [docs/features/](docs/features/)
+3. **Check logs:** `docker compose logs -f` or `storage/logs/laravel.log`
+4. **Enable debug mode:** Set `APP_DEBUG=true` in `.env` (development only)

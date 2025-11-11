@@ -121,7 +121,61 @@ exit
 # Then reconnect via SSH
 ```
 
-### Step 5: Create Application User (Optional but Recommended)
+### Step 5: Install UFW-Docker Script (CRITICAL for Security)
+
+**⚠️ IMPORTANT:** Docker bypasses UFW firewall rules by default, manipulating iptables directly. This script fixes that security issue.
+
+```bash
+# Download ufw-docker script
+sudo wget -O /usr/local/bin/ufw-docker \
+  https://github.com/chaifeng/ufw-docker/raw/master/ufw-docker
+
+# Make executable
+sudo chmod +x /usr/local/bin/ufw-docker
+
+# Install UFW integration
+sudo ufw-docker install
+
+# Restart UFW to apply changes
+sudo systemctl restart ufw
+```
+
+**What this does:**
+- Adds rules to `/etc/ufw/after.rules` that hook into Docker's `DOCKER-USER` iptables chain
+- Blocks all public internet access to Docker ports by default
+- Allows private networks (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16) to communicate
+- Ensures Docker containers respect UFW firewall rules
+
+**Verify installation:**
+```bash
+# Check if DOCKER-USER chain exists
+sudo iptables -L DOCKER-USER -n
+
+# Expected output: Should show ufw-docker rules, not just "RETURN" rule
+```
+
+**⚠️ CRITICAL:** After installation, **REBOOT the server** for iptables rules to take full effect:
+```bash
+sudo reboot
+```
+
+After reboot, reconnect and verify:
+```bash
+# Verify UFW status
+sudo ufw status verbose
+
+# Verify Docker-UFW integration
+sudo iptables -L DOCKER-USER -n
+```
+
+**Why this matters:**
+Without ufw-docker, even with `ufw deny 3306/tcp`, Docker will expose MySQL port 3306 publicly. This script prevents that security hole.
+
+**References:**
+- [chaifeng/ufw-docker on GitHub](https://github.com/chaifeng/ufw-docker)
+- [Docker Official Docs on UFW](https://docs.docker.com/network/packet-filtering-firewalls/)
+
+### Step 6: Create Application User (Optional but Recommended)
 
 ```bash
 # Create dedicated user for Laravel app
@@ -225,6 +279,52 @@ paradocks-horizon-prod         Up
 paradocks-scheduler-prod       Up
 ```
 
+**📋 Note: File Permissions in Docker**
+
+**⚠️ IMPORTANT:** Laravel needs write access to `storage/` and `bootstrap/cache/` directories. In Dockerized environments, permissions are set **inside the Dockerfile**, NOT on the host system.
+
+**Why this matters:**
+- Docker volumes inherit permissions from the image, not the host
+- Running `chown -R www-data:www-data storage/` on host **does NOT work** with Docker volumes
+- Permissions must be baked into the image during build time
+
+**How it's done (already configured in Dockerfile):**
+```dockerfile
+# In Dockerfile (line 28-36)
+RUN useradd -G www-data,root -u 1000 -d /home/laravel laravel
+RUN mkdir -p /home/laravel/.composer && \
+    chown -R laravel:laravel /home/laravel
+
+WORKDIR /var/www
+RUN chown -R laravel:laravel /var/www
+
+USER laravel
+```
+
+**What happens:**
+1. Image creates `laravel` user with UID 1000 (matches most Linux users)
+2. Ownership set to `laravel:laravel` for `/var/www`
+3. Container runs as `laravel` user (non-root for security)
+4. Laravel can write to `storage/` and `bootstrap/cache/` inside container
+
+**Troubleshooting permission errors:**
+```bash
+# If you see "Permission denied" errors in logs:
+docker compose -f docker-compose.prod.yml exec app ls -la storage/
+docker compose -f docker-compose.prod.yml exec app ls -la bootstrap/cache/
+
+# Rebuild image if needed (permissions baked at build time):
+docker compose -f docker-compose.prod.yml build --no-cache app
+docker compose -f docker-compose.prod.yml up -d
+```
+
+**DO NOT:**
+- ❌ Run `sudo chown` on host for `storage/` or `bootstrap/cache/`
+- ❌ Run `chmod 777` (security risk)
+- ❌ Modify permissions inside running container (not persistent)
+
+**✅ CORRECT:** Permissions are already configured in Dockerfile. If errors occur, rebuild the image.
+
 ### Step 5: Run Database Migrations
 
 ```bash
@@ -269,30 +369,55 @@ docker compose -f docker-compose.prod.yml exec app php artisan view:cache
 
 ### Option A: Let's Encrypt with Certbot (Free, Automated)
 
+**⚠️ IMPORTANT:** This guide uses standalone mode for initial certificate + webroot mode for renewals (Docker-compatible approach).
+
 #### Step 1: Install Certbot
 
 ```bash
-# Install Certbot and Nginx plugin
-sudo apt install -y certbot python3-certbot-nginx
+# Install Certbot via snap (Ubuntu 24.04 recommended method)
+sudo snap install --classic certbot
+
+# Create symlink
+sudo ln -s /snap/bin/certbot /usr/bin/certbot
+
+# Verify installation
+certbot --version
 ```
 
-#### Step 2: Stop Nginx Container (Temporarily)
+**Expected Output:**
+```
+certbot 2.x.x
+```
+
+#### Step 2: Create Webroot Directory
 
 ```bash
-# Certbot needs port 80 free
+# Create directory for ACME challenge files
+sudo mkdir -p /var/www/certbot
+
+# Set permissions
+sudo chown -R www-data:www-data /var/www/certbot
+```
+
+#### Step 3: Stop Nginx Container (For Initial Certificate Only)
+
+```bash
+# Certbot needs port 80 free for standalone mode
 docker compose -f docker-compose.prod.yml stop nginx
 ```
 
-#### Step 3: Generate SSL Certificate
+#### Step 4: Generate Initial SSL Certificate (Standalone Mode)
 
 ```bash
 # Replace with your actual domain
-sudo certbot certonly --standalone -d your-domain.com -d www.your-domain.com
+sudo certbot certonly --standalone \
+  -d your-domain.com \
+  -d www.your-domain.com \
+  --non-interactive \
+  --agree-tos \
+  --email your-email@example.com
 
-# Follow prompts:
-# Enter email address: your-email@example.com
-# Agree to ToS: (Y)es
-# Share email with EFF: (Y)es or (N)o
+# Follow prompts if not using --non-interactive
 ```
 
 **Expected Output:**
@@ -300,6 +425,7 @@ sudo certbot certonly --standalone -d your-domain.com -d www.your-domain.com
 Successfully received certificate.
 Certificate is saved at: /etc/letsencrypt/live/your-domain.com/fullchain.pem
 Key is saved at:         /etc/letsencrypt/live/your-domain.com/privkey.pem
+This certificate expires on 2025-04-15.
 ```
 
 #### Step 4: Update Nginx Configuration
@@ -344,31 +470,91 @@ server {
 }
 ```
 
-#### Step 5: Restart Nginx
+#### Step 6: Configure Webroot Renewal + Post-Hook
+
+**Setup post-hook script to restart Nginx after renewal:**
 
 ```bash
-# Restart Nginx with new SSL config
+# Create post-hook directory
+sudo mkdir -p /etc/letsencrypt/renewal-hooks/post
+
+# Create restart script
+sudo nano /etc/letsencrypt/renewal-hooks/post/reload-nginx.sh
+```
+
+**Paste this content:**
+```bash
+#!/bin/bash
+set -e
+
+DOCKER_COMPOSE_PATH="/var/www/paradocks"
+LOG_FILE="/var/log/letsencrypt/post-hook.log"
+
+log_message() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> "$LOG_FILE"
+}
+
+log_message "=== SSL certificate renewed, restarting Nginx ===" cd "$DOCKER_COMPOSE_PATH"
+
+if docker compose -f docker-compose.prod.yml restart nginx; then
+    log_message "✅ Nginx restarted successfully"
+else
+    log_message "❌ Failed to restart Nginx"
+    exit 1
+fi
+```
+
+**Make executable:**
+```bash
+sudo chmod +x /etc/letsencrypt/renewal-hooks/post/reload-nginx.sh
+sudo mkdir -p /var/log/letsencrypt
+```
+
+#### Step 7: Update Certbot Renewal Config for Webroot
+
+```bash
+# Edit renewal config
+sudo nano /etc/letsencrypt/renewal/your-domain.com.conf
+```
+
+**Add/modify these lines:**
+```ini
+# BEFORE (remove this):
+# authenticator = standalone
+
+# AFTER (add this):
+authenticator = webroot
+
+[[webroot_map]]
+your-domain.com = /var/www/certbot
+www.your-domain.com = /var/www/certbot
+```
+
+#### Step 8: Restart Nginx + Test Auto-Renewal
+
+```bash
+# Start Nginx
 docker compose -f docker-compose.prod.yml up -d nginx
 
 # Test HTTPS
 curl -I https://your-domain.com
-```
 
-#### Step 6: Setup Auto-Renewal
-
-```bash
-# Test renewal (dry run)
+# Test renewal (dry run - will NOT restart nginx)
 sudo certbot renew --dry-run
 
-# Enable automatic renewal
-sudo systemctl enable certbot.timer
-sudo systemctl start certbot.timer
-
-# Check renewal timer status
-sudo systemctl status certbot.timer
+# Check systemd timer (auto-enabled by snap)
+sudo systemctl status snap.certbot.renew.timer
 ```
 
-**Certbot will auto-renew certificates before expiry (every 90 days).**
+**Expected Output:**
+```
+● snap.certbot.renew.timer - Timer for snap application certbot.renew
+     Loaded: loaded
+     Active: active (waiting)
+    Trigger: Next run at 02:00:00
+```
+
+**Certbot will auto-renew certificates before expiry (every 90 days) and automatically restart Nginx via post-hook.**
 
 ---
 

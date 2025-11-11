@@ -160,7 +160,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: sh -c "while true; do php artisan schedule:run --verbose --no-interaction; sleep 60; done"
+    command: sh -c "while true; do php artisan schedule:run --verbose --no-interaction >> /proc/1/fd/1 2>&1 || echo 'Schedule run failed'; sleep 60; done"
 
 # Production Networks (isolated from host)
 networks:
