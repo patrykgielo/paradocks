@@ -450,11 +450,10 @@ class SystemSettings extends Page implements HasForms
                             ->label('SMS Enabled')
                             ->helperText('Enable or disable SMS notifications globally'),
 
-                        TextInput::make('sms.api_token')
+                        Placeholder::make('api_token_info')
                             ->label('API Token')
-                            ->password()
-                            ->revealable()
-                            ->helperText('SMSAPI.pl OAuth 2.0 Bearer Token'),
+                            ->content('⚙️ Configure SMSAPI_TOKEN in .env file for security')
+                            ->helperText('API token is no longer stored in database for security reasons. Set SMSAPI_TOKEN in your .env file.'),
 
                         Select::make('sms.service')
                             ->label('Service')
@@ -499,6 +498,46 @@ class SystemSettings extends Page implements HasForms
                         Toggle::make('sms.send_follow_up')
                             ->label('Follow-up SMS')
                             ->helperText('Send follow-up after completed appointment'),
+                    ])
+                    ->columns(2),
+
+                Section::make('SMS Cost Control')
+                    ->description('Spending limits and alerts to control SMS costs')
+                    ->schema([
+                        TextInput::make('sms.daily_limit')
+                            ->label('Daily SMS Limit')
+                            ->numeric()
+                            ->minValue(1)
+                            ->maxValue(100000)
+                            ->default(500)
+                            ->required()
+                            ->helperText('Maximum SMS messages per day (also configurable via SMS_DAILY_LIMIT in .env)'),
+
+                        TextInput::make('sms.monthly_limit')
+                            ->label('Monthly SMS Limit')
+                            ->numeric()
+                            ->minValue(1)
+                            ->maxValue(1000000)
+                            ->default(10000)
+                            ->required()
+                            ->helperText('Maximum SMS messages per month (also configurable via SMS_MONTHLY_LIMIT in .env)'),
+
+                        TextInput::make('sms.alert_threshold')
+                            ->label('Alert Threshold (%)')
+                            ->numeric()
+                            ->minValue(1)
+                            ->maxValue(100)
+                            ->default(80)
+                            ->suffix('%')
+                            ->required()
+                            ->helperText('Send alert email when reaching this percentage of daily/monthly limit'),
+
+                        TextInput::make('sms.alert_email')
+                            ->label('Alert Email')
+                            ->email()
+                            ->default('admin@example.com')
+                            ->required()
+                            ->helperText('Email address for cost alerts (also configurable via SMS_ALERT_EMAIL in .env)'),
                     ])
                     ->columns(2),
             ]);

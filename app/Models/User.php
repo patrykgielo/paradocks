@@ -34,6 +34,11 @@ class User extends Authenticatable implements FilamentUser, HasName
         'postal_code',
         'access_notes',
         'preferred_language',
+        'sms_consent_given_at',
+        'sms_consent_ip',
+        'sms_consent_user_agent',
+        'sms_opted_out_at',
+        'sms_opt_out_method',
     ];
 
     /**
@@ -56,7 +61,51 @@ class User extends Authenticatable implements FilamentUser, HasName
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'sms_consent_given_at' => 'datetime',
+            'sms_opted_out_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Check if user has given SMS consent and has not opted out.
+     *
+     * @return bool
+     */
+    public function hasSmsConsent(): bool
+    {
+        return $this->sms_consent_given_at !== null && $this->sms_opted_out_at === null;
+    }
+
+    /**
+     * Grant SMS consent with tracking.
+     *
+     * @param string|null $ip IP address of consent
+     * @param string|null $userAgent User agent string
+     * @return void
+     */
+    public function grantSmsConsent(?string $ip = null, ?string $userAgent = null): void
+    {
+        $this->update([
+            'sms_consent_given_at' => now(),
+            'sms_consent_ip' => $ip,
+            'sms_consent_user_agent' => $userAgent,
+            'sms_opted_out_at' => null,
+            'sms_opt_out_method' => null,
+        ]);
+    }
+
+    /**
+     * Revoke SMS consent (opt-out).
+     *
+     * @param string $method Opt-out method: 'manual', 'STOP_reply', 'admin'
+     * @return void
+     */
+    public function revokeSmsConsent(string $method = 'manual'): void
+    {
+        $this->update([
+            'sms_opted_out_at' => now(),
+            'sms_opt_out_method' => $method,
+        ]);
     }
 
     /**

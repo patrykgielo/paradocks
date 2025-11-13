@@ -148,7 +148,7 @@ class SettingSeeder extends Seeder
     {
         $settings = [
             'enabled' => [true],
-            'api_token' => [null],
+            // api_token removed - now configured in .env as SMSAPI_TOKEN
             'service' => ['pl'],
             'sender_name' => ['Paradocks'],
             'test_mode' => [false],
@@ -157,6 +157,11 @@ class SettingSeeder extends Seeder
             'send_reminder_24h' => [true],
             'send_reminder_2h' => [true],
             'send_follow_up' => [true],
+            // Spending limits (also configurable via .env)
+            'daily_limit' => [config('services.sms.daily_limit', 500)],
+            'monthly_limit' => [config('services.sms.monthly_limit', 10000)],
+            'alert_threshold' => [config('services.sms.alert_threshold', 80)],
+            'alert_email' => [config('services.sms.alert_email', 'admin@example.com')],
         ];
 
         $this->seedGroup('sms', $settings);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Sms;
 
+use App\Helpers\PrivacyHelper;
 use App\Models\SmsEvent;
 use App\Models\SmsSend;
 use App\Models\SmsSuppression;
@@ -56,7 +57,7 @@ class SmsService
         $smsSettings = $this->settings->group('sms');
         if (!($smsSettings['enabled'] ?? true)) {
             Log::warning('SMS sending is disabled globally', [
-                'recipient' => $recipient,
+                'recipient' => PrivacyHelper::maskPhone($recipient),
                 'template' => $templateKey,
             ]);
 
@@ -66,14 +67,31 @@ class SmsService
         // Step 2: Check suppression list
         if (SmsSuppression::isSuppressed($recipient)) {
             Log::warning('SMS blocked by suppression list', [
-                'recipient' => $recipient,
+                'recipient' => PrivacyHelper::maskPhone($recipient),
                 'template' => $templateKey,
             ]);
 
             throw new \Exception("Phone number {$recipient} is suppressed and cannot receive SMS.");
         }
 
-        // Step 3: Fetch template from database
+        // Step 3: Check SMS consent (GDPR compliance)
+        if (isset($metadata['user_id'])) {
+            $user = \App\Models\User::find($metadata['user_id']);
+            if ($user && !$user->hasSmsConsent()) {
+                Log::warning('SMS blocked: user has not given consent or has opted out', [
+                    'recipient' => PrivacyHelper::maskPhone($recipient),
+                    'user_id' => $metadata['user_id'],
+                    'template' => $templateKey,
+                ]);
+
+                throw new \Exception("User has not given SMS consent or has opted out.");
+            }
+        }
+
+        // Step 4: Check spending limits (daily and monthly)
+        $this->checkSpendingLimits();
+
+        // Step 5: Fetch template from database
         $template = SmsTemplate::where('key', $templateKey)
             ->where('language', $language)
             ->where('active', true)
@@ -83,10 +101,10 @@ class SmsService
             throw new \Exception("SMS template '{$templateKey}' not found for language '{$language}'.");
         }
 
-        // Step 4: Generate unique message key for idempotency
+        // Step 6: Generate unique message key for idempotency
         $messageKey = $this->generateMessageKey($templateKey, $recipient, $metadata);
 
-        // Step 5: Check for duplicate (idempotency check)
+        // Step 7: Check for duplicate (idempotency check)
         $existingSend = SmsSend::where('message_key', $messageKey)->first();
 
         if ($existingSend) {
@@ -98,10 +116,10 @@ class SmsService
             return $existingSend;
         }
 
-        // Step 6: Render template
+        // Step 8: Render template
         $messageBody = $this->renderTemplate($template, $data);
 
-        // Step 7: Validate message length
+        // Step 9: Validate message length
         $lengthInfo = $this->gateway->calculateMessageLength($messageBody);
         if ($lengthInfo['length'] > $template->max_length) {
             Log::warning('SMS message exceeds max length', [
@@ -115,7 +133,7 @@ class SmsService
             $lengthInfo = $this->gateway->calculateMessageLength($messageBody);
         }
 
-        // Step 8: Create SmsSend record (status='pending')
+        // Step 10: Create SmsSend record (status='pending')
         $smsSend = SmsSend::create([
             'template_key' => $templateKey,
             'language' => $language,
@@ -128,7 +146,7 @@ class SmsService
             'message_parts' => $lengthInfo['parts'],
         ]);
 
-        // Step 9: Try to send via SmsGateway
+        // Step 11: Try to send via SmsGateway
         try {
             $response = $this->gateway->send(
                 $recipient,
@@ -157,7 +175,7 @@ class SmsService
 
             Log::info('SMS sent successfully', [
                 'sms_send_id' => $smsSend->id,
-                'recipient' => $recipient,
+                'recipient' => PrivacyHelper::maskPhone($recipient),
                 'template' => $templateKey,
                 'sms_id' => $response['sms_id'],
             ]);
@@ -181,7 +199,7 @@ class SmsService
 
             Log::error('SMS sending failed', [
                 'sms_send_id' => $smsSend->id,
-                'recipient' => $recipient,
+                'recipient' => PrivacyHelper::maskPhone($recipient),
                 'template' => $templateKey,
                 'error' => $e->getMessage(),
             ]);
@@ -280,7 +298,7 @@ class SmsService
 
             Log::info('Test SMS sent successfully', [
                 'sms_send_id' => $smsSend->id,
-                'recipient' => $recipient,
+                'recipient' => PrivacyHelper::maskPhone($recipient),
             ]);
         } catch (\Throwable $e) {
             $smsSend->update([
@@ -292,5 +310,97 @@ class SmsService
         }
 
         return $smsSend;
+    }
+
+    /**
+     * Check daily and monthly SMS spending limits.
+     *
+     * Throws exception if limits are exceeded.
+     * Sends alert email when threshold is reached.
+     *
+     * @return void
+     * @throws \Exception If spending limit is exceeded
+     */
+    private function checkSpendingLimits(): void
+    {
+        $smsSettings = $this->settings->group('sms');
+
+        $dailyLimit = $smsSettings['daily_limit'] ?? config('services.sms.daily_limit', 500);
+        $monthlyLimit = $smsSettings['monthly_limit'] ?? config('services.sms.monthly_limit', 10000);
+        $alertThreshold = $smsSettings['alert_threshold'] ?? config('services.sms.alert_threshold', 80);
+        $alertEmail = $smsSettings['alert_email'] ?? config('services.sms.alert_email');
+
+        // Count SMS sent today
+        $todayCount = SmsSend::whereDate('created_at', today())->count();
+
+        // Count SMS sent this month
+        $monthCount = SmsSend::whereYear('created_at', now()->year)
+            ->whereMonth('created_at', now()->month)
+            ->count();
+
+        // Check daily limit
+        if ($todayCount >= $dailyLimit) {
+            Log::error('Daily SMS limit exceeded', [
+                'today_count' => $todayCount,
+                'daily_limit' => $dailyLimit,
+            ]);
+
+            throw new \Exception("Daily SMS limit of {$dailyLimit} messages exceeded. Sent: {$todayCount}.");
+        }
+
+        // Check monthly limit
+        if ($monthCount >= $monthlyLimit) {
+            Log::error('Monthly SMS limit exceeded', [
+                'month_count' => $monthCount,
+                'monthly_limit' => $monthlyLimit,
+            ]);
+
+            throw new \Exception("Monthly SMS limit of {$monthlyLimit} messages exceeded. Sent: {$monthCount}.");
+        }
+
+        // Check if we should send alert (e.g., 80% threshold)
+        $dailyThreshold = ($dailyLimit * $alertThreshold) / 100;
+        $monthlyThreshold = ($monthlyLimit * $alertThreshold) / 100;
+
+        if ($todayCount >= $dailyThreshold && !cache()->has('sms_daily_alert_sent_' . today()->toDateString())) {
+            $this->sendSpendingAlert('daily', $todayCount, $dailyLimit, $alertEmail);
+            cache()->put('sms_daily_alert_sent_' . today()->toDateString(), true, now()->endOfDay());
+        }
+
+        if ($monthCount >= $monthlyThreshold && !cache()->has('sms_monthly_alert_sent_' . now()->format('Y-m'))) {
+            $this->sendSpendingAlert('monthly', $monthCount, $monthlyLimit, $alertEmail);
+            cache()->put('sms_monthly_alert_sent_' . now()->format('Y-m'), true, now()->endOfMonth());
+        }
+    }
+
+    /**
+     * Send spending alert email to admin.
+     *
+     * @param string $period 'daily' or 'monthly'
+     * @param int $currentCount Current SMS count
+     * @param int $limit SMS limit
+     * @param string|null $email Alert email address
+     * @return void
+     */
+    private function sendSpendingAlert(string $period, int $currentCount, int $limit, ?string $email): void
+    {
+        if (empty($email)) {
+            Log::warning('SMS spending alert email not configured');
+
+            return;
+        }
+
+        $percentage = round(($currentCount / $limit) * 100);
+
+        Log::warning("SMS {$period} spending threshold reached", [
+            'current_count' => $currentCount,
+            'limit' => $limit,
+            'percentage' => $percentage,
+            'alert_email' => $email,
+        ]);
+
+        // TODO: Send email notification
+        // This would typically use Laravel's Mail facade:
+        // Mail::to($email)->send(new SmsSpendingAlertMail($period, $currentCount, $limit, $percentage));
     }
 }

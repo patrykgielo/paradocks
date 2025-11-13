@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Sms;
 
+use App\Helpers\PrivacyHelper;
 use App\Support\Settings\SettingsManager;
 use Illuminate\Support\Facades\Log;
 use Smsapi\Client\Curl\SmsapiHttpClient;
@@ -83,7 +84,7 @@ class SmsApiGateway implements SmsGatewayInterface
 
             // Log SMS sending attempt
             Log::debug('Sending SMS via SMSAPI', [
-                'to' => $to,
+                'to' => PrivacyHelper::maskPhone($to),
                 'from' => $senderName,
                 'test_mode' => $testMode,
                 'message_length' => $lengthInfo['length'],
@@ -99,7 +100,7 @@ class SmsApiGateway implements SmsGatewayInterface
             $smsId = $response->id ?? 'unknown';
 
             Log::info('SMS sent successfully via SMSAPI', [
-                'to' => $to,
+                'to' => PrivacyHelper::maskPhone($to),
                 'sms_id' => $smsId,
                 'message_length' => $lengthInfo['length'],
                 'message_parts' => $lengthInfo['parts'],
@@ -113,7 +114,7 @@ class SmsApiGateway implements SmsGatewayInterface
             ];
         } catch (\Throwable $e) {
             Log::error('SMSAPI sending failed', [
-                'to' => $to,
+                'to' => PrivacyHelper::maskPhone($to),
                 'from' => $senderName,
                 'test_mode' => $testMode,
                 'error' => $e->getMessage(),
@@ -193,16 +194,15 @@ class SmsApiGateway implements SmsGatewayInterface
             return $this->service;
         }
 
-        $smsSettings = $this->settings->group('sms');
-
-        // Validate required settings
-        $apiToken = $smsSettings['api_token'] ?? env('SMSAPI_TOKEN');
+        // Get API token from config (env)
+        $apiToken = config('services.smsapi.token');
         if (empty($apiToken)) {
-            throw new \Exception('SMSAPI token not configured. Set sms.api_token in System Settings or SMSAPI_TOKEN in .env');
+            throw new \Exception('SMSAPI token not configured. Set SMSAPI_TOKEN in .env file');
         }
 
-        // Determine service (pl or com)
-        $serviceType = $smsSettings['service'] ?? env('SMSAPI_SERVICE', 'pl');
+        // Determine service (pl or com) - check settings first, then config
+        $smsSettings = $this->settings->group('sms');
+        $serviceType = $smsSettings['service'] ?? config('services.smsapi.service', 'pl');
 
         // Create SMSAPI HTTP client (Curl adapter)
         $client = new SmsapiHttpClient();

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\PrivacyHelper;
 use App\Http\Controllers\Controller;
 use App\Models\SmsEvent;
 use App\Models\SmsSend;
@@ -38,6 +39,18 @@ class SmsApiWebhookController extends Controller
     public function handleDeliveryStatus(Request $request): JsonResponse
     {
         try {
+            // Verify webhook signature for security
+            if (!$this->verifyWebhookSignature($request)) {
+                Log::warning('SMSAPI webhook: Invalid signature', [
+                    'ip' => $request->ip(),
+                    'payload' => $request->all(),
+                ]);
+
+                return response()->json([
+                    'error' => 'Invalid signature',
+                ], 401);
+            }
+
             // Log incoming webhook for debugging
             Log::info('SMSAPI webhook received', [
                 'payload' => $request->all(),
@@ -82,7 +95,7 @@ class SmsApiWebhookController extends Controller
                 'sms_send_id' => $smsSend->id,
                 'event_type' => $eventType,
                 'occurred_at' => now(),
-                'metadata' => [
+                'event_data' => [
                     'smsapi_status' => $status,
                     'error_code' => $errorCode,
                     'phone' => $phone,
@@ -202,7 +215,7 @@ class SmsApiWebhookController extends Controller
             SmsSuppression::suppress($phoneToSuppress, 'invalid_number');
 
             Log::info('Phone number added to suppression list', [
-                'phone' => substr($phoneToSuppress, 0, 3) . '***',
+                'phone' => PrivacyHelper::maskPhone($phoneToSuppress),
                 'reason' => 'invalid_number',
             ]);
 
@@ -220,10 +233,46 @@ class SmsApiWebhookController extends Controller
                 SmsSuppression::suppress($phoneToSuppress, 'failed_repeatedly');
 
                 Log::warning('Phone number suppressed due to repeated failures', [
-                    'phone' => substr($phoneToSuppress, 0, 3) . '***',
+                    'phone' => PrivacyHelper::maskPhone($phoneToSuppress),
                     'failure_count' => $failureCount,
                 ]);
             }
         }
+    }
+
+    /**
+     * Verify webhook signature for security.
+     *
+     * SMSAPI.pl uses HMAC SHA-256 signature in X-SMSAPI-Signature header.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return bool True if signature is valid or webhook secret not configured
+     */
+    private function verifyWebhookSignature(Request $request): bool
+    {
+        $webhookSecret = config('services.smsapi.webhook_secret');
+
+        // If webhook secret not configured, skip verification (development mode)
+        if (empty($webhookSecret)) {
+            Log::debug('SMSAPI webhook signature verification skipped (no secret configured)');
+
+            return true;
+        }
+
+        // Get signature from header
+        $providedSignature = $request->header('X-SMSAPI-Signature');
+
+        if (empty($providedSignature)) {
+            Log::warning('SMSAPI webhook: Missing X-SMSAPI-Signature header');
+
+            return false;
+        }
+
+        // Calculate expected signature
+        $payload = $request->getContent();
+        $expectedSignature = hash_hmac('sha256', $payload, $webhookSecret);
+
+        // Compare signatures using timing-safe comparison
+        return hash_equals($expectedSignature, $providedSignature);
     }
 }
