@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Events\AppointmentCancelled;
+use App\Events\AppointmentConfirmed;
 use App\Events\AppointmentCreated;
 use App\Events\AppointmentFollowUp;
 use App\Events\AppointmentReminder24h;
@@ -26,6 +27,9 @@ use App\Observers\AppointmentObserver;
 use App\Services\Email\EmailGatewayInterface;
 use App\Services\Email\EmailService;
 use App\Services\Email\SmtpMailer;
+use App\Services\Sms\SmsApiGateway;
+use App\Services\Sms\SmsGatewayInterface;
+use App\Services\Sms\SmsService;
 use App\Support\Settings\SettingsManager;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
@@ -45,6 +49,12 @@ class AppServiceProvider extends ServiceProvider
 
         // Register EmailService as singleton
         $this->app->singleton(EmailService::class);
+
+        // Bind SmsGateway interface to SMSAPI implementation
+        $this->app->bind(SmsGatewayInterface::class, SmsApiGateway::class);
+
+        // Register SmsService as singleton
+        $this->app->singleton(SmsService::class);
     }
 
     /**
@@ -160,6 +170,94 @@ class AppServiceProvider extends ServiceProvider
                 new AppointmentFollowUpNotification($event->appointment)
             );
         });
+
+        // ========== SMS NOTIFICATIONS ==========
+
+        // Send booking confirmation SMS when customer creates appointment
+        Event::listen(AppointmentCreated::class, function (AppointmentCreated $event) {
+            $this->sendSmsNotification(
+                'booking_confirmation',
+                $event->appointment,
+                'send_booking_confirmation'
+            );
+        });
+
+        // Send admin confirmation SMS when admin confirms appointment
+        Event::listen(AppointmentConfirmed::class, function (AppointmentConfirmed $event) {
+            $this->sendSmsNotification(
+                'admin_confirmation',
+                $event->appointment,
+                'send_admin_confirmation'
+            );
+        });
+    }
+
+    /**
+     * Send SMS notification for appointment event.
+     *
+     * @param string $templateKey Template key (e.g., 'booking_confirmation')
+     * @param \App\Models\Appointment $appointment The appointment
+     * @param string $settingKey Setting key to check if enabled (e.g., 'send_booking_confirmation')
+     */
+    private function sendSmsNotification(string $templateKey, $appointment, string $settingKey): void
+    {
+        try {
+            $smsService = app(SmsService::class);
+            $settingsManager = app(SettingsManager::class);
+            $smsSettings = $settingsManager->group('sms');
+
+            // Check if SMS globally enabled
+            if (!($smsSettings['enabled'] ?? true)) {
+                return;
+            }
+
+            // Check if specific notification type is enabled
+            if (!($smsSettings[$settingKey] ?? true)) {
+                return;
+            }
+
+            // Get customer phone number
+            $customerPhone = $appointment->customer->phone ?? null;
+            if (!$customerPhone) {
+                \Log::warning("Cannot send SMS notification: customer has no phone number", [
+                    'appointment_id' => $appointment->id,
+                    'customer_id' => $appointment->customer->id,
+                    'template_key' => $templateKey,
+                ]);
+                return;
+            }
+
+            // Prepare template data
+            $data = [
+                'customer_name' => $appointment->customer->name,
+                'service_name' => $appointment->service->name ?? 'N/A',
+                'appointment_date' => $appointment->appointment_date->format('Y-m-d'),
+                'start_time' => $appointment->start_time->format('H:i'),
+                'location' => $appointment->location_address ?? 'N/A',
+            ];
+
+            // Send SMS
+            $smsService->sendFromTemplate(
+                $templateKey,
+                'pl', // Default to Polish
+                $customerPhone,
+                $data,
+                ['appointment_id' => $appointment->id]
+            );
+
+            \Log::info("SMS notification sent successfully", [
+                'template_key' => $templateKey,
+                'appointment_id' => $appointment->id,
+                'phone' => substr($customerPhone, 0, 3) . '***', // Masked for privacy
+            ]);
+        } catch (\Exception $e) {
+            // Log error but don't throw - SMS failure shouldn't block appointment flow
+            \Log::error("Failed to send SMS notification", [
+                'template_key' => $templateKey,
+                'appointment_id' => $appointment->id ?? null,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }
 

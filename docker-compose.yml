@@ -7,7 +7,7 @@ services:
     restart: unless-stopped
     working_dir: /var/www/
     volumes:
-      - ./app:/var/www
+      - .:/var/www
     networks:
       - paradocks
     environment:
@@ -43,7 +43,7 @@ services:
       - "8081:80"
       - "8444:443"
     volumes:
-      - ./app:/var/www
+      - .:/var/www
       - ./docker/nginx:/etc/nginx/conf.d
       - ./docker/ssl:/etc/nginx/ssl
     networks:
@@ -58,7 +58,7 @@ services:
     container_name: paradocks-node
     working_dir: /var/www
     volumes:
-      - ./app:/var/www
+      - .:/var/www
     ports:
       - "5173:5173"
     networks:
@@ -106,7 +106,7 @@ services:
     restart: unless-stopped
     working_dir: /var/www
     volumes:
-      - ./app:/var/www
+      - .:/var/www
     networks:
       - paradocks
     depends_on:
@@ -123,7 +123,7 @@ services:
     restart: unless-stopped
     working_dir: /var/www
     volumes:
-      - ./app:/var/www
+      - .:/var/www
     networks:
       - paradocks
     depends_on:
@@ -144,7 +144,7 @@ services:
     restart: unless-stopped
     working_dir: /var/www
     volumes:
-      - ./app:/var/www
+      - .:/var/www
     networks:
       - paradocks
     depends_on:

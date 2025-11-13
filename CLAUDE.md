@@ -31,6 +31,7 @@ docker compose exec app php artisan db:seed --class=VehicleTypeSeeder
 docker compose exec app php artisan db:seed --class=RolePermissionSeeder
 docker compose exec app php artisan db:seed --class=ServiceAvailabilitySeeder
 docker compose exec app php artisan db:seed --class=EmailTemplateSeeder
+docker compose exec app php artisan db:seed --class=SmsTemplateSeeder
 docker compose exec app php artisan db:seed --class=SettingSeeder
 
 # Create admin user
@@ -73,6 +74,7 @@ docker compose exec app php artisan db:seed --class=VehicleTypeSeeder
 docker compose exec app php artisan db:seed --class=RolePermissionSeeder
 docker compose exec app php artisan db:seed --class=ServiceAvailabilitySeeder
 docker compose exec app php artisan db:seed --class=EmailTemplateSeeder
+docker compose exec app php artisan db:seed --class=SmsTemplateSeeder
 docker compose exec app php artisan db:seed --class=SettingSeeder
 ```
 
