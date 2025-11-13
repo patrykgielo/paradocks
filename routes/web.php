@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\SmsApiWebhookController;
 use App\Http\Controllers\Api\VehicleDataController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\BookingController;
@@ -11,6 +12,12 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 
 // Authentication routes
 Auth::routes();
+
+// Webhook routes (no authentication required)
+Route::prefix('api/webhooks')->name('webhooks.')->group(function () {
+    Route::post('/smsapi/delivery-status', [SmsApiWebhookController::class, 'handleDeliveryStatus'])
+        ->name('smsapi.delivery-status');
+});
 
 // Protected routes (require authentication)
 Route::middleware(['auth'])->group(function () {
