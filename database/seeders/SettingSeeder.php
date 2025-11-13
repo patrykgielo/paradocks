@@ -16,6 +16,7 @@ use Illuminate\Database\Seeder;
  * - contact: Business contact information
  * - marketing: Homepage content and messaging
  * - email: SMTP configuration and notification settings
+ * - sms: SMSAPI configuration and notification settings
  */
 class SettingSeeder extends Seeder
 {
@@ -29,6 +30,7 @@ class SettingSeeder extends Seeder
         $this->seedContactSettings();
         $this->seedMarketingSettings();
         $this->seedEmailSettings();
+        $this->seedSmsSettings();
     }
 
     /**
@@ -137,6 +139,32 @@ class SettingSeeder extends Seeder
         ];
 
         $this->seedGroup('email', $settings);
+    }
+
+    /**
+     * Seed SMS system configuration settings.
+     */
+    private function seedSmsSettings(): void
+    {
+        $settings = [
+            'enabled' => [true],
+            // api_token removed - now configured in .env as SMSAPI_TOKEN
+            'service' => ['pl'],
+            'sender_name' => ['Paradocks'],
+            'test_mode' => [false],
+            'send_booking_confirmation' => [true],
+            'send_admin_confirmation' => [true],
+            'send_reminder_24h' => [true],
+            'send_reminder_2h' => [true],
+            'send_follow_up' => [true],
+            // Spending limits (also configurable via .env)
+            'daily_limit' => [config('services.sms.daily_limit', 500)],
+            'monthly_limit' => [config('services.sms.monthly_limit', 10000)],
+            'alert_threshold' => [config('services.sms.alert_threshold', 80)],
+            'alert_email' => [config('services.sms.alert_email', 'admin@example.com')],
+        ];
+
+        $this->seedGroup('sms', $settings);
     }
 
     /**

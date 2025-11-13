@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Events\AppointmentCancelled;
+use App\Events\AppointmentConfirmed;
 use App\Events\AppointmentCreated;
 use App\Events\AppointmentRescheduled;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -40,6 +41,11 @@ class Appointment extends Model
                 }
             }
 
+            // Detect appointment confirmation (status change to 'confirmed')
+            if ($appointment->isDirty('status') && $appointment->status === 'confirmed') {
+                event(new AppointmentConfirmed($appointment));
+            }
+
             // Detect appointment cancellation (status change to 'cancelled')
             if ($appointment->isDirty('status') && $appointment->status === 'cancelled') {
                 event(new AppointmentCancelled($appointment));
@@ -71,6 +77,9 @@ class Appointment extends Model
         'sent_24h_reminder',
         'sent_2h_reminder',
         'sent_followup',
+        'sent_24h_reminder_sms',
+        'sent_2h_reminder_sms',
+        'sent_followup_sms',
     ];
 
     protected $casts = [
@@ -81,6 +90,9 @@ class Appointment extends Model
         'sent_24h_reminder' => 'boolean',
         'sent_2h_reminder' => 'boolean',
         'sent_followup' => 'boolean',
+        'sent_24h_reminder_sms' => 'boolean',
+        'sent_2h_reminder_sms' => 'boolean',
+        'sent_followup_sms' => 'boolean',
     ];
 
     // Relationships

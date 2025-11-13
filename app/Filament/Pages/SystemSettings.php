@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages;
 
+use App\Services\Sms\SmsService;
 use App\Support\Settings\SettingsManager;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Section;
@@ -87,6 +88,7 @@ class SystemSettings extends Page implements HasForms
                         $this->contactTab(),
                         $this->marketingTab(),
                         $this->emailTab(),
+                        $this->smsTab(),
                     ])
                     ->columnSpanFull(),
             ])
@@ -435,6 +437,113 @@ class SystemSettings extends Page implements HasForms
     }
 
     /**
+     * SMS settings tab.
+     */
+    private function smsTab(): Tabs\Tab
+    {
+        return Tabs\Tab::make('SMS')
+            ->schema([
+                Section::make('SMSAPI Configuration')
+                    ->description('Configure SMSAPI.pl integration for sending SMS')
+                    ->schema([
+                        Toggle::make('sms.enabled')
+                            ->label('SMS Enabled')
+                            ->helperText('Enable or disable SMS notifications globally'),
+
+                        Placeholder::make('api_token_info')
+                            ->label('API Token')
+                            ->content('⚙️ Configure SMSAPI_TOKEN in .env file for security')
+                            ->helperText('API token is no longer stored in database for security reasons. Set SMSAPI_TOKEN in your .env file.'),
+
+                        Select::make('sms.service')
+                            ->label('Service')
+                            ->options([
+                                'pl' => 'SMSAPI.pl (Poland)',
+                                'com' => 'SMSAPI.com (International)',
+                            ])
+                            ->required()
+                            ->helperText('SMSAPI service endpoint'),
+
+                        TextInput::make('sms.sender_name')
+                            ->label('Sender Name')
+                            ->maxLength(11)
+                            ->required()
+                            ->helperText('Max 11 characters, alphanumeric'),
+
+                        Toggle::make('sms.test_mode')
+                            ->label('Test Mode (Sandbox)')
+                            ->helperText('Send SMS in test mode (no actual delivery)'),
+                    ])
+                    ->columns(2),
+
+                Section::make('SMS Notification Settings')
+                    ->description('Enable or disable specific SMS notifications')
+                    ->schema([
+                        Toggle::make('sms.send_booking_confirmation')
+                            ->label('Booking Confirmation')
+                            ->helperText('Send SMS when customer creates appointment'),
+
+                        Toggle::make('sms.send_admin_confirmation')
+                            ->label('Admin Confirmation')
+                            ->helperText('Send SMS when admin confirms appointment'),
+
+                        Toggle::make('sms.send_reminder_24h')
+                            ->label('24-Hour Reminder')
+                            ->helperText('Send reminder 24 hours before appointment'),
+
+                        Toggle::make('sms.send_reminder_2h')
+                            ->label('2-Hour Reminder')
+                            ->helperText('Send reminder 2 hours before appointment'),
+
+                        Toggle::make('sms.send_follow_up')
+                            ->label('Follow-up SMS')
+                            ->helperText('Send follow-up after completed appointment'),
+                    ])
+                    ->columns(2),
+
+                Section::make('SMS Cost Control')
+                    ->description('Spending limits and alerts to control SMS costs')
+                    ->schema([
+                        TextInput::make('sms.daily_limit')
+                            ->label('Daily SMS Limit')
+                            ->numeric()
+                            ->minValue(1)
+                            ->maxValue(100000)
+                            ->default(500)
+                            ->required()
+                            ->helperText('Maximum SMS messages per day (also configurable via SMS_DAILY_LIMIT in .env)'),
+
+                        TextInput::make('sms.monthly_limit')
+                            ->label('Monthly SMS Limit')
+                            ->numeric()
+                            ->minValue(1)
+                            ->maxValue(1000000)
+                            ->default(10000)
+                            ->required()
+                            ->helperText('Maximum SMS messages per month (also configurable via SMS_MONTHLY_LIMIT in .env)'),
+
+                        TextInput::make('sms.alert_threshold')
+                            ->label('Alert Threshold (%)')
+                            ->numeric()
+                            ->minValue(1)
+                            ->maxValue(100)
+                            ->default(80)
+                            ->suffix('%')
+                            ->required()
+                            ->helperText('Send alert email when reaching this percentage of daily/monthly limit'),
+
+                        TextInput::make('sms.alert_email')
+                            ->label('Alert Email')
+                            ->email()
+                            ->default('admin@example.com')
+                            ->required()
+                            ->helperText('Email address for cost alerts (also configurable via SMS_ALERT_EMAIL in .env)'),
+                    ])
+                    ->columns(2),
+            ]);
+    }
+
+    /**
      * Submit form and save settings.
      */
     public function submit(): void
@@ -487,6 +596,46 @@ class SystemSettings extends Page implements HasForms
     }
 
     /**
+     * Test SMS connection.
+     */
+    public function testSmsConnection(): void
+    {
+        try {
+            $user = auth()->user();
+
+            if (!$user || !$user->phone_e164) {
+                Notification::make()
+                    ->title('No phone number found')
+                    ->body('Your user account does not have a phone number (phone_e164). Please add one to test SMS.')
+                    ->danger()
+                    ->send();
+                return;
+            }
+
+            // Get SMS service
+            $smsService = app(SmsService::class);
+
+            // Send test SMS
+            $result = $smsService->sendTestSms(
+                $user->phone_e164,
+                app()->getLocale()
+            );
+
+            Notification::make()
+                ->title('Test SMS sent successfully')
+                ->body("Check your phone at {$user->phone_e164}")
+                ->success()
+                ->send();
+        } catch (\Exception $e) {
+            Notification::make()
+                ->title('SMS test failed')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
+        }
+    }
+
+    /**
      * Get form actions.
      */
     protected function getFormActions(): array
@@ -505,6 +654,15 @@ class SystemSettings extends Page implements HasForms
                 ->modalHeading('Test Email Connection')
                 ->modalDescription('This will send a test email to your account. Continue?')
                 ->modalSubmitActionLabel('Send Test Email'),
+
+            \Filament\Actions\Action::make('testSms')
+                ->label('Test SMS Connection')
+                ->color('gray')
+                ->action('testSmsConnection')
+                ->requiresConfirmation()
+                ->modalHeading('Test SMS Connection')
+                ->modalDescription('This will send a test SMS to your phone number. Continue?')
+                ->modalSubmitActionLabel('Send Test SMS'),
         ];
     }
 }

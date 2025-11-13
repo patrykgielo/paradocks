@@ -1,6 +1,6 @@
 # Project Map - Paradocks Booking System
 
-**Last Updated:** 2025-10-31
+**Last Updated:** 2025-11-12
 **Laravel Version:** 12
 **PHP Version:** 8.2+
 **Database:** SQLite (development), MySQL (Docker production)
@@ -528,6 +528,348 @@ Standard Spatie Laravel Permission tables:
 - admin
 - staff
 - customer
+
+---
+
+### Table: sms_sends
+**Columns:**
+- id (bigint, PK, auto-increment)
+- template_key (varchar) - Template identifier (e.g., 'booking_confirmation')
+- phone_to (varchar(20)) - Recipient phone number (+48...)
+- message_body (text) - Final rendered SMS message
+- status (enum: pending, sent, failed, invalid_number, default: pending)
+- sms_id (varchar(100), nullable) - SMSAPI message ID for tracking
+- message_length (integer, nullable) - Character count
+- message_parts (integer, nullable) - Number of SMS parts (multi-part messages)
+- message_key (varchar(32), unique, nullable) - MD5 hash for idempotency
+- metadata (json, nullable) - Additional data (appointment_id, etc.)
+- error_message (text, nullable) - Error details if failed
+- created_at, updated_at (timestamps)
+
+**Indexes:**
+- Primary key: id
+- Index: status
+- Index: phone_to
+- Index: created_at
+- Unique: message_key
+
+**Purpose:** Tracks all sent SMS messages with delivery status
+
+---
+
+### Table: sms_templates
+**Columns:**
+- id (bigint, PK, auto-increment)
+- key (varchar) - Template identifier (e.g., 'booking_confirmation')
+- language (varchar(2), default: 'pl') - Template language (pl|en)
+- message_body (text) - SMS message template with {{placeholders}}
+- variables (json, nullable) - Array of available variables
+- max_length (integer, default: 160) - Max SMS length (160 GSM, 70 Unicode)
+- active (boolean, default: true) - Enable/disable template
+- created_at, updated_at (timestamps)
+
+**Indexes:**
+- Primary key: id
+- Composite: (key, language)
+- Index: active
+
+**Purpose:** Bilingual SMS message templates with variable interpolation
+
+---
+
+### Table: sms_events
+**Columns:**
+- id (bigint, PK, auto-increment)
+- sms_send_id (foreignId, references sms_sends.id, cascade on delete)
+- event_type (enum: sent, delivered, failed, invalid_number, expired)
+- occurred_at (timestamp) - When event occurred
+- metadata (json, nullable) - Full webhook payload from SMSAPI
+- created_at, updated_at (timestamps)
+
+**Indexes:**
+- Primary key: id
+- Foreign key: sms_send_id
+- Composite: (sms_send_id, event_type)
+
+**Purpose:** Webhook delivery events from SMSAPI for tracking
+
+---
+
+### Table: sms_suppressions
+**Columns:**
+- id (bigint, PK, auto-increment)
+- phone (varchar(20), unique) - Suppressed phone number (+48...)
+- reason (enum: invalid_number, opted_out, failed_repeatedly, manual)
+- suppressed_at (timestamp) - When number was suppressed
+- created_at, updated_at (timestamps)
+
+**Indexes:**
+- Primary key: id
+- Unique: phone
+
+**Purpose:** Opt-out and invalid number management (prevents spam)
+
+---
+
+## SMS System
+
+### Overview
+Complete SMS notification system integrated with SMSAPI.pl for automated appointment notifications.
+
+**Status:** ✅ Production Ready (November 2025)
+
+**Documentation:** `docs/features/sms-system/README.md` | **ADR:** `docs/decisions/ADR-007-sms-system-implementation.md`
+
+### Architecture
+**Pattern:** Service Layer with Gateway Interface
+
+**Components:**
+- **SmsService** (`app/Services/Sms/SmsService.php`) - Core SMS sending logic with template rendering
+- **SmsGatewayInterface** (`app/Services/Sms/SmsGatewayInterface.php`) - Contract for SMS gateway implementations
+- **SmsApiGateway** (`app/Services/Sms/SmsApiGateway.php`) - SMSAPI.pl HTTP API integration (Guzzle client)
+- **Models** - SmsSend, SmsTemplate, SmsEvent, SmsSuppression (4 tables)
+- **Webhook** - SmsApiWebhookController for delivery status tracking
+- **Seeder** - SmsTemplateSeeder (14 templates: 7 types × 2 languages)
+
+### Database Models
+
+**SmsTemplate** (`app/Models/SmsTemplate.php`)
+- Stores SMS message templates with `{{placeholders}}`
+- Fields: `key`, `language`, `message_body`, `variables`, `max_length`, `active`
+- Methods: `render($data)`, `exceedsMaxLength()`, `truncateMessage()`
+- 14 records: 7 types × 2 languages (PL, EN)
+
+**SmsSend** (`app/Models/SmsSend.php`)
+- History of sent SMS messages
+- Fields: `phone_number`, `message_body`, `status`, `smsapi_message_id`, `message_key`, `cost`, `metadata`
+- Statuses: `pending`, `sent`, `failed`, `delivered`
+- Idempotent via `message_key` (MD5 hash prevents duplicates)
+
+**SmsEvent** (`app/Models/SmsEvent.php`)
+- Audit trail of SMS lifecycle events
+- Fields: `sms_send_id`, `event_type`, `smsapi_status`, `error_message`, `raw_response`
+- Event types: `sent`, `failed`, `delivered`, `undelivered`
+
+**SmsSuppression** (`app/Models/SmsSuppression.php`)
+- Opt-out blacklist (phone numbers that should not receive SMS)
+- Fields: `phone_number`, `reason`, `suppressed_at`
+- Reasons: `opt_out`, `invalid_number`, `manual`
+
+### SMS Template Types
+**Location:** 14 templates seeded by `database/seeders/SmsTemplateSeeder.php`
+
+**Template Keys:**
+- `appointment-created` - Customer creates appointment
+- `appointment-confirmed` - Admin manually confirms appointment
+- `appointment-rescheduled` - Date/time changed
+- `appointment-cancelled` - Appointment cancelled
+- `appointment-reminder-24h` - 24 hours before appointment
+- `appointment-reminder-2h` - 2 hours before appointment
+- `appointment-followup` - Post-service feedback request
+
+**Languages:** Polish (pl), English (en)
+
+**Variables:**
+- `customer_name`, `service_name`, `appointment_date`, `appointment_time`
+- `location_address`, `app_name`, `contact_phone`
+
+**Character Limits:**
+- GSM-7: 160 characters (1 SMS)
+- Unicode (Polish): 70 characters (1 SMS)
+
+### Service Layer
+
+**SmsService** (`app/Services/Sms/SmsService.php`)
+- `sendFromTemplate($templateKey, $language, $phoneNumber, $data, $metadata)` - Main method
+- `sendTestSms($phoneNumber, $language)` - Test SMS for admin
+- `renderTemplate($template, $data)` - Blade rendering with fallback
+- Checks suppression list before sending
+- Generates `message_key` for idempotency (prevents duplicate SMS)
+- Creates SmsSend record and logs events
+
+**SmsApiGateway** (`app/Services/Sms/SmsApiGateway.php`)
+- HTTP client for SMSAPI.pl RESTful API (Guzzle)
+- `send($phoneNumber, $messageBody, $from)` - POST to https://api.smsapi.pl/sms.do
+- `checkCredits()` - Get account balance
+- `getMessageStatus($messageId)` - Check delivery status
+- Handles authentication (Bearer token), test mode, error responses
+
+**SmsGatewayInterface** (`app/Services/Sms/SmsGatewayInterface.php`)
+- Contract for gateway implementations (allows switching providers)
+- Methods: `send()`, `checkCredits()`, `getMessageStatus()`
+
+### Webhook Handler
+**Endpoint:** `POST /api/webhooks/smsapi`
+**Controller:** `app/Http/Controllers/Api/SmsApiWebhookController.php`
+
+**Flow:**
+1. Receives HTTP POST from SMSAPI.pl with delivery status
+2. Extracts `id` (SMSAPI message ID) from payload
+3. Finds `SmsSend` by `smsapi_message_id`
+4. Updates `status` to `delivered` or `failed`
+5. Sets `delivered_at` or `failed_at` timestamp
+6. Creates `SmsEvent` for audit trail
+7. Returns `200 OK` to SMSAPI.pl
+
+**Payload Example:**
+```json
+{
+  "id": "sms-123456",
+  "status": "DELIVERED",
+  "error": null,
+  "date_sent": 1635789012,
+  "date_delivered": 1635789120,
+  "number": "+48501234567"
+}
+```
+
+**Event Types:**
+- `sent` - Message sent from SMSAPI gateway
+- `delivered` - Successfully delivered to recipient
+- `failed` - Delivery failed
+- `undelivered` - Not delivered (invalid number, phone off, etc.)
+
+### Admin Panel Resources
+
+**SmsTemplateResource** (`app/Filament/Resources/SmsTemplateResource.php`)
+- CRUD for SMS templates
+- Actions: **Test Send** (sends test SMS from template)
+- Filters: Active/Inactive, Language (PL/EN), Template Type
+- Columns: Key, Language, Message Preview, Max Length, Active
+- Form validation: Max 160 characters, required variables
+
+**SmsSendResource** (`app/Filament/Resources/SmsSendResource.php`)
+- View-only SMS history (no create/edit)
+- Filters: Status, Template Key, Date Range
+- Search: Phone number, message body
+- Actions: **View Details** (full message, metadata, events), **Resend** (retry failed)
+
+**SmsEventResource** (`app/Filament/Resources/SmsEventResource.php`)
+- Audit trail of SMS events
+- Filters: Event Type, Date Range
+- Columns: Event Type, SMSAPI Status, Error Message, Created At
+- Expandable: Shows raw SMSAPI response JSON
+
+**SmsSuppressionResource** (`app/Filament/Resources/SmsSuppressionResource.php`)
+- CRUD for suppression list (blacklist)
+- Filters: Reason (opt_out, invalid_number, manual)
+- Actions: **Add to Blacklist**, **Remove** (un-suppress)
+
+### System Settings
+**Page:** System Settings → SMS Tab (`app/Filament/Pages/SystemSettings.php`)
+
+**SMSAPI Configuration:**
+- SMS Enabled (toggle)
+- API Token (secure, revealable)
+- Service (pl/com)
+- Sender Name (max 11 chars, alphanumeric)
+- Test Mode (sandbox for development)
+
+**SMS Notification Settings:**
+- Booking Confirmation SMS
+- Admin Confirmation SMS
+- 24-Hour Reminder SMS
+- 2-Hour Reminder SMS
+- Follow-up SMS
+
+**Actions:**
+- **Test Email Connection** - Send test email to admin
+- **Test SMS Connection** - Send test SMS to admin (uses admin's `phone_e164`)
+
+### Seeder
+**SmsTemplateSeeder** (`database/seeders/SmsTemplateSeeder.php`)
+- Creates 14 SMS templates (7 types × 2 languages)
+- Idempotent (uses `updateOrCreate`)
+- Run with: `php artisan db:seed --class=SmsTemplateSeeder`
+
+**Added to CLAUDE.md:** Required seeder after `migrate:fresh`
+
+### Configuration
+
+**Environment Variables:**
+```bash
+SMSAPI_TOKEN=Bearer_xxxxx          # API token from SMSAPI.pl
+SMSAPI_SERVICE=pl                  # or 'com' for international
+SMSAPI_SENDER_NAME=Paradocks       # Max 11 chars
+SMSAPI_TEST_MODE=false             # true for sandbox mode
+```
+
+**Settings (Database):**
+Stored in `settings` table via SettingsManager:
+- `sms.enabled` - SMS system on/off
+- `sms.api_token` - SMSAPI.pl Bearer token
+- `sms.service` - pl or com
+- `sms.sender_name` - Sender name (max 11 chars)
+- `sms.test_mode` - Sandbox mode
+- `sms.notification_booking_confirmation` - Toggle
+- `sms.notification_admin_confirmation` - Toggle
+- `sms.notification_reminder_24h` - Toggle
+- `sms.notification_reminder_2h` - Toggle
+- `sms.notification_followup` - Toggle
+
+### Key Features
+
+**Idempotency:**
+- `message_key` = MD5(phone + template + language + appointment_id + timestamp)
+- Prevents duplicate SMS if job retried or event triggered twice
+
+**Suppression List:**
+- Checked before sending (skips suppressed numbers)
+- Users can opt-out (add to suppression list)
+- Invalid numbers auto-added after failures
+
+**Character Limits:**
+- GSM-7: 160 chars (1 SMS), 161-306 chars (2 SMS), 307-459 chars (3 SMS)
+- Unicode (Polish): 70 chars (1 SMS), 71-134 chars (2 SMS), 135-201 chars (3 SMS)
+- Multi-part SMS cost 2-3× more
+
+**Test Mode:**
+- SMS not sent to real phones (simulated by SMSAPI.pl)
+- No credits deducted
+- Useful for development/testing
+
+**Pricing:**
+- ~0.10 PLN per SMS (160 chars) in Poland
+- ~0.20 PLN for 2-part SMS (161-306 chars)
+- ~0.30 PLN for 3-part SMS (307-459 chars)
+
+### Future Enhancements (Backlog)
+- [ ] Queue SMS sending (SendSmsJob) - currently synchronous
+- [ ] SMS analytics dashboard (costs, delivery rates, trends)
+- [ ] Batch SMS sending (send to multiple numbers at once)
+- [ ] SMS scheduling (schedule SMS for future delivery)
+- [ ] Two-way SMS (allow replies, requires phone number as sender)
+- [ ] A/B testing for SMS templates
+
+### Configuration
+**Settings Group:** `sms` in settings table
+
+**Keys:**
+- enabled, api_token, service, sender_name, test_mode
+- send_booking_confirmation, send_admin_confirmation
+- send_reminder_24h, send_reminder_2h, send_follow_up
+
+**Access:** Via `SettingsManager::group('sms')`
+
+### Integration Points
+**Appointment Model:**
+- Added fields: sent_24h_reminder_sms, sent_2h_reminder_sms, sent_followup_sms
+- Dispatches AppointmentConfirmed event on status change to 'confirmed'
+
+**User Model:**
+- Requires `phone` field for SMS notifications
+- Phone stored in international format (+48...)
+
+### Dependencies
+**Composer:**
+```json
+"smsapi/php-client": "^3.0"
+```
+
+**SMSAPI SDK:**
+- OAuth 2.0 Bearer Token authentication
+- PSR-17/18 compliant HTTP client
+- Support for pl and com service endpoints
 
 ---
 
