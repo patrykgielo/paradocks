@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\EmployeeResource\Pages;
+use App\Filament\Resources\EmployeeResource\RelationManagers;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -202,7 +203,11 @@ class EmployeeResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\ServicesRelationManager::class,
+            RelationManagers\StaffSchedulesRelationManager::class,
+            RelationManagers\DateExceptionsRelationManager::class,
+            RelationManagers\VacationPeriodsRelationManager::class,
+            RelationManagers\ServiceAvailabilitiesRelationManager::class, // Legacy - do usunięcia w przyszłości
         ];
     }
 

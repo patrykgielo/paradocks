@@ -29,10 +29,15 @@ sudo ./add-hosts-entry.sh
 # Run required seeders (⚠️ CRITICAL - always after migrate:fresh)
 docker compose exec app php artisan db:seed --class=VehicleTypeSeeder
 docker compose exec app php artisan db:seed --class=RolePermissionSeeder
-docker compose exec app php artisan db:seed --class=ServiceAvailabilitySeeder
 docker compose exec app php artisan db:seed --class=EmailTemplateSeeder
 docker compose exec app php artisan db:seed --class=SmsTemplateSeeder
 docker compose exec app php artisan db:seed --class=SettingSeeder
+
+# Staff scheduling is now managed via new calendar-based system:
+# - /admin/staff-schedules (base weekly patterns)
+# - /admin/staff-date-exceptions (single-day overrides)
+# - /admin/staff-vacation-periods (vacation management)
+# Or via Employee edit page → Harmonogramy/Wyjątki/Urlopy tabs
 
 # Create admin user
 docker compose exec app php artisan make:filament-user
@@ -72,10 +77,12 @@ docker compose exec app php artisan migrate:fresh --seed
 # You MUST manually run these seeders afterward:
 docker compose exec app php artisan db:seed --class=VehicleTypeSeeder
 docker compose exec app php artisan db:seed --class=RolePermissionSeeder
-docker compose exec app php artisan db:seed --class=ServiceAvailabilitySeeder
 docker compose exec app php artisan db:seed --class=EmailTemplateSeeder
 docker compose exec app php artisan db:seed --class=SmsTemplateSeeder
 docker compose exec app php artisan db:seed --class=SettingSeeder
+
+# NOTE: Staff availability is managed via admin panel (/admin/service-availabilities)
+# Use "Ustaw standardowy harmonogram" action to quickly set schedules for employees
 ```
 
 **See:** [Commands Reference](app/docs/guides/commands.md)
@@ -247,6 +254,50 @@ Multi-step wizard for appointment booking with validation.
 
 **See:** [Booking System](app/docs/features/booking-system/README.md)
 
+### Staff Scheduling (Option B - Calendar-based)
+
+Complete calendar-based staff availability management system replacing the old day_of_week pattern.
+
+- **Architecture:** Base Schedules + Date Exceptions + Vacation Periods
+- **Database:** 4 tables (staff_schedules, staff_date_exceptions, staff_vacation_periods, service_staff pivot)
+- **Service:** StaffScheduleService with priority logic (Vacation → Exception → Base Schedule)
+- **Admin:** 3 Filament Resources + 4 RelationManagers in EmployeeResource
+- **Features:**
+  - Recurring weekly schedules with effective date ranges
+  - Single-day exceptions (sick days, doctor visits, extra work days)
+  - Vacation period management with approval workflow
+  - Service-staff assignments via pivot table
+  - Calendar-based availability checking (not just recurring weekdays)
+
+**Admin URLs:**
+- `/admin/staff-schedules` - Base weekly patterns (Mon-Fri 9-17)
+- `/admin/staff-date-exceptions` - Single day overrides
+- `/admin/staff-vacation-periods` - Vacation management
+- `/admin/employees/{id}/edit` → Tabs: Usługi, Harmonogramy, Wyjątki, Urlopy
+
+**Key Files:**
+- `app/Services/StaffScheduleService.php` - Core availability logic
+- `app/Services/AppointmentService.php` - Integrated with new system
+- `app/Models/StaffSchedule.php` - Base patterns
+- `app/Models/StaffDateException.php` - Day overrides
+- `app/Models/StaffVacationPeriod.php` - Vacation ranges
+- `database/migrations/2025_11_19_*` - All schema migrations
+
+**Migration Notes:**
+- Old `service_availabilities` data migrated automatically
+- 40 redundant records deduplicated to separate schedules + service assignments
+- Zero data loss, backward compatible
+- Old ServiceAvailabilityResource still functional (legacy)
+
+**Usage Example:**
+1. Create base schedule: Jan works Mon-Fri 9:00-17:00
+2. Add exception: Jan unavailable 2025-12-24 (Christmas Eve)
+3. Add vacation: Jan on vacation 2025-07-01 to 2025-07-14
+4. Assign services: Jan can perform "Detailing wewnętrzny" + "Korekta lakieru"
+5. System checks availability: Vacation (blocks all) → Exception (overrides schedule) → Base schedule
+
+**See:** [Staff Availability Guide](app/docs/guides/staff-availability.md)
+
 ## Production Build
 
 **IMPORTANT:** This project uses Tailwind CSS 4.0 with `@tailwindcss/vite` plugin.
@@ -352,6 +403,30 @@ docker compose exec app php artisan queue:retry all
 # Check failed jobs
 https://paradocks.local:8444/horizon/failed
 ```
+
+### OPcache / Code Changes Not Applying
+
+**Problem:** Code changes don't take effect, old code still executes (especially Filament Resources).
+
+**Cause:** PHP OPcache in Docker containers caches bytecode. `php artisan optimize:clear` only clears **CLI** OPcache, not **PHP-FPM workers** (web server).
+
+```bash
+# Solution: Restart containers to clear PHP-FPM OPcache
+docker compose restart app horizon queue scheduler
+
+# Verify containers restarted (check "STATUS" for recent timestamp)
+docker compose ps
+
+# Then clear Laravel caches
+docker compose exec app php artisan optimize:clear
+docker compose exec app php artisan filament:optimize-clear
+```
+
+**When to restart containers:**
+- After changing Filament Resources, Livewire components, or Actions
+- After Composer updates (composer.json changes)
+- When code changes don't appear in browser
+- After modifying .env file
 
 **See:** [Troubleshooting Guide](app/docs/guides/troubleshooting.md)
 

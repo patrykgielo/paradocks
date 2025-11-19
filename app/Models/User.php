@@ -205,4 +205,37 @@ class User extends Authenticatable implements FilamentUser, HasName
     {
         return $this->hasMany(ServiceAvailability::class, 'user_id');
     }
+
+    /**
+     * Get the staff schedules (base weekly patterns) for this user.
+     */
+    public function staffSchedules()
+    {
+        return $this->hasMany(StaffSchedule::class, 'user_id');
+    }
+
+    /**
+     * Get the date exceptions for this user.
+     */
+    public function dateExceptions()
+    {
+        return $this->hasMany(StaffDateException::class, 'user_id');
+    }
+
+    /**
+     * Get the vacation periods for this user.
+     */
+    public function vacationPeriods()
+    {
+        return $this->hasMany(StaffVacationPeriod::class, 'user_id');
+    }
+
+    /**
+     * Get the services that this staff member can perform.
+     */
+    public function services()
+    {
+        return $this->belongsToMany(Service::class, 'service_staff', 'user_id', 'service_id')
+                    ->withTimestamps();
+    }
 }
