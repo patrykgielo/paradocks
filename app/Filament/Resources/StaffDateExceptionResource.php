@@ -27,6 +27,12 @@ class StaffDateExceptionResource extends Resource
 
     protected static ?int $navigationSort = 2;
 
+    // DEPRECATED: Hidden from navigation 2025-11-20 (UI-MIGRATION-001)
+    // Replaced by StaffScheduleCalendarPage (unified view)
+    // Keep for rollback and RelationManager compatibility
+    // TODO: Consider removal after 30 days if no issues (2025-12-20)
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function form(Form $form): Form
     {
         return $form

@@ -17,6 +17,31 @@ Laravel 12 car detailing booking application with:
 
 ⚠️ **CRITICAL:** Documentation is in `app/docs/`, NOT `/docs/` in repository root!
 
+## Internationalization (i18n)
+
+**Multi-Language Support:** Polish (pl) + English (en), easily extensible
+
+**Locale Detection Priority:**
+1. User profile (`users.locale`)
+2. Session (temporary switch)
+3. Browser `Accept-Language` header
+4. Default from config (`pl`)
+
+**Always use Localized Filament components:**
+- `LocalizedDatePicker` / `LocalizedDateColumn` for dates
+- `LocalizedTimePicker` / `LocalizedTimeColumn` for times
+- `LocalizedDateTimeColumn` for datetimes
+
+**Never hardcode format strings or locales.** Components adapt to `app()->getLocale()` automatically.
+
+**Date Formats (locale-aware):**
+- Polish (pl): `20.11.2025 14:30` (d.m.Y H:i)
+- English (en): `11/20/2025 2:30 PM` (m/d/Y h:i A)
+
+**Add new locales:** Edit `config/formats.php` and `config/app.php` only - zero code changes!
+
+**See:** [Internationalization Guide](app/docs/guides/internationalization.md) | [Quick Reference](app/docs/guides/i18n-quick-reference.md)
+
 ## Quick Start
 
 ```bash

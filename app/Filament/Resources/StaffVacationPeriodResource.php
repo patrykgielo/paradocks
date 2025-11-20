@@ -166,9 +166,8 @@ class StaffVacationPeriodResource extends Resource
                         }
                     }),
 
-                Tables\Columns\TextColumn::make('created_at')
+                LocalizedDateTimeColumn::make('created_at')
                     ->label('Utworzono')
-                    ->dateTime('Y-m-d H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
