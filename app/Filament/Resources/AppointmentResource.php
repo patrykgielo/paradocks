@@ -2,7 +2,12 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Forms\Components\LocalizedDatePicker;
+use App\Filament\Forms\Components\LocalizedTimePicker;
 use App\Filament\Resources\AppointmentResource\Pages;
+use App\Filament\Tables\Columns\LocalizedDateColumn;
+use App\Filament\Tables\Columns\LocalizedDateTimeColumn;
+use App\Filament\Tables\Columns\LocalizedTimeColumn;
 use App\Models\Appointment;
 use App\Models\Service;
 use App\Models\User;
@@ -76,14 +81,13 @@ class AppointmentResource extends Resource
                     ->required()
                     ->reactive(),
 
-                Forms\Components\DatePicker::make('appointment_date')
+                LocalizedDatePicker::make('appointment_date')
                     ->label('Data wizyty')
                     ->required()
-                    ->native(false)
                     ->minDate(now())
                     ->reactive(),
 
-                Forms\Components\TimePicker::make('start_time')
+                LocalizedTimePicker::make('start_time')
                     ->label('Czas rozpoczęcia')
                     ->required()
                     ->reactive()
@@ -99,7 +103,7 @@ class AppointmentResource extends Resource
                         }
                     }),
 
-                Forms\Components\TimePicker::make('end_time')
+                LocalizedTimePicker::make('end_time')
                     ->label('Czas zakończenia')
                     ->required()
                     ->reactive(),
@@ -248,16 +252,13 @@ class AppointmentResource extends Resource
                     ->getStateUsing(fn ($record) => $record->staff?->full_name)
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('appointment_date')
+                LocalizedDateColumn::make('appointment_date')
                     ->label('Data')
-                    ->date('d.m.Y')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('start_time')
-                    ->label('Od')
-                    ->time('H:i'),
-                Tables\Columns\TextColumn::make('end_time')
-                    ->label('Do')
-                    ->time('H:i'),
+                LocalizedTimeColumn::make('start_time')
+                    ->label('Od'),
+                LocalizedTimeColumn::make('end_time')
+                    ->label('Do'),
                 Tables\Columns\TextColumn::make('location_address')
                     ->label('Lokalizacja')
                     ->searchable()
@@ -288,9 +289,8 @@ class AppointmentResource extends Resource
                         'completed' => 'Zakończona',
                         default => $state,
                     }),
-                Tables\Columns\TextColumn::make('created_at')
+                LocalizedDateTimeColumn::make('created_at')
                     ->label('Utworzono')
-                    ->dateTime('d.m.Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])

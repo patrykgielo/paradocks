@@ -10,6 +10,7 @@ Laravel 12 car detailing booking application with:
 - **Admin Panel:** Filament v3.3+
 - **Queue:** Redis with Laravel Horizon
 - **Containerization:** Docker Compose (8 services)
+- **Locale:** Polish (pl) with Europe/Warsaw timezone
 
 **Local URL:** https://paradocks.local:8444
 

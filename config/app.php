@@ -86,6 +86,33 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Available Locales
+    |--------------------------------------------------------------------------
+    |
+    | List of all locales supported by the application.
+    | Used for locale validation and switching.
+    |
+    */
+
+    'available_locales' => ['pl', 'en'],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Locale Names
+    |--------------------------------------------------------------------------
+    |
+    | Human-readable names for each supported locale.
+    | Used in UI dropdowns and locale selectors.
+    |
+    */
+
+    'locale_names' => [
+        'pl' => 'Polski',
+        'en' => 'English',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Encryption Key
     |--------------------------------------------------------------------------
     |

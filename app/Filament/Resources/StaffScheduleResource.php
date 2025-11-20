@@ -2,8 +2,13 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Forms\Components\LocalizedDatePicker;
+use App\Filament\Forms\Components\LocalizedTimePicker;
 use App\Filament\Resources\StaffScheduleResource\Pages;
 use App\Filament\Resources\StaffScheduleResource\RelationManagers;
+use App\Filament\Tables\Columns\LocalizedDateColumn;
+use App\Filament\Tables\Columns\LocalizedDateTimeColumn;
+use App\Filament\Tables\Columns\LocalizedTimeColumn;
 use App\Models\StaffSchedule;
 use App\Models\User;
 use Filament\Forms;
@@ -59,28 +64,24 @@ class StaffScheduleResource extends Resource
 
                 Forms\Components\Section::make('Godziny pracy')
                     ->schema([
-                        Forms\Components\TimePicker::make('start_time')
+                        LocalizedTimePicker::make('start_time')
                             ->label('Od godziny')
-                            ->required()
-                            ->seconds(false),
+                            ->required(),
 
-                        Forms\Components\TimePicker::make('end_time')
+                        LocalizedTimePicker::make('end_time')
                             ->label('Do godziny')
                             ->required()
-                            ->seconds(false)
                             ->after('start_time'),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Okres obowiązywania')
                     ->description('Opcjonalne: określ kiedy ten harmonogram jest aktywny')
                     ->schema([
-                        Forms\Components\DatePicker::make('effective_from')
-                            ->label('Obowiązuje od')
-                            ->native(false),
+                        LocalizedDatePicker::make('effective_from')
+                            ->label('Obowiązuje od'),
 
-                        Forms\Components\DatePicker::make('effective_until')
+                        LocalizedDatePicker::make('effective_until')
                             ->label('Obowiązuje do')
-                            ->native(false)
                             ->after('effective_from'),
 
                         Forms\Components\Toggle::make('is_active')
@@ -110,24 +111,20 @@ class StaffScheduleResource extends Resource
                         default => 'primary',
                     }),
 
-                Tables\Columns\TextColumn::make('start_time')
-                    ->label('Od')
-                    ->time('H:i'),
+                LocalizedTimeColumn::make('start_time')
+                    ->label('Od'),
 
-                Tables\Columns\TextColumn::make('end_time')
-                    ->label('Do')
-                    ->time('H:i'),
+                LocalizedTimeColumn::make('end_time')
+                    ->label('Do'),
 
-                Tables\Columns\TextColumn::make('effective_from')
+                LocalizedDateColumn::make('effective_from')
                     ->label('Obowiązuje od')
-                    ->date('Y-m-d')
                     ->placeholder('Zawsze')
                     ->sortable()
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('effective_until')
+                LocalizedDateColumn::make('effective_until')
                     ->label('Obowiązuje do')
-                    ->date('Y-m-d')
                     ->placeholder('Bezterminowo')
                     ->sortable()
                     ->toggleable(),
@@ -137,9 +134,8 @@ class StaffScheduleResource extends Resource
                     ->boolean()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('created_at')
+                LocalizedDateTimeColumn::make('created_at')
                     ->label('Utworzono')
-                    ->dateTime('Y-m-d H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])

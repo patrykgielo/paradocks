@@ -29,6 +29,13 @@ class ServiceAvailabilityResource extends Resource
 
     protected static ?int $navigationSort = 3;
 
+    // DEPRECATED: Hidden from navigation 2025-11-20 (UI-MIGRATION-001)
+    // LEGACY system (pre-Option B migration)
+    // Data migrated to staff_schedules + service_staff tables
+    // Keep for historical reference only
+    // TODO: Consider removal after 30 days if no issues (2025-12-20)
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function form(Form $form): Form
     {
         return $form

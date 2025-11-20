@@ -2,8 +2,13 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Forms\Components\LocalizedDatePicker;
+use App\Filament\Forms\Components\LocalizedTimePicker;
 use App\Filament\Resources\StaffDateExceptionResource\Pages;
 use App\Filament\Resources\StaffDateExceptionResource\RelationManagers;
+use App\Filament\Tables\Columns\LocalizedDateColumn;
+use App\Filament\Tables\Columns\LocalizedDateTimeColumn;
+use App\Filament\Tables\Columns\LocalizedTimeColumn;
 use App\Models\StaffDateException;
 use App\Models\User;
 use Filament\Forms;
@@ -43,10 +48,8 @@ class StaffDateExceptionResource extends Resource
                             ->preload()
                             ->required(),
 
-                        Forms\Components\DatePicker::make('exception_date')
+                        LocalizedDatePicker::make('exception_date')
                             ->label('Data wyjątku')
-                            ->native(false)
-                            ->displayFormat('Y-m-d')
                             ->required()
                             ->helperText('Dzień, na który chcesz zastosować wyjątek'),
                     ])->columns(2),
@@ -71,14 +74,12 @@ class StaffDateExceptionResource extends Resource
                 Forms\Components\Section::make('Zakres czasowy')
                     ->description('Opcjonalne: jeśli nie wypełnisz, wyjątek dotyczy całego dnia')
                     ->schema([
-                        Forms\Components\TimePicker::make('start_time')
+                        LocalizedTimePicker::make('start_time')
                             ->label('Od godziny')
-                            ->seconds(false)
                             ->helperText('Zostaw puste jeśli dotyczy całego dnia'),
 
-                        Forms\Components\TimePicker::make('end_time')
+                        LocalizedTimePicker::make('end_time')
                             ->label('Do godziny')
-                            ->seconds(false)
                             ->after('start_time')
                             ->helperText('Zostaw puste jeśli dotyczy całego dnia'),
                     ])->columns(2),
@@ -103,9 +104,8 @@ class StaffDateExceptionResource extends Resource
                     ->searchable(['first_name', 'last_name'])
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('exception_date')
+                LocalizedDateColumn::make('exception_date')
                     ->label('Data')
-                    ->date('Y-m-d')
                     ->sortable()
                     ->badge()
                     ->color(fn (StaffDateException $record) =>
@@ -126,15 +126,13 @@ class StaffDateExceptionResource extends Resource
                         default => 'gray',
                     }),
 
-                Tables\Columns\TextColumn::make('start_time')
+                LocalizedTimeColumn::make('start_time')
                     ->label('Od')
-                    ->time('H:i')
                     ->placeholder('Cały dzień')
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('end_time')
+                LocalizedTimeColumn::make('end_time')
                     ->label('Do')
-                    ->time('H:i')
                     ->placeholder('Cały dzień')
                     ->toggleable(),
 
@@ -144,9 +142,8 @@ class StaffDateExceptionResource extends Resource
                     ->placeholder('Brak')
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('created_at')
+                LocalizedDateTimeColumn::make('created_at')
                     ->label('Utworzono')
-                    ->dateTime('Y-m-d H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])

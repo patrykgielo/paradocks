@@ -11,6 +11,27 @@ use Illuminate\Support\Facades\Route;
 // Public routes
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
+// Locale switching (toggle between pl/en)
+Route::get('/locale/toggle', function () {
+    $currentLocale = app()->getLocale();
+    $availableLocales = config('app.available_locales', ['pl', 'en']);
+
+    // Find next locale in rotation (pl → en → pl)
+    $currentIndex = array_search($currentLocale, $availableLocales);
+    $nextIndex = ($currentIndex + 1) % count($availableLocales);
+    $newLocale = $availableLocales[$nextIndex];
+
+    // Update user preference if authenticated
+    if (auth()->check()) {
+        auth()->user()->update(['preferred_language' => $newLocale]);
+    }
+
+    // Store in session for guests
+    session(['locale' => $newLocale]);
+
+    return redirect()->back();
+})->name('locale.toggle');
+
 // Authentication routes
 Auth::routes();
 

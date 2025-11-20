@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\CustomerResource\Pages;
+use App\Filament\Tables\Columns\LocalizedDateTimeColumn;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -166,9 +167,8 @@ class CustomerResource extends Resource
                     ->falseIcon('heroicon-o-x-circle')
                     ->trueColor('success')
                     ->falseColor('danger'),
-                Tables\Columns\TextColumn::make('created_at')
+                LocalizedDateTimeColumn::make('created_at')
                     ->label('Data rejestracji')
-                    ->dateTime('d.m.Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: false),
             ])

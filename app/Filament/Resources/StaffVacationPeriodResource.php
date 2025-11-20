@@ -2,8 +2,11 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Forms\Components\LocalizedDatePicker;
 use App\Filament\Resources\StaffVacationPeriodResource\Pages;
 use App\Filament\Resources\StaffVacationPeriodResource\RelationManagers;
+use App\Filament\Tables\Columns\LocalizedDateColumn;
+use App\Filament\Tables\Columns\LocalizedDateTimeColumn;
 use App\Models\StaffVacationPeriod;
 use App\Models\User;
 use Filament\Forms;
@@ -21,11 +24,13 @@ class StaffVacationPeriodResource extends Resource
 
     protected static ?string $navigationGroup = 'Harmonogramy';
 
+    protected static ?string $navigationLabel = 'Wnioski o Czas Wolny';
+
     protected static ?string $modelLabel = 'Urlop';
 
-    protected static ?string $pluralModelLabel = 'Urlopy';
+    protected static ?string $pluralModelLabel = 'Urlopy / Wnioski o Czas Wolny';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
     {
@@ -46,10 +51,8 @@ class StaffVacationPeriodResource extends Resource
 
                 Forms\Components\Section::make('Okres urlopu')
                     ->schema([
-                        Forms\Components\DatePicker::make('start_date')
+                        LocalizedDatePicker::make('start_date')
                             ->label('Data rozpoczęcia')
-                            ->native(false)
-                            ->displayFormat('Y-m-d')
                             ->required()
                             ->reactive()
                             ->afterStateUpdated(function ($state, callable $set, callable $get) {
@@ -58,10 +61,8 @@ class StaffVacationPeriodResource extends Resource
                                 }
                             }),
 
-                        Forms\Components\DatePicker::make('end_date')
+                        LocalizedDatePicker::make('end_date')
                             ->label('Data zakończenia')
-                            ->native(false)
-                            ->displayFormat('Y-m-d')
                             ->required()
                             ->after('start_date')
                             ->reactive()
@@ -106,14 +107,12 @@ class StaffVacationPeriodResource extends Resource
                     ->searchable(['first_name', 'last_name'])
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('start_date')
+                LocalizedDateColumn::make('start_date')
                     ->label('Od')
-                    ->date('Y-m-d')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('end_date')
+                LocalizedDateColumn::make('end_date')
                     ->label('Do')
-                    ->date('Y-m-d')
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('duration')

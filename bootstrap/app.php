@@ -21,6 +21,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'api/webhooks/*',
         ]);
+
+        // Register SetLocale middleware globally for web and API routes
+        // Automatically detects and sets application locale based on:
+        // 1. User preference, 2. Session, 3. Browser, 4. Default
+        $middleware->append(\App\Http\Middleware\SetLocale::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

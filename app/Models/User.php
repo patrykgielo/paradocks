@@ -34,6 +34,8 @@ class User extends Authenticatable implements FilamentUser, HasName
         'postal_code',
         'access_notes',
         'preferred_language',
+        'locale',
+        'timezone',
         'sms_consent_given_at',
         'sms_consent_ip',
         'sms_consent_user_agent',
@@ -167,6 +169,32 @@ class User extends Authenticatable implements FilamentUser, HasName
     public function getPreferredLanguageAttribute(?string $value): string
     {
         return $value ?? 'pl';
+    }
+
+    /**
+     * Get user's locale with fallback to application default.
+     *
+     * Returns the user's preferred locale for date/time formatting and translations.
+     * Falls back to app default (pl) if not set.
+     *
+     * @return string Locale code (pl, en, etc.)
+     */
+    public function getLocaleAttribute(?string $value): string
+    {
+        return $value ?? config('app.locale', 'pl');
+    }
+
+    /**
+     * Get user's timezone with fallback to application default.
+     *
+     * Returns the user's timezone for accurate datetime display.
+     * Falls back to app default (Europe/Warsaw) if not set.
+     *
+     * @return string IANA timezone identifier (e.g., Europe/Warsaw, America/New_York)
+     */
+    public function getTimezoneAttribute(?string $value): string
+    {
+        return $value ?? config('app.timezone', 'Europe/Warsaw');
     }
 
     public function canAccessPanel(Panel $panel): bool
