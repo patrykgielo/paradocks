@@ -3,8 +3,10 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "build": "npm run generate:theme && vite build",
+        "generate:theme": "node scripts/generate-theme.js",
+        "watch:theme": "node scripts/generate-theme.js --watch"
     },
     "dependencies": {
         "alpinejs": "^3.14.1"

@@ -1,0 +1,397 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2024-11-14",
+  "description": "Component Registry for iOS-styled Laravel Livewire Components",
+  
+  "components": {
+    "ios-button": {
+      "path": "resources/views/components/ios/button.blade.php",
+      "purpose": "iOS-styled button with loading states, multiple variants, and full Livewire support",
+      "category": "forms",
+      "props": {
+        "variant": {
+          "type": "string",
+          "default": "primary",
+          "options": ["primary", "secondary", "destructive", "ghost"],
+          "description": "Visual style variant of the button"
+        },
+        "loading": {
+          "type": "boolean",
+          "default": false,
+          "description": "Shows loading spinner and disables button when true"
+        },
+        "size": {
+          "type": "string",
+          "default": "md",
+          "options": ["sm", "md", "lg"],
+          "description": "Button size affecting padding and font size"
+        },
+        "fullWidth": {
+          "type": "boolean",
+          "default": false,
+          "description": "Makes button take full width of container"
+        },
+        "icon": {
+          "type": "string",
+          "default": null,
+          "description": "Optional icon name to display before text"
+        }
+      },
+      "livewire_directives": [
+        "wire:click",
+        "wire:loading",
+        "wire:loading.attr",
+        "wire:target"
+      ],
+      "slots": {
+        "default": {
+          "required": true,
+          "description": "Button text or content"
+        }
+      },
+      "examples": [
+        "<x-ios-button variant='primary' wire:click='submit'>Submit</x-ios-button>",
+        "<x-ios-button variant='destructive' :loading='$isDeleting' wire:click='delete'>Delete</x-ios-button>",
+        "<x-ios-button variant='secondary' size='lg' fullWidth>Continue</x-ios-button>"
+      ],
+      "related": ["ios-input", "ios-form", "ios-icon-button"],
+      "accessibility": {
+        "aria_support": true,
+        "keyboard_navigation": true,
+        "screen_reader": true
+      },
+      "version": "1.0.0",
+      "status": "stable",
+      "last_updated": "2024-11-13"
+    },
+    
+    "ios-input": {
+      "path": "resources/views/components/ios/input.blade.php",
+      "purpose": "iOS-styled text input with label, error handling, and Livewire wire:model support",
+      "category": "forms",
+      "props": {
+        "label": {
+          "type": "string",
+          "default": "",
+          "description": "Label text displayed above input"
+        },
+        "error": {
+          "type": "string|null",
+          "default": null,
+          "description": "Error message to display below input"
+        },
+        "required": {
+          "type": "boolean",
+          "default": false,
+          "description": "Shows required asterisk next to label"
+        },
+        "placeholder": {
+          "type": "string",
+          "default": "",
+          "description": "Placeholder text inside input"
+        },
+        "type": {
+          "type": "string",
+          "default": "text",
+          "options": ["text", "email", "password", "tel", "number", "url"],
+          "description": "HTML input type"
+        },
+        "icon": {
+          "type": "string",
+          "default": null,
+          "description": "Optional icon name to display inside input"
+        }
+      },
+      "livewire_directives": [
+        "wire:model",
+        "wire:model.live",
+        "wire:model.lazy",
+        "wire:model.debounce",
+        "wire:dirty"
+      ],
+      "slots": {
+        "prefix": {
+          "required": false,
+          "description": "Content to display before the input"
+        },
+        "suffix": {
+          "required": false,
+          "description": "Content to display after the input"
+        }
+      },
+      "examples": [
+        "<x-ios-input label='Email' type='email' wire:model='email' :error='$errors->first(\"email\")' required />",
+        "<x-ios-input label='Phone' type='tel' placeholder='+1 (555) 000-0000' wire:model.live='phone' />",
+        "<x-ios-input label='Search' icon='search' wire:model.debounce.300ms='search' />"
+      ],
+      "related": ["ios-button", "ios-textarea", "ios-select", "ios-form"],
+      "accessibility": {
+        "aria_support": true,
+        "keyboard_navigation": true,
+        "screen_reader": true
+      },
+      "version": "1.0.0",
+      "status": "stable",
+      "last_updated": "2024-11-13"
+    },
+    
+    "ios-card": {
+      "path": "resources/views/components/ios/card.blade.php",
+      "purpose": "iOS-styled card container with optional padding and customizable appearance",
+      "category": "layout",
+      "props": {
+        "padding": {
+          "type": "boolean|string",
+          "default": true,
+          "options": [true, false, "sm", "md", "lg"],
+          "description": "Controls card padding. Boolean for default, string for specific size"
+        },
+        "shadow": {
+          "type": "string",
+          "default": "sm",
+          "options": ["none", "sm", "base", "md", "lg"],
+          "description": "Shadow elevation level"
+        },
+        "border": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to show border"
+        }
+      },
+      "livewire_directives": [],
+      "slots": {
+        "default": {
+          "required": true,
+          "description": "Card content"
+        },
+        "header": {
+          "required": false,
+          "description": "Optional card header"
+        },
+        "footer": {
+          "required": false,
+          "description": "Optional card footer"
+        }
+      },
+      "examples": [
+        "<x-ios-card><p>Simple card content</p></x-ios-card>",
+        "<x-ios-card :padding='false' shadow='lg'>No padding, larger shadow</x-ios-card>",
+        "<x-ios-card><x-slot:header>Title</x-slot:header>Content here</x-ios-card>"
+      ],
+      "related": ["ios-list", "ios-list-row", "ios-section"],
+      "accessibility": {
+        "aria_support": false,
+        "keyboard_navigation": false,
+        "screen_reader": true
+      },
+      "version": "1.0.0",
+      "status": "stable",
+      "last_updated": "2024-11-13"
+    },
+    
+    "ios-list-row": {
+      "path": "resources/views/components/ios/list-row.blade.php",
+      "purpose": "iOS-styled list row with optional chevron, perfect for navigation and selection",
+      "category": "lists",
+      "props": {
+        "href": {
+          "type": "string|null",
+          "default": null,
+          "description": "URL for navigation. Renders as anchor tag when provided"
+        },
+        "showChevron": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to show right chevron arrow"
+        },
+        "active": {
+          "type": "boolean",
+          "default": false,
+          "description": "Highlights row as active/selected"
+        },
+        "divided": {
+          "type": "boolean",
+          "default": true,
+          "description": "Shows bottom border separator"
+        }
+      },
+      "livewire_directives": [
+        "wire:click"
+      ],
+      "slots": {
+        "default": {
+          "required": true,
+          "description": "Row content"
+        },
+        "leading": {
+          "required": false,
+          "description": "Content before main text (icon, image)"
+        },
+        "trailing": {
+          "required": false,
+          "description": "Content after main text, before chevron"
+        }
+      },
+      "examples": [
+        "<x-ios-list-row href='/profile'>Profile Settings</x-ios-list-row>",
+        "<x-ios-list-row wire:click='toggleNotifications' :active='$notificationsEnabled'>Notifications</x-ios-list-row>",
+        "<x-ios-list-row :showChevron='false'><x-slot:leading><img src='avatar.jpg'></x-slot:leading>John Doe</x-ios-list-row>"
+      ],
+      "related": ["ios-list", "ios-card", "ios-section"],
+      "accessibility": {
+        "aria_support": true,
+        "keyboard_navigation": true,
+        "screen_reader": true
+      },
+      "version": "1.0.0",
+      "status": "stable",
+      "last_updated": "2024-11-13"
+    },
+    
+    "ios-bottom-sheet": {
+      "path": "resources/views/components/ios/bottom-sheet.blade.php",
+      "purpose": "iOS-styled bottom sheet modal with smooth slide-up animation and backdrop",
+      "category": "overlays",
+      "props": {
+        "maxHeight": {
+          "type": "string",
+          "default": "90vh",
+          "description": "Maximum height of the sheet"
+        },
+        "showHandle": {
+          "type": "boolean",
+          "default": true,
+          "description": "Shows drag handle at top of sheet"
+        },
+        "closeOnBackdrop": {
+          "type": "boolean",
+          "default": true,
+          "description": "Closes sheet when backdrop is clicked"
+        }
+      },
+      "livewire_directives": [
+        "wire:model",
+        "x-model"
+      ],
+      "slots": {
+        "default": {
+          "required": true,
+          "description": "Sheet content"
+        },
+        "header": {
+          "required": false,
+          "description": "Optional header section"
+        },
+        "footer": {
+          "required": false,
+          "description": "Optional footer with actions"
+        }
+      },
+      "examples": [
+        "<x-ios-bottom-sheet wire:model='showSheet'><p>Sheet content</p></x-ios-bottom-sheet>",
+        "<x-ios-bottom-sheet x-model='open' :closeOnBackdrop='false'>Always requires button close</x-ios-bottom-sheet>"
+      ],
+      "related": ["ios-modal", "ios-action-sheet", "ios-dialog"],
+      "dependencies": ["Alpine.js"],
+      "accessibility": {
+        "aria_support": true,
+        "keyboard_navigation": true,
+        "screen_reader": true,
+        "focus_trap": true
+      },
+      "version": "1.0.0",
+      "status": "beta",
+      "last_updated": "2024-11-13"
+    },
+    
+    "ios-toggle": {
+      "path": "resources/views/components/ios/toggle.blade.php",
+      "purpose": "iOS-styled toggle switch with smooth animation and Livewire wire:model support",
+      "category": "forms",
+      "props": {
+        "label": {
+          "type": "string",
+          "default": "",
+          "description": "Label text displayed next to toggle"
+        },
+        "disabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Disables the toggle"
+        },
+        "size": {
+          "type": "string",
+          "default": "md",
+          "options": ["sm", "md", "lg"],
+          "description": "Toggle size"
+        }
+      },
+      "livewire_directives": [
+        "wire:model",
+        "wire:model.live"
+      ],
+      "slots": {},
+      "examples": [
+        "<x-ios-toggle label='Enable notifications' wire:model='notifications' />",
+        "<x-ios-toggle label='Dark mode' wire:model.live='darkMode' size='lg' />"
+      ],
+      "related": ["ios-input", "ios-checkbox", "ios-radio"],
+      "accessibility": {
+        "aria_support": true,
+        "keyboard_navigation": true,
+        "screen_reader": true
+      },
+      "version": "1.0.0",
+      "status": "stable",
+      "last_updated": "2024-11-13"
+    }
+  },
+  
+  "categories": {
+    "forms": {
+      "description": "Form inputs, buttons, and controls",
+      "components": ["ios-button", "ios-input", "ios-textarea", "ios-select", "ios-toggle", "ios-checkbox", "ios-radio"]
+    },
+    "layout": {
+      "description": "Layout containers and wrappers",
+      "components": ["ios-card", "ios-section", "ios-container", "ios-grid"]
+    },
+    "lists": {
+      "description": "List components and rows",
+      "components": ["ios-list", "ios-list-row", "ios-grouped-list"]
+    },
+    "navigation": {
+      "description": "Navigation components",
+      "components": ["ios-nav-bar", "ios-tab-bar", "ios-breadcrumb"]
+    },
+    "overlays": {
+      "description": "Modals, sheets, and overlays",
+      "components": ["ios-bottom-sheet", "ios-modal", "ios-action-sheet", "ios-dialog", "ios-toast"]
+    },
+    "feedback": {
+      "description": "Loading, progress, and status indicators",
+      "components": ["ios-spinner", "ios-progress", "ios-skeleton", "ios-badge"]
+    },
+    "data": {
+      "description": "Data display components",
+      "components": ["ios-table", "ios-calendar", "ios-chart"]
+    }
+  },
+  
+  "design_principles": {
+    "touch_targets": "Minimum 44x44px for all interactive elements",
+    "animations": "Smooth transitions between 150-300ms",
+    "spacing": "Consistent 4px/8px grid system",
+    "colors": "iOS semantic colors from design-system.json",
+    "typography": "System font stack mimicking SF Pro",
+    "mobile_first": "Always design for mobile first, enhance for larger screens"
+  },
+  
+  "livewire_patterns": {
+    "reactive_props": "Use wire:model for two-way binding",
+    "loading_states": "Use wire:loading for async operations",
+    "dirty_tracking": "Use wire:dirty to show unsaved changes",
+    "polling": "Use wire:poll for real-time updates",
+    "lazy_loading": "Use wire:init for deferred loading"
+  }
+}

@@ -34,6 +34,8 @@ class User extends Authenticatable implements FilamentUser, HasName
         'postal_code',
         'access_notes',
         'preferred_language',
+        'locale',
+        'timezone',
         'sms_consent_given_at',
         'sms_consent_ip',
         'sms_consent_user_agent',
@@ -169,6 +171,32 @@ class User extends Authenticatable implements FilamentUser, HasName
         return $value ?? 'pl';
     }
 
+    /**
+     * Get user's locale with fallback to application default.
+     *
+     * Returns the user's preferred locale for date/time formatting and translations.
+     * Falls back to app default (pl) if not set.
+     *
+     * @return string Locale code (pl, en, etc.)
+     */
+    public function getLocaleAttribute(?string $value): string
+    {
+        return $value ?? config('app.locale', 'pl');
+    }
+
+    /**
+     * Get user's timezone with fallback to application default.
+     *
+     * Returns the user's timezone for accurate datetime display.
+     * Falls back to app default (Europe/Warsaw) if not set.
+     *
+     * @return string IANA timezone identifier (e.g., Europe/Warsaw, America/New_York)
+     */
+    public function getTimezoneAttribute(?string $value): string
+    {
+        return $value ?? config('app.timezone', 'Europe/Warsaw');
+    }
+
     public function canAccessPanel(Panel $panel): bool
     {
         return $this->hasAnyRole(['super-admin', 'admin', 'staff']);
@@ -204,5 +232,38 @@ class User extends Authenticatable implements FilamentUser, HasName
     public function serviceAvailabilities()
     {
         return $this->hasMany(ServiceAvailability::class, 'user_id');
+    }
+
+    /**
+     * Get the staff schedules (base weekly patterns) for this user.
+     */
+    public function staffSchedules()
+    {
+        return $this->hasMany(StaffSchedule::class, 'user_id');
+    }
+
+    /**
+     * Get the date exceptions for this user.
+     */
+    public function dateExceptions()
+    {
+        return $this->hasMany(StaffDateException::class, 'user_id');
+    }
+
+    /**
+     * Get the vacation periods for this user.
+     */
+    public function vacationPeriods()
+    {
+        return $this->hasMany(StaffVacationPeriod::class, 'user_id');
+    }
+
+    /**
+     * Get the services that this staff member can perform.
+     */
+    public function services()
+    {
+        return $this->belongsToMany(Service::class, 'service_staff', 'user_id', 'service_id')
+                    ->withTimestamps();
     }
 }
