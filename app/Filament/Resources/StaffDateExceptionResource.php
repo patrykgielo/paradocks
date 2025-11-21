@@ -27,6 +27,10 @@ class StaffDateExceptionResource extends Resource
 
     protected static ?int $navigationSort = 2;
 
+    // Hide from main navigation - accessible via StaffScheduleResource header actions
+    // This reduces cognitive load by consolidating schedule management
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function form(Form $form): Form
     {
         return $form

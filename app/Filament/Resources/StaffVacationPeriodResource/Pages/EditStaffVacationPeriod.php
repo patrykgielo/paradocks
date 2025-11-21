@@ -16,4 +16,18 @@ class EditStaffVacationPeriod extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
+
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        // Ensure dates are strings for form compatibility
+        if (isset($data['start_date']) && $data['start_date'] instanceof \Carbon\Carbon) {
+            $data['start_date'] = $data['start_date']->format('Y-m-d');
+        }
+
+        if (isset($data['end_date']) && $data['end_date'] instanceof \Carbon\Carbon) {
+            $data['end_date'] = $data['end_date']->format('Y-m-d');
+        }
+
+        return $data;
+    }
 }

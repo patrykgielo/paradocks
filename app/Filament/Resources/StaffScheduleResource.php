@@ -21,11 +21,13 @@ class StaffScheduleResource extends Resource
 
     protected static ?string $navigationGroup = 'Harmonogramy';
 
-    protected static ?string $modelLabel = 'Harmonogram bazowy';
+    protected static ?string $modelLabel = 'Harmonogram';
 
-    protected static ?string $pluralModelLabel = 'Harmonogramy bazowe';
+    protected static ?string $pluralModelLabel = 'Harmonogramy';
 
     protected static ?int $navigationSort = 1;
+
+    protected static ?string $navigationLabel = 'Harmonogramy';
 
     public static function form(Form $form): Form
     {

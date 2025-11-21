@@ -53,7 +53,20 @@ class StaffVacationPeriodResource extends Resource
                             ->required()
                             ->reactive()
                             ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                if ($state && $get('end_date') && $state > $get('end_date')) {
+                                if (!$state) {
+                                    return;
+                                }
+
+                                $endDate = $get('end_date');
+                                if (!$endDate) {
+                                    return;
+                                }
+
+                                // Handle both string and Carbon instances for comparison
+                                $stateDate = $state instanceof \Carbon\Carbon ? $state : \Carbon\Carbon::parse($state);
+                                $endDateObj = $endDate instanceof \Carbon\Carbon ? $endDate : \Carbon\Carbon::parse($endDate);
+
+                                if ($stateDate->gt($endDateObj)) {
                                     $set('end_date', $state);
                                 }
                             }),
@@ -70,8 +83,9 @@ class StaffVacationPeriodResource extends Resource
                                 $end = $get('end_date');
 
                                 if ($start && $end) {
-                                    $startDate = \Carbon\Carbon::parse($start);
-                                    $endDate = \Carbon\Carbon::parse($end);
+                                    // Handle both string and Carbon instances
+                                    $startDate = $start instanceof \Carbon\Carbon ? $start : \Carbon\Carbon::parse($start);
+                                    $endDate = $end instanceof \Carbon\Carbon ? $end : \Carbon\Carbon::parse($end);
                                     $days = $startDate->diffInDays($endDate) + 1;
                                     return "Długość urlopu: {$days} " . ($days === 1 ? 'dzień' : 'dni');
                                 }

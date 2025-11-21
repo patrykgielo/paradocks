@@ -33,10 +33,9 @@ docker compose exec app php artisan db:seed --class=EmailTemplateSeeder
 docker compose exec app php artisan db:seed --class=SmsTemplateSeeder
 docker compose exec app php artisan db:seed --class=SettingSeeder
 
-# Staff scheduling is now managed via new calendar-based system:
-# - /admin/staff-schedules (base weekly patterns)
-# - /admin/staff-date-exceptions (single-day overrides)
-# - /admin/staff-vacation-periods (vacation management)
+# Staff scheduling - SIMPLIFIED NAVIGATION (2 main sections):
+# - /admin/staff-schedules (Harmonogramy - base patterns + link to exceptions)
+# - /admin/staff-vacation-periods (Urlopy - vacation management)
 # Or via Employee edit page → Harmonogramy/Wyjątki/Urlopy tabs
 
 # Create admin user
@@ -254,14 +253,14 @@ Multi-step wizard for appointment booking with validation.
 
 **See:** [Booking System](app/docs/features/booking-system/README.md)
 
-### Staff Scheduling (Option B - Calendar-based)
+### Staff Scheduling (Simplified UX - 2 Main Sections)
 
-Complete calendar-based staff availability management system replacing the old day_of_week pattern.
+Complete calendar-based staff availability management system with **user-friendly navigation** following industry best practices (Deputy, Homebase, 7shifts).
 
 - **Architecture:** Base Schedules + Date Exceptions + Vacation Periods
-- **Database:** 4 tables (staff_schedules, staff_date_exceptions, staff_vacation_periods, service_staff pivot)
+- **Database:** 3 active tables (staff_schedules, staff_date_exceptions, staff_vacation_periods)
 - **Service:** StaffScheduleService with priority logic (Vacation → Exception → Base Schedule)
-- **Admin:** 3 Filament Resources + 4 RelationManagers in EmployeeResource
+- **Admin:** 2 main navigation items (reduced from 4 for better UX)
 - **Features:**
   - Recurring weekly schedules with effective date ranges
   - Single-day exceptions (sick days, doctor visits, extra work days)
@@ -269,10 +268,16 @@ Complete calendar-based staff availability management system replacing the old d
   - Service-staff assignments via pivot table
   - Calendar-based availability checking (not just recurring weekdays)
 
+**Simplified Navigation (UX-MIGRATION-001):**
+- ✅ **"Harmonogramy"** - Main section with base schedules + quick link to exceptions
+- ✅ **"Urlopy"** - Vacation management (separate section)
+- ❌ ~~"Wyjątki"~~ - Hidden from nav, accessible via Harmonogramy header actions
+- ❌ ~~"Dostępności"~~ - DELETED (legacy ServiceAvailabilityResource)
+
 **Admin URLs:**
-- `/admin/staff-schedules` - Base weekly patterns (Mon-Fri 9-17)
-- `/admin/staff-date-exceptions` - Single day overrides
-- `/admin/staff-vacation-periods` - Vacation management
+- `/admin/staff-schedules` - Harmonogramy (base patterns + "Zarządzaj wyjątkami" button)
+- `/admin/staff-date-exceptions` - Wyjątki (accessible via header action, not in nav)
+- `/admin/staff-vacation-periods` - Urlopy (separate section)
 - `/admin/employees/{id}/edit` → Tabs: Usługi, Harmonogramy, Wyjątki, Urlopy
 
 **Key Files:**
@@ -283,11 +288,12 @@ Complete calendar-based staff availability management system replacing the old d
 - `app/Models/StaffVacationPeriod.php` - Vacation ranges
 - `database/migrations/2025_11_19_*` - All schema migrations
 
-**Migration Notes:**
-- Old `service_availabilities` data migrated automatically
-- 40 redundant records deduplicated to separate schedules + service assignments
-- Zero data loss, backward compatible
-- Old ServiceAvailabilityResource still functional (legacy)
+**UX Migration Notes (UX-MIGRATION-001):**
+- **Navigation reduced from 4 → 2 items** (50% cognitive load reduction)
+- Follows industry best practices (Deputy, Homebase, 7shifts all use 1-2 sections)
+- StaffDateExceptionResource hidden from nav, accessible via header actions
+- ServiceAvailabilityResource completely deleted (legacy cleanup)
+- Research: https://medium.com/@pnaylor09/a-ux-case-study-on-designing-a-time-off-management-web-app-8b3151fa397d
 
 **Usage Example:**
 1. Create base schedule: Jan works Mon-Fri 9:00-17:00

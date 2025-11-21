@@ -95,6 +95,11 @@ class StaffVacationPeriod extends Model
      */
     public function includesDate(Carbon $date): bool
     {
+        // Guard against null dates (e.g., during record creation)
+        if (!$this->start_date || !$this->end_date) {
+            return false;
+        }
+
         return $date->between($this->start_date, $this->end_date);
     }
 
@@ -103,16 +108,29 @@ class StaffVacationPeriod extends Model
      */
     public function getDurationInDays(): int
     {
+        // Guard against null dates (e.g., during record creation)
+        if (!$this->start_date || !$this->end_date) {
+            return 0;
+        }
+
         return $this->start_date->diffInDays($this->end_date) + 1;
     }
 
     /**
      * Get all dates in this vacation period.
      *
+     * RENAMED from getDates() to avoid collision with Laravel's
+     * protected getDates() method in HasAttributes trait.
+     *
      * @return array<Carbon>
      */
-    public function getDates(): array
+    public function getDateRange(): array
     {
+        // Guard against null dates (e.g., during record creation)
+        if (!$this->start_date || !$this->end_date) {
+            return [];
+        }
+
         $period = CarbonPeriod::create($this->start_date, $this->end_date);
         return iterator_to_array($period);
     }
