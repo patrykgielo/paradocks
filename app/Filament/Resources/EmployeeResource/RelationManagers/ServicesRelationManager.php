@@ -1,0 +1,72 @@
+<?php
+
+namespace App\Filament\Resources\EmployeeResource\RelationManagers;
+
+use Filament\Forms;
+use Filament\Forms\Form;
+use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Tables;
+use Filament\Tables\Table;
+
+class ServicesRelationManager extends RelationManager
+{
+    protected static string $relationship = 'services';
+
+    protected static ?string $title = 'Usługi';
+
+    protected static ?string $modelLabel = 'Usługa';
+
+    public function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                Forms\Components\Select::make('service_id')
+                    ->label('Usługa')
+                    ->relationship('services', 'name')
+                    ->required(),
+            ]);
+    }
+
+    public function table(Table $table): Table
+    {
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('name')
+                    ->label('Nazwa usługi')
+                    ->searchable()
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('formatted_duration')
+                    ->label('Czas trwania')
+                    ->badge()
+                    ->color('info'),
+
+                Tables\Columns\TextColumn::make('price')
+                    ->label('Cena')
+                    ->money('PLN')
+                    ->sortable(),
+
+                Tables\Columns\IconColumn::make('is_active')
+                    ->label('Aktywna')
+                    ->boolean(),
+            ])
+            ->filters([
+                //
+            ])
+            ->headerActions([
+                Tables\Actions\AttachAction::make()
+                    ->label('Przypisz usługę')
+                    ->preloadRecordSelect(),
+            ])
+            ->actions([
+                Tables\Actions\DetachAction::make()
+                    ->label('Odepnij'),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DetachBulkAction::make()
+                        ->label('Odepnij zaznaczone'),
+                ]),
+            ]);
+    }
+}

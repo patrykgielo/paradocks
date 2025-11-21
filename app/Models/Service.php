@@ -34,6 +34,15 @@ class Service extends Model
         return $this->hasMany(ServiceAvailability::class);
     }
 
+    /**
+     * Get the staff members that can perform this service.
+     */
+    public function staff()
+    {
+        return $this->belongsToMany(User::class, 'service_staff', 'service_id', 'user_id')
+                    ->withTimestamps();
+    }
+
     // Scopes
     public function scopeActive($query)
     {
