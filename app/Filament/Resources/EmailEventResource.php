@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
+use BackedEnum;
+use UnitEnum;
 use App\Filament\Resources\EmailEventResource\Pages;
 use App\Models\EmailEvent;
 use App\Models\EmailSuppression;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -19,19 +21,18 @@ class EmailEventResource extends Resource
 {
     protected static ?string $model = EmailEvent::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-chart-bar';
+    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-chart-bar';
 
-    protected static ?string $navigationGroup = 'Email';
+    protected static string | UnitEnum | null $navigationGroup = 'Email';
 
     protected static ?int $navigationSort = 3;
 
     protected static ?string $navigationLabel = 'Email Events';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
         // Read-only resource - no create/edit forms
-        return $form
-            ->schema([
+        return $schema->components([
                 //
             ]);
     }
@@ -131,7 +132,7 @@ class EmailEventResource extends Resource
                             );
                     }),
             ])
-            ->actions([
+            ->recordActions([
                 Tables\Actions\Action::make('viewEmail')
                     ->label('View Email')
                     ->icon('heroicon-o-envelope-open')
@@ -187,7 +188,7 @@ class EmailEventResource extends Resource
                         }
                     }),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\BulkAction::make('export')
                         ->label('Export Selected')

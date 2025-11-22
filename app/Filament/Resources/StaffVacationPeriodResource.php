@@ -2,12 +2,14 @@
 
 namespace App\Filament\Resources;
 
+use BackedEnum;
+use UnitEnum;
 use App\Filament\Resources\StaffVacationPeriodResource\Pages;
 use App\Filament\Resources\StaffVacationPeriodResource\RelationManagers;
 use App\Models\StaffVacationPeriod;
 use App\Models\User;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -17,9 +19,9 @@ class StaffVacationPeriodResource extends Resource
 {
     protected static ?string $model = StaffVacationPeriod::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-sun';
+    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-sun';
 
-    protected static ?string $navigationGroup = 'Harmonogramy';
+    protected static string | UnitEnum | null $navigationGroup = 'Harmonogramy';
 
     protected static ?string $modelLabel = 'Urlop';
 
@@ -27,10 +29,9 @@ class StaffVacationPeriodResource extends Resource
 
     protected static ?int $navigationSort = 3;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema->components([
                 Forms\Components\Section::make('Podstawowe informacje')
                     ->schema([
                         Forms\Components\Select::make('user_id')
@@ -51,7 +52,7 @@ class StaffVacationPeriodResource extends Resource
                             ->native(false)
                             ->displayFormat('Y-m-d')
                             ->required()
-                            ->reactive()
+                            ->live()
                             ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                 if (!$state) {
                                     return;
@@ -77,7 +78,7 @@ class StaffVacationPeriodResource extends Resource
                             ->displayFormat('Y-m-d')
                             ->required()
                             ->after('start_date')
-                            ->reactive()
+                            ->live()
                             ->helperText(function (callable $get) {
                                 $start = $get('start_date');
                                 $end = $get('end_date');
@@ -219,7 +220,7 @@ class StaffVacationPeriodResource extends Resource
                     ->label('Zakończone')
                     ->query(fn (Builder $query) => $query->where('end_date', '<', now()->toDateString())),
             ])
-            ->actions([
+            ->recordActions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
                 Tables\Actions\Action::make('approve')
@@ -230,7 +231,7 @@ class StaffVacationPeriodResource extends Resource
                     ->action(fn (StaffVacationPeriod $record) => $record->update(['is_approved' => true]))
                     ->requiresConfirmation(),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\BulkAction::make('approve')

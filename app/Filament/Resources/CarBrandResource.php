@@ -2,11 +2,13 @@
 
 namespace App\Filament\Resources;
 
+use BackedEnum;
+use UnitEnum;
 use App\Filament\Resources\CarBrandResource\Pages;
 use App\Filament\Resources\CarBrandResource\RelationManagers;
 use App\Models\CarBrand;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -17,7 +19,7 @@ class CarBrandResource extends Resource
 {
     protected static ?string $model = CarBrand::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-building-office';
+    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-building-office';
 
     protected static ?string $navigationLabel = 'Marki';
 
@@ -25,14 +27,13 @@ class CarBrandResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Marki';
 
-    protected static ?string $navigationGroup = 'Cars';
+    protected static string | UnitEnum | null $navigationGroup = 'Cars';
 
     protected static ?int $navigationSort = 2;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema->components([
                 Forms\Components\TextInput::make('name')
                     ->label('Nazwa marki')
                     ->required()
@@ -104,11 +105,11 @@ class CarBrandResource extends Resource
                         'inactive' => 'Nieaktywna',
                     ]),
             ])
-            ->actions([
+            ->recordActions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\BulkAction::make('approve')

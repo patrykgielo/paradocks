@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
+use BackedEnum;
+use UnitEnum;
 use App\Filament\Resources\EmailSendResource\Pages;
 use App\Models\EmailSend;
 use App\Services\Email\EmailService;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Infolists;
-use Filament\Infolists\Infolist;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -21,19 +22,18 @@ class EmailSendResource extends Resource
 {
     protected static ?string $model = EmailSend::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-paper-airplane';
+    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-paper-airplane';
 
-    protected static ?string $navigationGroup = 'Email';
+    protected static string | UnitEnum | null $navigationGroup = 'Email';
 
     protected static ?int $navigationSort = 2;
 
     protected static ?string $navigationLabel = 'Email Logs';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
         // Read-only resource - no create/edit forms
-        return $form
-            ->schema([
+        return $schema->components([
                 //
             ]);
     }
@@ -140,7 +140,7 @@ class EmailSendResource extends Resource
                             );
                     }),
             ])
-            ->actions([
+            ->recordActions([
                 Tables\Actions\ViewAction::make(),
 
                 Tables\Actions\Action::make('resend')
@@ -203,7 +203,7 @@ class EmailSendResource extends Resource
                         }
                     }),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\BulkAction::make('export')
                         ->label('Export Selected')
@@ -243,10 +243,10 @@ class EmailSendResource extends Resource
             ->poll('30s'); // Auto-refresh every 30 seconds
     }
 
-    public static function infolist(Infolist $infolist): Infolist
+    public static function infolist(Schema $schema): Schema
     {
-        return $infolist
-            ->schema([
+        return $schema
+            ->components([
                 Infolists\Components\Section::make('Email Details')
                     ->schema([
                         Infolists\Components\TextEntry::make('recipient_email')

@@ -2,11 +2,13 @@
 
 namespace App\Filament\Resources;
 
+use BackedEnum;
+use UnitEnum;
 use App\Filament\Resources\ServiceResource\Pages;
 use App\Filament\Resources\ServiceResource\RelationManagers;
 use App\Models\Service;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -17,12 +19,11 @@ class ServiceResource extends Resource
 {
     protected static ?string $model = Service::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema->components([
                 Forms\Components\TextInput::make('name')
                     ->label('Nazwa usługi')
                     ->required()
@@ -131,10 +132,10 @@ class ServiceResource extends Resource
             ->filters([
                 //
             ])
-            ->actions([
+            ->recordActions([
                 Tables\Actions\EditAction::make(),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),

@@ -4,7 +4,7 @@ namespace App\Filament\Resources\EmployeeResource\RelationManagers;
 
 use App\Models\ServiceAvailability;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -21,10 +21,9 @@ class ServiceAvailabilitiesRelationManager extends RelationManager
 
     protected static ?string $pluralModelLabel = 'dostępności';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema->components([
                 Forms\Components\Select::make('service_id')
                     ->label('Usługa')
                     ->relationship('service', 'name')
@@ -173,13 +172,13 @@ class ServiceAvailabilitiesRelationManager extends RelationManager
                 Tables\Actions\CreateAction::make()
                     ->label('Dodaj dostępność'),
             ])
-            ->actions([
+            ->recordActions([
                 Tables\Actions\EditAction::make()
                     ->label('Edytuj'),
                 Tables\Actions\DeleteAction::make()
                     ->label('Usuń'),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make()
                         ->label('Usuń zaznaczone'),

@@ -2,9 +2,11 @@
 
 namespace App\Filament\Resources;
 
+use BackedEnum;
+use UnitEnum;
 use App\Filament\Resources\RoleResource\Pages;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -15,9 +17,9 @@ class RoleResource extends Resource
 {
     protected static ?string $model = Role::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-shield-check';
+    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-shield-check';
 
-    protected static ?string $navigationGroup = 'Zarządzanie Użytkownikami';
+    protected static string | UnitEnum | null $navigationGroup = 'Zarządzanie Użytkownikami';
 
     protected static ?string $modelLabel = 'Rola';
 
@@ -25,10 +27,9 @@ class RoleResource extends Resource
 
     protected static ?int $navigationSort = 2;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema->components([
                 Forms\Components\Section::make('Informacje o roli')
                     ->schema([
                         Forms\Components\TextInput::make('name')
@@ -110,13 +111,13 @@ class RoleResource extends Resource
                         'api' => 'API',
                     ]),
             ])
-            ->actions([
+            ->recordActions([
                 Tables\Actions\EditAction::make()
                     ->label('Edytuj'),
                 Tables\Actions\DeleteAction::make()
                     ->label('Usuń'),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make()
                         ->label('Usuń zaznaczone'),

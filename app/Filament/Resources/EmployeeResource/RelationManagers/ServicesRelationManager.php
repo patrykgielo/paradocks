@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\EmployeeResource\RelationManagers;
 
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -16,10 +16,9 @@ class ServicesRelationManager extends RelationManager
 
     protected static ?string $modelLabel = 'Usługa';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema->components([
                 Forms\Components\Select::make('service_id')
                     ->label('Usługa')
                     ->relationship('services', 'name')
@@ -58,11 +57,11 @@ class ServicesRelationManager extends RelationManager
                     ->label('Przypisz usługę')
                     ->preloadRecordSelect(),
             ])
-            ->actions([
+            ->recordActions([
                 Tables\Actions\DetachAction::make()
                     ->label('Odepnij'),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DetachBulkAction::make()
                         ->label('Odepnij zaznaczone'),

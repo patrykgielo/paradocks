@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
+use BackedEnum;
+use UnitEnum;
 use App\Filament\Resources\EmailSuppressionResource\Pages;
 use App\Models\EmailSuppression;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -17,18 +19,17 @@ class EmailSuppressionResource extends Resource
 {
     protected static ?string $model = EmailSuppression::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-no-symbol';
+    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-no-symbol';
 
-    protected static ?string $navigationGroup = 'Email';
+    protected static string | UnitEnum | null $navigationGroup = 'Email';
 
     protected static ?int $navigationSort = 4;
 
     protected static ?string $navigationLabel = 'Email Suppressions';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema->components([
                 Forms\Components\Section::make('Suppression Details')
                     ->schema([
                         Forms\Components\TextInput::make('email')
@@ -143,7 +144,7 @@ class EmailSuppressionResource extends Resource
                             );
                     }),
             ])
-            ->actions([
+            ->recordActions([
                 Tables\Actions\EditAction::make(),
 
                 Tables\Actions\DeleteAction::make()
@@ -157,7 +158,7 @@ class EmailSuppressionResource extends Resource
                         $record->delete();
                     }),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make()
                         ->label('Bulk Unsuppress')
