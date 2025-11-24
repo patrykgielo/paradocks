@@ -4,7 +4,7 @@ namespace App\Filament\Forms\Components;
 
 use App\Support\Settings\SettingsManager;
 use Filament\Forms\Components\Component;
-use Filament\Forms\Components\Grid;
+use Filament\Schemas\Components\Grid;
 use Filament\Forms\Components\TextInput;
 
 class DurationInput extends Component

@@ -10,9 +10,11 @@ use App\Models\StaffDateException;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Actions;
 use Illuminate\Database\Eloquent\Builder;
 
 class StaffDateExceptionResource extends Resource
@@ -36,7 +38,7 @@ class StaffDateExceptionResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-                Forms\Components\Section::make('Podstawowe informacje')
+                Section::make('Podstawowe informacje')
                     ->schema([
                         Forms\Components\Select::make('user_id')
                             ->label('Pracownik')
@@ -56,7 +58,7 @@ class StaffDateExceptionResource extends Resource
                             ->helperText('Dzień, na który chcesz zastosować wyjątek'),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Typ wyjątku')
+                Section::make('Typ wyjątku')
                     ->schema([
                         Forms\Components\Radio::make('exception_type')
                             ->label('Co się dzieje w tym dniu?')
@@ -73,7 +75,7 @@ class StaffDateExceptionResource extends Resource
                             ->default(StaffDateException::TYPE_UNAVAILABLE),
                     ]),
 
-                Forms\Components\Section::make('Zakres czasowy')
+                Section::make('Zakres czasowy')
                     ->description('Opcjonalne: jeśli nie wypełnisz, wyjątek dotyczy całego dnia')
                     ->schema([
                         Forms\Components\TimePicker::make('start_time')
@@ -88,7 +90,7 @@ class StaffDateExceptionResource extends Resource
                             ->helperText('Zostaw puste jeśli dotyczy całego dnia'),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Dodatkowe informacje')
+                Section::make('Dodatkowe informacje')
                     ->schema([
                         Forms\Components\Textarea::make('reason')
                             ->label('Powód (opcjonalnie)')
@@ -182,12 +184,12 @@ class StaffDateExceptionResource extends Resource
                     ->query(fn (Builder $query) => $query->where('exception_date', '<', now()->toDateString())),
             ])
             ->recordActions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Actions\EditAction::make(),
+                Actions\DeleteAction::make(),
             ])
             ->toolbarActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }

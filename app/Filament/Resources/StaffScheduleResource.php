@@ -10,9 +10,11 @@ use App\Models\StaffSchedule;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Actions;
 use Illuminate\Database\Eloquent\Builder;
 
 class StaffScheduleResource extends Resource
@@ -34,7 +36,7 @@ class StaffScheduleResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-                Forms\Components\Section::make('Podstawowe informacje')
+                Section::make('Podstawowe informacje')
                     ->schema([
                         Forms\Components\Select::make('user_id')
                             ->label('Pracownik')
@@ -60,7 +62,7 @@ class StaffScheduleResource extends Resource
                             ->required(),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Godziny pracy')
+                Section::make('Godziny pracy')
                     ->schema([
                         Forms\Components\TimePicker::make('start_time')
                             ->label('Od godziny')
@@ -74,7 +76,7 @@ class StaffScheduleResource extends Resource
                             ->after('start_time'),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Okres obowiązywania')
+                Section::make('Okres obowiązywania')
                     ->description('Opcjonalne: określ kiedy ten harmonogram jest aktywny')
                     ->schema([
                         Forms\Components\DatePicker::make('effective_from')
@@ -176,13 +178,13 @@ class StaffScheduleResource extends Resource
                     ->falseLabel('Tylko nieaktywne'),
             ])
             ->recordActions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Actions\EditAction::make(),
+                Actions\DeleteAction::make(),
             ])
             ->toolbarActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\BulkAction::make('activate')
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make(),
+                    Actions\BulkAction::make('activate')
                         ->label('Aktywuj zaznaczone')
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
@@ -190,7 +192,7 @@ class StaffScheduleResource extends Resource
                             $records->each->update(['is_active' => true]);
                         })
                         ->deselectRecordsAfterCompletion(),
-                    Tables\Actions\BulkAction::make('deactivate')
+                    Actions\BulkAction::make('deactivate')
                         ->label('Dezaktywuj zaznaczone')
                         ->icon('heroicon-o-x-circle')
                         ->color('danger')

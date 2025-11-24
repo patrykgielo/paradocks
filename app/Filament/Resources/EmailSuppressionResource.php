@@ -10,9 +10,11 @@ use App\Filament\Resources\EmailSuppressionResource\Pages;
 use App\Models\EmailSuppression;
 use Filament\Forms;
 use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Actions;
 use Illuminate\Database\Eloquent\Builder;
 
 class EmailSuppressionResource extends Resource
@@ -30,7 +32,7 @@ class EmailSuppressionResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-                Forms\Components\Section::make('Suppression Details')
+                Section::make('Suppression Details')
                     ->schema([
                         Forms\Components\TextInput::make('email')
                             ->label('Email Address')
@@ -61,7 +63,7 @@ class EmailSuppressionResource extends Resource
                     ])
                     ->columns(2),
 
-                Forms\Components\Section::make('Warning')
+                Section::make('Warning')
                     ->schema([
                         Forms\Components\Placeholder::make('warning')
                             ->content('Suppressed emails will NOT receive any automated emails from the system. Remove from this list to re-enable sending.')
@@ -145,9 +147,9 @@ class EmailSuppressionResource extends Resource
                     }),
             ])
             ->recordActions([
-                Tables\Actions\EditAction::make(),
+                Actions\EditAction::make(),
 
-                Tables\Actions\DeleteAction::make()
+                Actions\DeleteAction::make()
                     ->label('Remove')
                     ->requiresConfirmation()
                     ->modalHeading('Remove Email from Suppression List')
@@ -159,8 +161,8 @@ class EmailSuppressionResource extends Resource
                     }),
             ])
             ->toolbarActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make()
                         ->label('Bulk Unsuppress')
                         ->requiresConfirmation()
                         ->modalHeading('Bulk Remove from Suppression List')
@@ -168,7 +170,7 @@ class EmailSuppressionResource extends Resource
                         ->modalSubmitActionLabel('Yes, Remove All Selected')
                         ->successNotificationTitle('Selected emails unsuppressed'),
 
-                    Tables\Actions\BulkAction::make('export')
+                    Actions\BulkAction::make('export')
                         ->label('Export Selected')
                         ->icon('heroicon-o-arrow-down-tray')
                         ->action(function ($records) {

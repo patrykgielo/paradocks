@@ -11,11 +11,13 @@ use App\Models\EmailTemplate;
 use App\Services\Email\EmailService;
 use Filament\Forms;
 use Filament\Schemas\Schema;
-use Filament\Forms\Get;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Actions;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\HtmlString;
@@ -35,7 +37,7 @@ class EmailTemplateResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-                Forms\Components\Section::make('Template Details')
+                Section::make('Template Details')
                     ->schema([
                         Forms\Components\Select::make('key')
                             ->label('Template Key')
@@ -71,7 +73,7 @@ class EmailTemplateResource extends Resource
                     ])
                     ->columns(3),
 
-                Forms\Components\Section::make('Email Content')
+                Section::make('Email Content')
                     ->schema([
                         Forms\Components\TextInput::make('subject')
                             ->label('Subject Line')
@@ -94,7 +96,7 @@ class EmailTemplateResource extends Resource
                             ->helperText('Plain text version for email clients that don\'t support HTML'),
                     ]),
 
-                Forms\Components\Section::make('Available Variables')
+                Section::make('Available Variables')
                     ->schema([
                         Forms\Components\Placeholder::make('variable_legend')
                             ->label('')
@@ -104,7 +106,7 @@ class EmailTemplateResource extends Resource
                     ->description('Variables you can use in the subject, HTML body, and text body')
                     ->collapsible(),
 
-                Forms\Components\Section::make('Advanced Settings')
+                Section::make('Advanced Settings')
                     ->schema([
                         Forms\Components\TextInput::make('blade_path')
                             ->label('Blade Path (Fallback)')
@@ -187,7 +189,7 @@ class EmailTemplateResource extends Resource
                     ->falseLabel('Inactive only'),
             ])
             ->recordActions([
-                // Tables\Actions\Action::make('preview')
+                // Actions\Action::make('preview')
                 //     ->label('Preview')
                 //     ->icon('heroicon-o-eye')
                 //     ->color('info')
@@ -203,7 +205,7 @@ class EmailTemplateResource extends Resource
                 //     ->modalSubmitAction(false)
                 //     ->modalCancelActionLabel('Close'),
 
-                Tables\Actions\Action::make('testSend')
+                Actions\Action::make('testSend')
                     ->label('Test Send')
                     ->icon('heroicon-o-paper-airplane')
                     ->color('success')
@@ -253,14 +255,14 @@ class EmailTemplateResource extends Resource
                     ->modalHeading('Send Test Email')
                     ->modalDescription('This will send a test email with example data to verify the template rendering.'),
 
-                Tables\Actions\EditAction::make(),
+                Actions\EditAction::make(),
 
-                Tables\Actions\DeleteAction::make()
+                Actions\DeleteAction::make()
                     ->requiresConfirmation(),
             ])
             ->toolbarActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make()
                         ->requiresConfirmation(),
                 ]),
             ])
