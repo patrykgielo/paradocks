@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
+use BackedEnum;
+use UnitEnum;
 use App\Filament\Resources\SmsSendResource\Pages;
 use App\Models\SmsSend;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -15,17 +17,17 @@ class SmsSendResource extends Resource
 {
     protected static ?string $model = SmsSend::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-envelope';
+    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-envelope';
 
-    protected static ?string $navigationGroup = 'SMS';
+    protected static string | UnitEnum | null $navigationGroup = 'SMS';
 
     protected static ?int $navigationSort = 2;
 
     protected static ?string $navigationLabel = 'SMS History';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form->schema([
+        return $schema->components([
             // Read-only resource, no forms needed
         ]);
     }
@@ -95,10 +97,10 @@ class SmsSendResource extends Resource
                         'appointment-follow-up' => 'Follow-up',
                     ]),
             ])
-            ->actions([
+            ->recordActions([
                 Tables\Actions\ViewAction::make(),
             ])
-            ->bulkActions([])
+            ->toolbarActions([])
             ->defaultSort('created_at', 'desc');
     }
 

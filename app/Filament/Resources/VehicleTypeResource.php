@@ -2,11 +2,13 @@
 
 namespace App\Filament\Resources;
 
+use BackedEnum;
+use UnitEnum;
 use App\Filament\Resources\VehicleTypeResource\Pages;
 use App\Filament\Resources\VehicleTypeResource\RelationManagers;
 use App\Models\VehicleType;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -17,7 +19,7 @@ class VehicleTypeResource extends Resource
 {
     protected static ?string $model = VehicleType::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-tag';
+    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-tag';
 
     protected static ?string $navigationLabel = 'Typy Pojazdów';
 
@@ -25,14 +27,13 @@ class VehicleTypeResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Typy Pojazdów';
 
-    protected static ?string $navigationGroup = 'Cars';
+    protected static string | UnitEnum | null $navigationGroup = 'Cars';
 
     protected static ?int $navigationSort = 1;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema->components([
                 Forms\Components\TextInput::make('name')
                     ->label('Nazwa')
                     ->required()
@@ -104,10 +105,10 @@ class VehicleTypeResource extends Resource
                     ->trueLabel('Tylko aktywne')
                     ->falseLabel('Tylko nieaktywne'),
             ])
-            ->actions([
+            ->recordActions([
                 Tables\Actions\EditAction::make(),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),

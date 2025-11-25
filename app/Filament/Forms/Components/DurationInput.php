@@ -40,7 +40,7 @@ class DurationInput extends Component
                         ->maxValue(0) // Car detailing services don't span multiple days
                         ->default((int) $days)
                         ->suffix('dni')
-                        ->reactive()
+                        ->live()
                         ->afterStateUpdated(fn () => $this->updateTotalMinutes())
                         ->helperText('Usługi wielodniowe nie są obsługiwane'),
 
@@ -51,7 +51,7 @@ class DurationInput extends Component
                         ->maxValue(9) // Max 9 hours (single work day)
                         ->default((int) $hours)
                         ->suffix('godz')
-                        ->reactive()
+                        ->live()
                         ->afterStateUpdated(fn () => $this->updateTotalMinutes())
                         ->required(),
 
@@ -63,7 +63,7 @@ class DurationInput extends Component
                         ->step(15) // 15-minute increments
                         ->default((int) $minutes)
                         ->suffix('min')
-                        ->reactive()
+                        ->live()
                         ->afterStateUpdated(fn () => $this->updateTotalMinutes())
                         ->required(),
                 ])

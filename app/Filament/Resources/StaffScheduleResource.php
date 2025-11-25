@@ -2,12 +2,14 @@
 
 namespace App\Filament\Resources;
 
+use BackedEnum;
+use UnitEnum;
 use App\Filament\Resources\StaffScheduleResource\Pages;
 use App\Filament\Resources\StaffScheduleResource\RelationManagers;
 use App\Models\StaffSchedule;
 use App\Models\User;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -17,9 +19,9 @@ class StaffScheduleResource extends Resource
 {
     protected static ?string $model = StaffSchedule::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
+    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-calendar-days';
 
-    protected static ?string $navigationGroup = 'Harmonogramy';
+    protected static string | UnitEnum | null $navigationGroup = 'Harmonogramy';
 
     protected static ?string $modelLabel = 'Harmonogram';
 
@@ -29,10 +31,9 @@ class StaffScheduleResource extends Resource
 
     protected static ?string $navigationLabel = 'Harmonogramy';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema->components([
                 Forms\Components\Section::make('Podstawowe informacje')
                     ->schema([
                         Forms\Components\Select::make('user_id')
@@ -174,11 +175,11 @@ class StaffScheduleResource extends Resource
                     ->trueLabel('Tylko aktywne')
                     ->falseLabel('Tylko nieaktywne'),
             ])
-            ->actions([
+            ->recordActions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\BulkAction::make('activate')

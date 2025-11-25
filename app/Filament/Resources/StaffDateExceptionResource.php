@@ -2,12 +2,14 @@
 
 namespace App\Filament\Resources;
 
+use BackedEnum;
+use UnitEnum;
 use App\Filament\Resources\StaffDateExceptionResource\Pages;
 use App\Filament\Resources\StaffDateExceptionResource\RelationManagers;
 use App\Models\StaffDateException;
 use App\Models\User;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -17,9 +19,9 @@ class StaffDateExceptionResource extends Resource
 {
     protected static ?string $model = StaffDateException::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
+    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-calendar-days';
 
-    protected static ?string $navigationGroup = 'Harmonogramy';
+    protected static string | UnitEnum | null $navigationGroup = 'Harmonogramy';
 
     protected static ?string $modelLabel = 'Wyjątek';
 
@@ -31,10 +33,9 @@ class StaffDateExceptionResource extends Resource
     // This reduces cognitive load by consolidating schedule management
     protected static bool $shouldRegisterNavigation = false;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema->components([
                 Forms\Components\Section::make('Podstawowe informacje')
                     ->schema([
                         Forms\Components\Select::make('user_id')
@@ -68,7 +69,7 @@ class StaffDateExceptionResource extends Resource
                                 StaffDateException::TYPE_AVAILABLE => 'Pracownik będzie dostępny mimo że normalnie nie pracuje',
                             ])
                             ->required()
-                            ->reactive()
+                            ->live()
                             ->default(StaffDateException::TYPE_UNAVAILABLE),
                     ]),
 
@@ -180,11 +181,11 @@ class StaffDateExceptionResource extends Resource
                     ->label('Tylko przeszłe')
                     ->query(fn (Builder $query) => $query->where('exception_date', '<', now()->toDateString())),
             ])
-            ->actions([
+            ->recordActions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),

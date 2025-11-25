@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
+use BackedEnum;
+use UnitEnum;
 use App\Filament\Resources\EmailTemplateResource\Pages;
 use App\Models\EmailTemplate;
 use App\Services\Email\EmailService;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Forms\Get;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
@@ -22,18 +24,17 @@ class EmailTemplateResource extends Resource
 {
     protected static ?string $model = EmailTemplate::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-document-text';
 
-    protected static ?string $navigationGroup = 'Email';
+    protected static string | UnitEnum | null $navigationGroup = 'Email';
 
     protected static ?int $navigationSort = 1;
 
     protected static ?string $navigationLabel = 'Email Templates';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema->components([
                 Forms\Components\Section::make('Template Details')
                     ->schema([
                         Forms\Components\Select::make('key')
@@ -185,7 +186,7 @@ class EmailTemplateResource extends Resource
                     ->trueLabel('Active only')
                     ->falseLabel('Inactive only'),
             ])
-            ->actions([
+            ->recordActions([
                 // Tables\Actions\Action::make('preview')
                 //     ->label('Preview')
                 //     ->icon('heroicon-o-eye')
@@ -257,7 +258,7 @@ class EmailTemplateResource extends Resource
                 Tables\Actions\DeleteAction::make()
                     ->requiresConfirmation(),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make()
                         ->requiresConfirmation(),

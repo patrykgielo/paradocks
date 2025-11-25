@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages;
 
+use BackedEnum;
+use UnitEnum;
 use App\Services\Sms\SmsService;
 use App\Support\Settings\SettingsManager;
 use Filament\Forms\Components\Repeater;
@@ -33,12 +35,12 @@ class SystemSettings extends Page implements HasForms
     /**
      * Page view.
      */
-    protected static ?string $navigationIcon = 'heroicon-o-cog-8-tooth';
+    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-cog-8-tooth';
 
     /**
      * Navigation group.
      */
-    protected static ?string $navigationGroup = 'Settings';
+    protected static string | UnitEnum | null $navigationGroup = 'Settings';
 
     /**
      * Navigation label.
@@ -46,9 +48,9 @@ class SystemSettings extends Page implements HasForms
     protected static ?string $navigationLabel = 'System Settings';
 
     /**
-     * Page title.
+     * Page view.
      */
-    protected static string $view = 'filament.pages.system-settings';
+    protected string $view = 'filament.pages.system-settings';
 
     /**
      * Permission required to access this page.

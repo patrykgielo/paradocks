@@ -4,30 +4,32 @@ namespace App\Filament\Widgets;
 
 use App\Filament\Resources\AppointmentResource;
 use App\Models\Appointment;
+use Guava\Calendar\Filament\CalendarWidget;
 use Guava\Calendar\ValueObjects\CalendarEvent;
-use Guava\Calendar\Widgets\CalendarWidget;
+use Guava\Calendar\ValueObjects\EventClickInfo;
+use Guava\Calendar\ValueObjects\FetchInfo;
 use Illuminate\Database\Eloquent\Model;
 
 class AppointmentsCalendar extends CalendarWidget
 {
     protected static ?int $sort = 1;
 
-    public function getEvents(array $fetchInfo = []): array
+    public function getEvents(FetchInfo $info): array
     {
         return Appointment::query()
             ->with(['service', 'customer', 'staff'])
             ->when(
-                isset($fetchInfo['start']),
-                fn ($query) => $query->where('appointment_date', '>=', $fetchInfo['start'])
+                $info->start,
+                fn ($query) => $query->where('appointment_date', '>=', $info->start)
             )
             ->when(
-                isset($fetchInfo['end']),
-                fn ($query) => $query->where('appointment_date', '<=', $fetchInfo['end'])
+                $info->end,
+                fn ($query) => $query->where('appointment_date', '<=', $info->end)
             )
             ->get()
             ->map(function (Appointment $appointment) {
                 return CalendarEvent::make()
-                    ->key($appointment->id)
+                    ->id($appointment->id)
                     ->title(
                         $appointment->customer->name . ' - ' . $appointment->service->name
                     )
@@ -51,10 +53,8 @@ class AppointmentsCalendar extends CalendarWidget
         };
     }
 
-    public function onEventClick(array $info = [], ?string $action = null): void
+    public function onEventClick(EventClickInfo $info, Model $event, ?string $action = null): void
     {
-        if (isset($info['event']['id'])) {
-            redirect(AppointmentResource::getUrl('edit', ['record' => $info['event']['id']]));
-        }
+        redirect(AppointmentResource::getUrl('edit', ['record' => $event->id]));
     }
 }
