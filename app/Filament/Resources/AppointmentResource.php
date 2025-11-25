@@ -6,19 +6,21 @@ use App\Filament\Resources\AppointmentResource\Pages;
 use App\Models\Appointment;
 use App\Models\Service;
 use App\Models\User;
+use BackedEnum;
 use Carbon\Carbon;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use UnitEnum;
 
 class AppointmentResource extends Resource
 {
     protected static ?string $model = Appointment::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-calendar';
+    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-calendar';
 
     protected static ?string $navigationLabel = 'Wizyty';
 
@@ -26,19 +28,19 @@ class AppointmentResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Wizyty';
 
-    protected static ?string $navigationGroup = 'Service Management';
+    protected static string | UnitEnum | null $navigationGroup = 'Service Management';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Forms\Components\Select::make('service_id')
                     ->label('Usługa')
                     ->relationship('service', 'name')
                     ->searchable()
                     ->preload()
                     ->required()
-                    ->reactive()
+                    ->live()
                     ->afterStateUpdated(fn ($state, callable $set) => $set('end_time', null)),
 
                 Forms\Components\Select::make('customer_id')
@@ -74,19 +76,19 @@ class AppointmentResource extends Resource
                     ->searchable()
                     ->preload()
                     ->required()
-                    ->reactive(),
+                    ->live(),
 
                 Forms\Components\DatePicker::make('appointment_date')
                     ->label('Data wizyty')
                     ->required()
                     ->native(false)
                     ->minDate(now())
-                    ->reactive(),
+                    ->live(),
 
                 Forms\Components\TimePicker::make('start_time')
                     ->label('Czas rozpoczęcia')
                     ->required()
-                    ->reactive()
+                    ->live()
                     ->afterStateUpdated(function ($state, callable $get, callable $set) {
                         $serviceId = $get('service_id');
                         if ($state && $serviceId) {
@@ -102,7 +104,7 @@ class AppointmentResource extends Resource
                 Forms\Components\TimePicker::make('end_time')
                     ->label('Czas zakończenia')
                     ->required()
-                    ->reactive(),
+                    ->live(),
 
                 Forms\Components\Select::make('status')
                     ->label('Status')
@@ -312,12 +314,12 @@ class AppointmentResource extends Resource
                     ->relationship('staff', 'first_name')
                     ->getOptionLabelFromRecordUsing(fn (User $record) => $record->full_name),
             ])
-            ->actions([
+            ->recordActions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),

@@ -4,7 +4,7 @@ namespace App\Filament\Resources\EmployeeResource\RelationManagers;
 
 use App\Models\StaffDateException;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -17,10 +17,9 @@ class DateExceptionsRelationManager extends RelationManager
 
     protected static ?string $modelLabel = 'Wyjątek';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema->components([
                 Forms\Components\DatePicker::make('exception_date')
                     ->label('Data')
                     ->native(false)
@@ -104,11 +103,11 @@ class DateExceptionsRelationManager extends RelationManager
                 Tables\Actions\CreateAction::make()
                     ->label('Dodaj wyjątek'),
             ])
-            ->actions([
+            ->recordActions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),

@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
+use BackedEnum;
+use UnitEnum;
 use App\Filament\Resources\SmsTemplateResource\Pages;
 use App\Models\SmsTemplate;
 use App\Services\Sms\SmsService;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Forms\Get;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
@@ -20,9 +22,9 @@ class SmsTemplateResource extends Resource
 {
     protected static ?string $model = SmsTemplate::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-chat-bubble-bottom-center-text';
+    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-chat-bubble-bottom-center-text';
 
-    protected static ?string $navigationGroup = 'SMS';
+    protected static string | UnitEnum | null $navigationGroup = 'SMS';
 
     protected static ?int $navigationSort = 1;
 
@@ -38,10 +40,9 @@ class SmsTemplateResource extends Resource
         return static::getModel()::count() === 0 ? 'danger' : null;
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema->components([
                 Forms\Components\Section::make('Template Details')
                     ->schema([
                         Forms\Components\Select::make('key')
@@ -94,7 +95,7 @@ class SmsTemplateResource extends Resource
                             ->maxLength(500)
                             ->placeholder('Witaj {{customer_name}}! Przypominamy o wizycie {{appointment_date}} o {{appointment_time}}.')
                             ->helperText('Use {{variable}} syntax for placeholders. Keep it short!')
-                            ->reactive()
+                            ->live()
                             ->afterStateUpdated(function ($state, Forms\Set $set) {
                                 $length = mb_strlen($state ?? '');
                                 $set('character_count', $length);
@@ -193,7 +194,7 @@ class SmsTemplateResource extends Resource
                     ->trueLabel('Active only')
                     ->falseLabel('Inactive only'),
             ])
-            ->actions([
+            ->recordActions([
                 Tables\Actions\Action::make('testSend')
                     ->label('Test Send')
                     ->icon('heroicon-o-paper-airplane')
@@ -249,7 +250,7 @@ class SmsTemplateResource extends Resource
                 Tables\Actions\DeleteAction::make()
                     ->requiresConfirmation(),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make()
                         ->requiresConfirmation(),

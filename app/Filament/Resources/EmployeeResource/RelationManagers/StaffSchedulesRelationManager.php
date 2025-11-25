@@ -4,7 +4,7 @@ namespace App\Filament\Resources\EmployeeResource\RelationManagers;
 
 use App\Models\StaffSchedule;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -17,10 +17,9 @@ class StaffSchedulesRelationManager extends RelationManager
 
     protected static ?string $modelLabel = 'Harmonogram';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema->components([
                 Forms\Components\Select::make('day_of_week')
                     ->label('Dzień tygodnia')
                     ->options([
@@ -102,11 +101,11 @@ class StaffSchedulesRelationManager extends RelationManager
                 Tables\Actions\CreateAction::make()
                     ->label('Dodaj harmonogram'),
             ])
-            ->actions([
+            ->recordActions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),

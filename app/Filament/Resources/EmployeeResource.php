@@ -2,11 +2,13 @@
 
 namespace App\Filament\Resources;
 
+use BackedEnum;
+use UnitEnum;
 use App\Filament\Resources\EmployeeResource\Pages;
 use App\Filament\Resources\EmployeeResource\RelationManagers;
 use App\Models\User;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -18,9 +20,9 @@ class EmployeeResource extends Resource
 {
     protected static ?string $model = User::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-user-circle';
+    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-user-circle';
 
-    protected static ?string $navigationGroup = 'Zarządzanie Użytkownikami';
+    protected static string | UnitEnum | null $navigationGroup = 'Zarządzanie Użytkownikami';
 
     protected static ?string $modelLabel = 'Pracownik';
 
@@ -35,10 +37,9 @@ class EmployeeResource extends Resource
         });
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema->components([
                 Forms\Components\Section::make('Dane osobowe')
                     ->schema([
                         Forms\Components\TextInput::make('first_name')
@@ -183,13 +184,13 @@ class EmployeeResource extends Resource
                     ->trueLabel('Zweryfikowane')
                     ->falseLabel('Niezweryfikowane'),
             ])
-            ->actions([
+            ->recordActions([
                 Tables\Actions\EditAction::make()
                     ->label('Edytuj'),
                 Tables\Actions\DeleteAction::make()
                     ->label('Usuń'),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make()
                         ->label('Usuń zaznaczonych'),
