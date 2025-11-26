@@ -8,6 +8,7 @@ use Filament\Schemas\Schema;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Actions;
 
 class VacationPeriodsRelationManager extends RelationManager
 {
@@ -86,13 +87,13 @@ class VacationPeriodsRelationManager extends RelationManager
                     ->falseLabel('Tylko oczekujące'),
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make()
+                Actions\CreateAction::make()
                     ->label('Dodaj urlop'),
             ])
             ->recordActions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
-                Tables\Actions\Action::make('approve')
+                Actions\EditAction::make(),
+                Actions\DeleteAction::make(),
+                Actions\Action::make('approve')
                     ->label('Zatwierdź')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
@@ -101,8 +102,8 @@ class VacationPeriodsRelationManager extends RelationManager
                     ->requiresConfirmation(),
             ])
             ->toolbarActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make(),
                 ]),
             ])
             ->defaultSort('start_date', 'desc');

@@ -8,6 +8,7 @@ use Filament\Schemas\Schema;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Actions;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
@@ -169,18 +170,18 @@ class ServiceAvailabilitiesRelationManager extends RelationManager
                     ]),
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make()
+                Actions\CreateAction::make()
                     ->label('Dodaj dostępność'),
             ])
             ->recordActions([
-                Tables\Actions\EditAction::make()
+                Actions\EditAction::make()
                     ->label('Edytuj'),
-                Tables\Actions\DeleteAction::make()
+                Actions\DeleteAction::make()
                     ->label('Usuń'),
             ])
             ->toolbarActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make()
                         ->label('Usuń zaznaczone'),
                 ]),
             ])

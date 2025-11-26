@@ -7,6 +7,7 @@ use Filament\Schemas\Schema;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Actions;
 
 class ServicesRelationManager extends RelationManager
 {
@@ -53,17 +54,17 @@ class ServicesRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                Tables\Actions\AttachAction::make()
+                Actions\AttachAction::make()
                     ->label('Przypisz usługę')
                     ->preloadRecordSelect(),
             ])
             ->recordActions([
-                Tables\Actions\DetachAction::make()
+                Actions\DetachAction::make()
                     ->label('Odepnij'),
             ])
             ->toolbarActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DetachBulkAction::make()
+                Actions\BulkActionGroup::make([
+                    Actions\DetachBulkAction::make()
                         ->label('Odepnij zaznaczone'),
                 ]),
             ]);

@@ -124,11 +124,6 @@ class AppServiceProvider extends ServiceProvider
             $event->appointment->customer->notify(
                 new AppointmentCreatedNotification($event->appointment, 'customer')
             );
-
-            // Notify admins with 'manage appointments' permission
-            User::permission('manage appointments')->each(function ($admin) use ($event) {
-                $admin->notify(new AppointmentCreatedNotification($event->appointment, 'admin'));
-            });
         });
 
         // Appointment Rescheduled

@@ -15,6 +15,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Actions;
 use Illuminate\Database\Eloquent\Builder;
 
 class EmailEventResource extends Resource
@@ -133,7 +134,7 @@ class EmailEventResource extends Resource
                     }),
             ])
             ->recordActions([
-                Tables\Actions\Action::make('viewEmail')
+                Actions\Action::make('viewEmail')
                     ->label('View Email')
                     ->icon('heroicon-o-envelope-open')
                     ->color('info')
@@ -142,7 +143,7 @@ class EmailEventResource extends Resource
                     )
                     ->openUrlInNewTab(false),
 
-                Tables\Actions\Action::make('addToSuppression')
+                Actions\Action::make('addToSuppression')
                     ->label('Suppress')
                     ->icon('heroicon-o-no-symbol')
                     ->color('danger')
@@ -189,8 +190,8 @@ class EmailEventResource extends Resource
                     }),
             ])
             ->toolbarActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\BulkAction::make('export')
+                Actions\BulkActionGroup::make([
+                    Actions\BulkAction::make('export')
                         ->label('Export Selected')
                         ->icon('heroicon-o-arrow-down-tray')
                         ->action(function ($records) {

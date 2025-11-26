@@ -29,7 +29,7 @@ class AppointmentsCalendar extends CalendarWidget
             ->get()
             ->map(function (Appointment $appointment) {
                 return CalendarEvent::make()
-                    ->id($appointment->id)
+                    ->key($appointment->id)
                     ->title(
                         $appointment->customer->name . ' - ' . $appointment->service->name
                     )

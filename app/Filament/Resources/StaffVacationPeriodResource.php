@@ -10,9 +10,11 @@ use App\Models\StaffVacationPeriod;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Actions;
 use Illuminate\Database\Eloquent\Builder;
 
 class StaffVacationPeriodResource extends Resource
@@ -32,7 +34,7 @@ class StaffVacationPeriodResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-                Forms\Components\Section::make('Podstawowe informacje')
+                Section::make('Podstawowe informacje')
                     ->schema([
                         Forms\Components\Select::make('user_id')
                             ->label('Pracownik')
@@ -45,7 +47,7 @@ class StaffVacationPeriodResource extends Resource
                             ->required(),
                     ]),
 
-                Forms\Components\Section::make('Okres urlopu')
+                Section::make('Okres urlopu')
                     ->schema([
                         Forms\Components\DatePicker::make('start_date')
                             ->label('Data rozpoczęcia')
@@ -95,7 +97,7 @@ class StaffVacationPeriodResource extends Resource
                             }),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Szczegóły')
+                Section::make('Szczegóły')
                     ->schema([
                         Forms\Components\Textarea::make('reason')
                             ->label('Powód/Typ urlopu')
@@ -221,9 +223,9 @@ class StaffVacationPeriodResource extends Resource
                     ->query(fn (Builder $query) => $query->where('end_date', '<', now()->toDateString())),
             ])
             ->recordActions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
-                Tables\Actions\Action::make('approve')
+                Actions\EditAction::make(),
+                Actions\DeleteAction::make(),
+                Actions\Action::make('approve')
                     ->label('Zatwierdź')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
@@ -232,9 +234,9 @@ class StaffVacationPeriodResource extends Resource
                     ->requiresConfirmation(),
             ])
             ->toolbarActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\BulkAction::make('approve')
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make(),
+                    Actions\BulkAction::make('approve')
                         ->label('Zatwierdź zaznaczone')
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
@@ -243,7 +245,7 @@ class StaffVacationPeriodResource extends Resource
                         })
                         ->deselectRecordsAfterCompletion()
                         ->requiresConfirmation(),
-                    Tables\Actions\BulkAction::make('unapprove')
+                    Actions\BulkAction::make('unapprove')
                         ->label('Cofnij zatwierdzenie')
                         ->icon('heroicon-o-x-circle')
                         ->color('warning')

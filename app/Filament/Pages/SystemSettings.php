@@ -8,17 +8,18 @@ use BackedEnum;
 use UnitEnum;
 use App\Services\Sms\SmsService;
 use App\Support\Settings\SettingsManager;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Form;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Schema;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Mail;
 
@@ -79,10 +80,10 @@ class SystemSettings extends Page implements HasForms
     /**
      * Define the form schema.
      */
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Tabs::make('Settings')
                     ->tabs([
                         $this->bookingTab(),

@@ -110,6 +110,179 @@ appointments (
 - `INDEX status (status)`
 - `INDEX deleted_at (deleted_at)` (soft deletes)
 
+## CMS Tables (Content Management System)
+
+### Pages Table
+
+```sql
+pages (
+  id: bigint primary key,
+  title: varchar(255),
+  slug: varchar(255) unique,
+  body: text nullable,
+  content: json nullable,
+  layout: enum('default', 'full-width', 'minimal') default 'default',
+  published_at: datetime nullable,
+  meta_title: varchar(255) nullable,
+  meta_description: text nullable,
+  featured_image: varchar(255) nullable,
+  created_at: timestamp,
+  updated_at: timestamp
+)
+```
+
+**Purpose:** Static content pages with customizable layouts (About Us, Services, Contact, etc.)
+
+**Indexes:**
+- `PRIMARY KEY (id)`
+- `UNIQUE KEY slug (slug)`
+- `INDEX published_at (published_at)`
+
+**Notes:**
+- Hybrid content: `body` (RichEditor) + `content` JSON (Builder blocks)
+- `published_at` NULL = draft, <= now() = published
+- Three layout options: default (with sidebars), full-width, minimal (narrow)
+
+### Posts Table
+
+```sql
+posts (
+  id: bigint primary key,
+  title: varchar(255),
+  slug: varchar(255) unique,
+  excerpt: text nullable,
+  body: text nullable,
+  content: json nullable,
+  category_id: bigint FK → categories.id nullable,
+  published_at: datetime nullable,
+  meta_title: varchar(255) nullable,
+  meta_description: text nullable,
+  featured_image: varchar(255) nullable,
+  created_at: timestamp,
+  updated_at: timestamp
+)
+```
+
+**Purpose:** Blog posts and news articles with categories
+
+**Indexes:**
+- `PRIMARY KEY (id)`
+- `UNIQUE KEY slug (slug)`
+- `INDEX category_id (category_id)`
+- `INDEX published_at (published_at)`
+
+**Foreign Keys:**
+- `category_id` references `categories(id)` ON DELETE SET NULL
+
+**Notes:**
+- `excerpt` displayed in post listings (optional)
+- Category is optional but recommended for organization
+
+### Promotions Table
+
+```sql
+promotions (
+  id: bigint primary key,
+  title: varchar(255),
+  slug: varchar(255) unique,
+  body: text nullable,
+  content: json nullable,
+  active: boolean default true,
+  valid_from: datetime nullable,
+  valid_until: datetime nullable,
+  meta_title: varchar(255) nullable,
+  meta_description: text nullable,
+  featured_image: varchar(255) nullable,
+  created_at: timestamp,
+  updated_at: timestamp
+)
+```
+
+**Purpose:** Special offers, discounts, and promotional campaigns
+
+**Indexes:**
+- `PRIMARY KEY (id)`
+- `UNIQUE KEY slug (slug)`
+- `INDEX active (active)`
+- `INDEX valid_from (valid_from)`
+- `INDEX valid_until (valid_until)`
+
+**Notes:**
+- `active` flag allows quick enable/disable without deleting
+- Date range is optional (null = no time restrictions)
+- Frontend only shows active=true AND within date range
+
+### Portfolio Items Table
+
+```sql
+portfolio_items (
+  id: bigint primary key,
+  title: varchar(255),
+  slug: varchar(255) unique,
+  body: text nullable,
+  content: json nullable,
+  category_id: bigint FK → categories.id nullable,
+  before_image: varchar(255) nullable,
+  after_image: varchar(255) nullable,
+  gallery: json nullable,
+  published_at: datetime nullable,
+  meta_title: varchar(255) nullable,
+  meta_description: text nullable,
+  created_at: timestamp,
+  updated_at: timestamp
+)
+```
+
+**Purpose:** Showcase completed detailing projects with before/after images
+
+**Indexes:**
+- `PRIMARY KEY (id)`
+- `UNIQUE KEY slug (slug)`
+- `INDEX category_id (category_id)`
+- `INDEX published_at (published_at)`
+
+**Foreign Keys:**
+- `category_id` references `categories(id)` ON DELETE SET NULL
+
+**JSON Fields:**
+- `gallery` - Array of image file paths: `["portfolio/gallery/image1.jpg", "portfolio/gallery/image2.jpg"]`
+- `content` - Builder blocks (typically client testimonials/quotes)
+
+**Notes:**
+- `before_image` and `after_image` are the hero feature
+- `gallery` stores additional project photos as JSON array
+
+### Categories Table
+
+```sql
+categories (
+  id: bigint primary key,
+  name: varchar(255),
+  slug: varchar(255),
+  description: text nullable,
+  parent_id: bigint FK → categories.id nullable,
+  type: enum('post', 'portfolio'),
+  created_at: timestamp,
+  updated_at: timestamp
+)
+```
+
+**Purpose:** Hierarchical categories for Posts and Portfolio Items
+
+**Indexes:**
+- `PRIMARY KEY (id)`
+- `UNIQUE KEY type_slug (type, slug)` - Slug unique per type
+- `INDEX parent_id (parent_id)`
+- `INDEX type (type)`
+
+**Foreign Keys:**
+- `parent_id` references `categories(id)` ON DELETE CASCADE
+
+**Notes:**
+- Supports nested categories (parent → children)
+- `type` field separates Post categories from Portfolio categories
+- Self-referencing relationship via `parent_id` (nullable for root categories)
+
 ## Vehicle Management Tables
 
 ### Vehicle Types Table

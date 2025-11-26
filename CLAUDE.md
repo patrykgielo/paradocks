@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Laravel 12 car detailing booking application with:
 - **Backend:** Laravel 12, PHP 8.2+, MySQL 8.0
 - **Frontend:** Vite 7+, Tailwind CSS 4.0
-- **Admin Panel:** Filament v3.3+
+- **Admin Panel:** Filament v4.2.3
 - **Queue:** Redis with Laravel Horizon
 - **Containerization:** Docker Compose (8 services)
 
@@ -303,6 +303,55 @@ Complete calendar-based staff availability management system with **user-friendl
 5. System checks availability: Vacation (blocks all) → Exception (overrides schedule) → Base schedule
 
 **See:** [Staff Availability Guide](app/docs/guides/staff-availability.md)
+
+### Content Management System (CMS)
+
+Complete content management system with 4 content types, Filament admin panel, and public frontend.
+
+- **Content Types:** Pages, Posts, Promotions, Portfolio Items
+- **Admin URLs:**
+  - Pages: `/admin/pages`
+  - Posts: `/admin/posts` (Aktualności)
+  - Promotions: `/admin/promotions`
+  - Portfolio: `/admin/portfolio-items`
+  - Categories: `/admin/categories`
+- **Public URLs:**
+  - Pages: `/strona/{slug}` (e.g., `/strona/o-nas`)
+  - Posts: `/aktualnosci/{slug}` (e.g., `/aktualnosci/nowa-promocja`)
+  - Promotions: `/promocje/{slug}` (e.g., `/promocje/rabat-50`)
+  - Portfolio: `/portfolio/{slug}` (e.g., `/portfolio/detailing-bmw`)
+
+**Content Features:**
+- **Hybrid content system:** RichEditor (main body) + Builder (advanced blocks)
+- **Content blocks:** image, gallery, video, CTA, columns, quotes
+- **SEO fields:** meta_title, meta_description, featured_image
+- **Publishing states:** draft (no published_at), scheduled (future date), published (past date)
+- **Categories:** Hierarchical categories for Posts/Portfolio (type: 'post' or 'portfolio')
+- **Before/After images:** Portfolio items showcase project transformations
+- **Preview buttons:** Open frontend in new tab (eye icon in admin)
+- **Auto-slug:** Generated from title on blur
+
+**Database Tables:**
+- `pages` - Static content with layout options (default, full-width, minimal)
+- `posts` - Blog/news with excerpt and category
+- `promotions` - Offers with active flag and valid_from/valid_until dates
+- `portfolio_items` - Projects with before_image, after_image, gallery JSON
+- `categories` - Hierarchical categories (parent_id, type field)
+
+**Key Models:**
+- `Page`, `Post`, `Promotion`, `PortfolioItem`, `Category`
+- Scopes: `published()`, `draft()`, `active()`, `valid()`
+- Relationships: Post/Portfolio → Category, Category → parent/children
+
+**Content Workflow:**
+1. Create content in admin (auto-draft)
+2. Add main content in RichEditor (body field)
+3. Optionally add advanced blocks (image, gallery, video, CTA, etc.)
+4. Set SEO fields (meta_title, meta_description, featured_image)
+5. Set published_at for scheduling or leave empty for draft
+6. Preview with eye icon button (opens frontend in new tab)
+
+**See:** [CMS System Documentation](app/docs/features/cms-system/README.md)
 
 ## Production Build
 

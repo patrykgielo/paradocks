@@ -9,9 +9,11 @@ use App\Filament\Resources\ServiceResource\RelationManagers;
 use App\Models\Service;
 use Filament\Forms;
 use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Grid;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Actions;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
@@ -31,7 +33,7 @@ class ServiceResource extends Resource
                 Forms\Components\Textarea::make('description')
                     ->label('Opis')
                     ->columnSpanFull(),
-                Forms\Components\Grid::make(3)
+                Grid::make(3)
                     ->schema([
                         Forms\Components\TextInput::make('duration_days')
                             ->label('Dni')
@@ -133,11 +135,11 @@ class ServiceResource extends Resource
                 //
             ])
             ->recordActions([
-                Tables\Actions\EditAction::make(),
+                Actions\EditAction::make(),
             ])
             ->toolbarActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }

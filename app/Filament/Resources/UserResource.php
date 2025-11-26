@@ -8,9 +8,11 @@ use App\Filament\Resources\UserResource\Pages;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Actions;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
@@ -32,7 +34,7 @@ class UserResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-                Forms\Components\Section::make('Dane osobowe')
+                Section::make('Dane osobowe')
                     ->schema([
                         Forms\Components\TextInput::make('first_name')
                             ->label('Imię')
@@ -46,7 +48,7 @@ class UserResource extends Resource
                             ->placeholder('Kowalski'),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Kontakt')
+                Section::make('Kontakt')
                     ->schema([
                         Forms\Components\TextInput::make('email')
                             ->label('Email')
@@ -67,7 +69,7 @@ class UserResource extends Resource
                             ->displayFormat('d.m.Y H:i'),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Adres')
+                Section::make('Adres')
                     ->schema([
                         Forms\Components\TextInput::make('street_name')
                             ->label('Ulica')
@@ -95,7 +97,7 @@ class UserResource extends Resource
                             ->columnSpanFull(),
                     ])->columns(4)->collapsible(),
 
-                Forms\Components\Section::make('Hasło')
+                Section::make('Hasło')
                     ->schema([
                         Forms\Components\TextInput::make('password')
                             ->label('Hasło')
@@ -109,7 +111,7 @@ class UserResource extends Resource
                             ->helperText('Pozostaw puste, aby zachować obecne hasło'),
                     ]),
 
-                Forms\Components\Section::make('Role i uprawnienia')
+                Section::make('Role i uprawnienia')
                     ->schema([
                         Forms\Components\Select::make('roles')
                             ->label('Role')
@@ -187,14 +189,14 @@ class UserResource extends Resource
                     ->falseLabel('Niezweryfikowane'),
             ])
             ->recordActions([
-                Tables\Actions\EditAction::make()
+                Actions\EditAction::make()
                     ->label('Edytuj'),
-                Tables\Actions\DeleteAction::make()
+                Actions\DeleteAction::make()
                     ->label('Usuń'),
             ])
             ->toolbarActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make()
                         ->label('Usuń zaznaczone'),
                 ]),
             ])

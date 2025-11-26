@@ -7,9 +7,11 @@ use UnitEnum;
 use App\Filament\Resources\RoleResource\Pages;
 use Filament\Forms;
 use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Actions;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -30,7 +32,7 @@ class RoleResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-                Forms\Components\Section::make('Informacje o roli')
+                Section::make('Informacje o roli')
                     ->schema([
                         Forms\Components\TextInput::make('name')
                             ->label('Nazwa roli')
@@ -46,7 +48,7 @@ class RoleResource extends Resource
                             ->helperText('Zazwyczaj "web" dla standardowych użytkowników'),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Uprawnienia')
+                Section::make('Uprawnienia')
                     ->schema([
                         Forms\Components\CheckboxList::make('permissions')
                             ->label('Przypisz uprawnienia')
@@ -112,14 +114,14 @@ class RoleResource extends Resource
                     ]),
             ])
             ->recordActions([
-                Tables\Actions\EditAction::make()
+                Actions\EditAction::make()
                     ->label('Edytuj'),
-                Tables\Actions\DeleteAction::make()
+                Actions\DeleteAction::make()
                     ->label('Usuń'),
             ])
             ->toolbarActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make()
                         ->label('Usuń zaznaczone'),
                 ]),
             ])
