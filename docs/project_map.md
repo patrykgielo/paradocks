@@ -1,6 +1,6 @@
 # Project Map - Paradocks Booking System
 
-**Last Updated:** 2025-11-12
+**Last Updated:** 2025-11-26
 **Laravel Version:** 12
 **PHP Version:** 8.2+
 **Database:** SQLite (development), MySQL (Docker production)
@@ -472,7 +472,7 @@ The application follows a traditional **Model-View-Controller (MVC)** pattern en
 
 **Routes:**
 - `GET /services/{service}/book` → `create()` (route name: 'booking.create')
-- `POST /api/available-slots` → `getAvailableSlots()` (route name: 'booking.slots')
+- `POST /booking/available-slots` → `getAvailableSlots()` (route name: 'booking.slots')
 
 **Methods:**
 
@@ -1123,11 +1123,106 @@ Stored in `settings` table via SettingsManager:
 
 ---
 
+## Email System
+
+Complete transactional email system with queue-based delivery.
+
+### Models
+
+**EmailTemplate** (`app/Models/EmailTemplate.php`)
+- Stores email templates with key, subject, body_html, body_text
+- Supports PL/EN language variants
+- 18 templates (9 types × 2 languages)
+
+**EmailSend** (`app/Models/EmailSend.php`)
+- Logs all sent emails with status, attempts, metadata
+- Tracks delivery status (pending, sent, failed, bounced)
+- Stores message_key for idempotency
+
+**EmailEvent** (`app/Models/EmailEvent.php`)
+- Logs email events (opened, clicked, bounced, complained)
+- Links to EmailSend via email_send_id
+
+**EmailSuppression** (`app/Models/EmailSuppression.php`)
+- Stores suppressed email addresses (bounces, complaints)
+- Prevents sending to problematic addresses
+
+### Services
+
+**EmailService** (`app/Services/Email/EmailService.php`)
+- Main entry point for sending emails
+- Template rendering with variable substitution
+- Queue integration for async delivery
+
+**SmtpMailer** (`app/Services/Email/SmtpMailer.php`)
+- SMTP gateway implementation
+- Uses Laravel's built-in mail functionality
+- Gmail SMTP with App Password support
+
+### Filament Resources
+
+- `EmailTemplateResource` - Template management
+- `EmailSendResource` - Send history and status
+- `EmailEventResource` - Event tracking
+- `EmailSuppressionResource` - Suppression list management
+
+---
+
+## Staff Scheduling System
+
+Calendar-based staff availability management.
+
+### Models
+
+**StaffSchedule** (`app/Models/StaffSchedule.php`)
+- Base weekly patterns (e.g., Mon-Fri 9:00-17:00)
+- Effective date ranges for schedule changes
+- Links to User (staff) via user_id
+
+**StaffDateException** (`app/Models/StaffDateException.php`)
+- Single-day overrides (sick days, extra work)
+- Can mark day as available or unavailable
+- Custom hours for specific dates
+
+**StaffVacationPeriod** (`app/Models/StaffVacationPeriod.php`)
+- Multi-day vacation/leave periods
+- Approval workflow (pending, approved, rejected)
+- Blocks all availability during period
+
+### Service
+
+**StaffScheduleService** (`app/Services/StaffScheduleService.php`)
+- Core availability checking logic
+- Priority: Vacation → Exception → Base Schedule
+- Used by AppointmentService for slot generation
+
+### Pivot Table
+
+**service_staff** - Links services to staff who can perform them
+- service_id → services.id
+- user_id → users.id (staff role)
+
+### Filament Resources
+
+- `StaffScheduleResource` - Base schedule patterns
+- `StaffDateExceptionResource` - Day overrides (hidden from nav)
+- `StaffVacationPeriodResource` - Vacation management
+
+---
+
 ## API Endpoints
 
 ### Public Web Routes
 ```
 GET  /                         HomeController@index             (public)
+```
+
+### CMS Routes (Public)
+```
+GET  /strona/{slug}            PageController@show              pages.show
+GET  /aktualnosci/{slug}       PostController@show              posts.show
+GET  /promocje/{slug}          PromotionController@show         promotions.show
+GET  /portfolio/{slug}         PortfolioController@show         portfolio.show
 ```
 
 ### Authentication Routes
@@ -1147,15 +1242,29 @@ POST /password/reset           Auth\ResetPasswordController@reset
 ### Protected Routes (require auth)
 ```
 GET  /services/{service}/book  BookingController@create         booking.create
-POST /api/available-slots      BookingController@getAvailableSlots  booking.slots
+POST /booking/available-slots  BookingController@getAvailableSlots  booking.slots
 GET  /my-appointments          AppointmentController@index      appointments.index
 POST /appointments             AppointmentController@store      appointments.store
 POST /appointments/{id}/cancel AppointmentController@cancel     appointments.cancel
 ```
 
+### Vehicle API Routes (Public)
+```
+GET  /api/vehicle-types        VehicleApiController@vehicleTypes
+GET  /api/car-brands           VehicleApiController@carBrands
+GET  /api/car-models           VehicleApiController@carModels
+GET  /api/vehicle-years        VehicleApiController@vehicleYears
+```
+
+### SMS Webhook Routes
+```
+POST /api/webhooks/smsapi/delivery-status  SmsWebhookController@deliveryStatus
+POST /api/webhooks/smsapi/incoming         SmsWebhookController@incoming
+```
+
 ### API Endpoint Details
 
-#### POST /api/available-slots
+#### POST /booking/available-slots
 **Purpose:** Get available booking time slots
 
 **Request:**
@@ -1249,11 +1358,232 @@ POST /appointments/{id}/cancel AppointmentController@cancel     appointments.can
 ---
 
 ### UserResource
-**Location:** `/var/www/projects/paradocks/app/app/Filament/Resources/UserResource.php`
+**Location:** `app/Filament/Resources/UserResource.php`
 
-**Status:** File exists but not reviewed in detail
+**Purpose:** User management with role assignment
 
-**Expected Features:** User management, role assignment
+**Features:**
+- Full CRUD operations
+- User details: first_name, last_name, email, phone
+- Role assignment via Spatie Permission
+- Filters: role, active status
+
+---
+
+### CustomerResource
+**Location:** `app/Filament/Resources/CustomerResource.php`
+
+**Purpose:** Customer management for appointments
+
+---
+
+### EmployeeResource
+**Location:** `app/Filament/Resources/EmployeeResource.php`
+
+**Purpose:** Employee (staff) management with scheduling tabs
+
+**Features:**
+- Employee details with role assignment
+- Tabs: Usługi, Harmonogramy, Wyjątki, Urlopy
+- Service-staff assignments via pivot table
+
+---
+
+### RoleResource
+**Location:** `app/Filament/Resources/RoleResource.php`
+
+**Purpose:** Role and permission management via Spatie
+
+---
+
+### Vehicle Management Resources
+
+#### VehicleTypeResource
+**Location:** `app/Filament/Resources/VehicleTypeResource.php`
+
+**Purpose:** Vehicle type management (SUV, Sedan, Van, etc.)
+
+---
+
+#### CarBrandResource
+**Location:** `app/Filament/Resources/CarBrandResource.php`
+
+**Purpose:** Car brand management (BMW, Audi, etc.)
+
+---
+
+#### CarModelResource
+**Location:** `app/Filament/Resources/CarModelResource.php`
+
+**Purpose:** Car model management with brand relationship
+
+---
+
+### Staff Scheduling Resources
+
+#### StaffScheduleResource
+**Location:** `app/Filament/Resources/StaffScheduleResource.php`
+
+**Purpose:** Base schedule patterns (recurring weekly schedules)
+
+**Features:**
+- Employee selection
+- Day of week selection
+- Start/end times
+- Effective date ranges
+- Header action: "Zarządzaj wyjątkami"
+
+---
+
+#### StaffDateExceptionResource
+**Location:** `app/Filament/Resources/StaffDateExceptionResource.php`
+
+**Purpose:** Single-day schedule exceptions
+
+**Notes:**
+- Hidden from main navigation (accessible via StaffScheduleResource header action)
+- UX improvement per UX-MIGRATION-001
+
+---
+
+#### StaffVacationPeriodResource
+**Location:** `app/Filament/Resources/StaffVacationPeriodResource.php`
+
+**Purpose:** Vacation period management
+
+**Features:**
+- Start/end dates
+- Approval status workflow
+- Reason field
+
+---
+
+### Email System Resources
+
+#### EmailTemplateResource
+**Location:** `app/Filament/Resources/EmailTemplateResource.php`
+
+**Purpose:** Email template management (18 templates: 9 types × PL/EN)
+
+---
+
+#### EmailSendResource
+**Location:** `app/Filament/Resources/EmailSendResource.php`
+
+**Purpose:** Email send logs viewing
+
+---
+
+#### EmailEventResource
+**Location:** `app/Filament/Resources/EmailEventResource.php`
+
+**Purpose:** Email event tracking (opens, clicks, bounces)
+
+---
+
+#### EmailSuppressionResource
+**Location:** `app/Filament/Resources/EmailSuppressionResource.php`
+
+**Purpose:** Email suppression list management
+
+---
+
+### SMS System Resources
+
+#### SmsTemplateResource
+**Location:** `app/Filament/Resources/SmsTemplateResource.php`
+
+**Purpose:** SMS template management (14 templates: 7 types × PL/EN)
+
+---
+
+#### SmsSendResource
+**Location:** `app/Filament/Resources/SmsSendResource.php`
+
+**Purpose:** SMS send logs viewing
+
+---
+
+#### SmsEventResource
+**Location:** `app/Filament/Resources/SmsEventResource.php`
+
+**Purpose:** SMS event tracking
+
+---
+
+#### SmsSuppressionResource
+**Location:** `app/Filament/Resources/SmsSuppressionResource.php`
+
+**Purpose:** SMS suppression list management
+
+---
+
+### CMS Resources (in subfolders)
+
+#### PageResource
+**Location:** `app/Filament/Resources/Pages/PageResource.php`
+
+**Purpose:** Static page management
+
+**Features:**
+- RichEditor body content
+- Builder blocks (image, gallery, video, CTA, columns, quotes)
+- SEO fields: meta_title, meta_description, featured_image
+- Layout options: default, full-width, minimal
+- Publishing workflow: draft → scheduled → published
+
+---
+
+#### PostResource
+**Location:** `app/Filament/Resources/Posts/PostResource.php`
+
+**Purpose:** Blog/news post management
+
+**Features:**
+- RichEditor body + Builder blocks
+- Category assignment
+- SEO fields
+- Excerpt for listings
+- Publishing workflow
+
+---
+
+#### PromotionResource
+**Location:** `app/Filament/Resources/Promotions/PromotionResource.php`
+
+**Purpose:** Promotional offer management
+
+**Features:**
+- RichEditor body + Builder blocks
+- Active flag
+- Valid from/until dates
+- SEO fields
+
+---
+
+#### PortfolioItemResource
+**Location:** `app/Filament/Resources/PortfolioItems/PortfolioItemResource.php`
+
+**Purpose:** Portfolio project showcase
+
+**Features:**
+- RichEditor body + Builder blocks
+- Before/after images
+- Gallery JSON field
+- Category assignment
+- SEO fields
+
+---
+
+#### CategoryResource
+**Location:** `app/Filament/Resources/Categories/CategoryResource.php`
+
+**Purpose:** Hierarchical category management
+
+**Features:**
+- Type field: 'post' or 'portfolio'
+- Parent-child relationships
+- Tree view display
 
 ---
 
@@ -1265,12 +1595,11 @@ POST /appointments/{id}/cancel AppointmentController@cancel     appointments.can
 - **Spatie Laravel Permission:** v6.21 - Role and permission management
 
 ### Admin Panel
-- **Laravel Filament:** v3.3+ - Complete admin panel framework
+- **Laravel Filament:** v4.2.3 - Complete admin panel framework
 
-### Calendar (Installed but Not Integrated)
-- **Guava Calendar:** v1.14.2 - Calendar component for Laravel
-- **Status:** Installed but no evidence of active use in codebase
-- **Potential:** Could be integrated for visual appointment management
+### Calendar
+- **Guava Calendar:** v2.0 - Calendar component for Laravel Filament
+- **Status:** Installed for calendar-based availability management
 
 ### Development Tools
 - Laravel Pint (code formatting)
@@ -1290,16 +1619,16 @@ POST /appointments/{id}/cancel AppointmentController@cancel     appointments.can
 - Email verification available but not enforced
 
 ### Queue System
-- Default: sync driver (no actual queue processing)
-- **Recommendation:** Configure for async email/SMS notifications
+- Redis driver with Laravel Horizon
+- Queue-based email and SMS delivery
+- Horizon dashboard: `/horizon`
 
 ### Cache
-- Default configuration
-- No advanced caching strategy implemented
+- Redis for session and cache storage
+- File-based fallback available
 
 ### Database
-- SQLite for development
-- MySQL for Docker/production
+- MySQL 8.0 in Docker (container: `paradocks-mysql`)
 - Good indexing on appointments table
 
 ---
@@ -1312,7 +1641,7 @@ Based on analysis of the current backend architecture, here are the gaps that ne
 **Status:** PARTIAL SUPPORT
 
 **Existing:**
-- `/api/available-slots` endpoint exists
+- `/booking/available-slots` endpoint exists
 - Returns time slots in 15-minute intervals
 - Checks staff availability and conflicts
 

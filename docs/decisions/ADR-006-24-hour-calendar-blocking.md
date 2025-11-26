@@ -1,4 +1,4 @@
-# ADR-005: Precise 24-Hour Advance Booking Calendar Blocking
+# ADR-006: Precise 24-Hour Advance Booking Calendar Blocking
 
 **Status:** Accepted
 **Date:** 2025-10-19

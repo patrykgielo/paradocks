@@ -1,4 +1,4 @@
-# ADR-006: Staff Role Enforcement in Appointment System
+# ADR-007: Staff Role Enforcement in Appointment System
 
 **Status:** Accepted
 **Date:** 2025-10-19
