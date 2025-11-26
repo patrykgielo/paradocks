@@ -9,7 +9,7 @@ Laravel 12 car detailing booking application with:
 - **Frontend:** Vite 7+, Tailwind CSS 4.0
 - **Admin Panel:** Filament v4.2.3
 - **Queue:** Redis with Laravel Horizon
-- **Containerization:** Docker Compose (8 services)
+- **Containerization:** Docker Compose (9 services)
 
 **Local URL:** https://paradocks.local:8444
 
@@ -80,8 +80,8 @@ docker compose exec app php artisan db:seed --class=EmailTemplateSeeder
 docker compose exec app php artisan db:seed --class=SmsTemplateSeeder
 docker compose exec app php artisan db:seed --class=SettingSeeder
 
-# NOTE: Staff availability is managed via admin panel (/admin/service-availabilities)
-# Use "Ustaw standardowy harmonogram" action to quickly set schedules for employees
+# NOTE: Staff availability is managed via admin panel (/admin/staff-schedules)
+# Use Employee edit page → Harmonogramy tab to set schedules for employees
 ```
 
 **See:** [Commands Reference](app/docs/guides/commands.md)
@@ -140,12 +140,13 @@ docker compose exec mysql mysql -u paradocks -ppassword paradocks
 docker compose down
 ```
 
-**Services:** app (PHP-FPM), nginx (reverse proxy), mysql, node (Vite), redis, queue, horizon, scheduler
+**Services:** app (PHP-FPM), nginx (reverse proxy), mysql, node (Vite), redis, queue, horizon, scheduler, mailpit
 
 **URLs:**
 - App: https://paradocks.local:8444
 - Admin: https://paradocks.local:8444/admin
 - Horizon: https://paradocks.local:8444/horizon
+- Mailpit: http://paradocks.local:8025 (email testing)
 - Vite: http://paradocks.local:5173
 
 **See:** [Docker Guide](app/docs/guides/docker.md)

@@ -1,6 +1,6 @@
 # Paradocks - Documentation Hub
 
-**Last Updated:** November 9, 2025
+**Last Updated:** November 26, 2025
 
 Centralna nawigacja po dokumentacji projektu Laravel 12 + Filament 4.2.3.
 
@@ -97,6 +97,24 @@ Multi-step appointment booking wizard (4 steps, vanilla JavaScript).
 
 ---
 
+### SMS System
+**Status:** ✅ Production Ready | **Docs:** [`features/sms-system/`](./features/sms-system/)
+
+Complete SMS notification system with SMSAPI.pl integration.
+
+- **[Overview & Quick Start](./features/sms-system/README.md)** - Getting started
+- **[Architecture](./features/sms-system/architecture.md)** - Services, Models, Events
+- **[Templates](./features/sms-system/templates.md)** - Template management
+- **[SMSAPI Integration](./features/sms-system/smsapi-integration.md)** - API configuration
+
+**Quick Links:**
+- 14 SMS templates (7 types × PL/EN)
+- SMSAPI.pl gateway
+- Queue-based delivery
+- Webhook support (delivery status, incoming)
+
+---
+
 ### Content Management System (CMS)
 **Status:** ✅ Production Ready | **Docs:** [`features/cms-system/`](./features/cms-system/)
 
@@ -129,11 +147,8 @@ Complete content management system with 4 content types, Filament admin panel, a
 ## 🏗️ Architecture
 
 - **[Project Map](./project_map.md)** - Complete system overview, domain model, relationships
-
-**Coming Soon:**
-- `architecture/overview.md` - High-level architecture
-- `architecture/database-schema.md` - ERD, tables, indexes
-- `architecture/queue-system.md` - Redis + Horizon
+- **[Database Schema](./architecture/database-schema.md)** - ERD, tables, indexes
+- **[Technology Stack](./architecture/technology-stack.md)** - Complete technology stack with versions
 
 ---
 
@@ -290,7 +305,7 @@ docs/
 - Laravel Horizon
 - Laravel Filament v4.2.3
 - Spatie Laravel Permission v6.21
-- Guava Calendar v1.14.2
+- Guava Calendar v2.0
 
 **Frontend:**
 - Vite 7
@@ -391,7 +406,7 @@ docs/
 ## 🔗 Useful Links
 
 - **Laravel 12 Docs:** https://laravel.com/docs/12.x
-- **Laravel Filament:** https://filamentphp.com/docs/3.x
+- **Laravel Filament:** https://filamentphp.com/docs/4.x
 - **Spatie Permission:** https://spatie.be/docs/laravel-permission/
 - **Tailwind CSS 4.0:** https://tailwindcss.com/docs
 - **Guava Calendar:** https://github.com/guava/calendar
@@ -399,7 +414,37 @@ docs/
 
 ---
 
+## 🔬 Edge Cases Analysis
+
+Detailed analysis of complex booking scenarios:
+
+- **[Availability Gaps](./edge-cases/availability-gaps.md)** - Handling schedule discontinuities
+- **[Multi-Day Services](./edge-cases/multi-day-services.md)** - Services spanning multiple days
+- **[Race Conditions](./edge-cases/race-conditions.md)** - Concurrent booking prevention
+- **[Timezone Handling](./edge-cases/timezone-handling.md)** - Time zone edge cases
+
+---
+
+## 📚 Advanced Topics
+
+Additional technical documentation:
+
+- **[API Contract](./api-contract-frontend.md)** - Complete API specification for frontend
+- **[Backend Recommendations](./backend-recommendations.md)** - Architecture best practices
+- **[Vehicle Pricing Logic](./features/vehicle-pricing-logic.md)** - Price calculation details
+- **[Settings Manager](./features/settings-manager.md)** - Advanced configuration patterns
+
+---
+
 ## 📅 Version History
+
+### v2.1 (2025-11-26) - Documentation Audit & Update
+- **Filament upgrade:** v3.3.42 → v4.2.3 + Guava Calendar v2.0
+- **SMS System:** Added to documentation hub (production feature)
+- **Edge Cases:** Added section with links to analysis docs
+- **Advanced Topics:** Added section with API contract, backend recommendations
+- **Fixed:** Filament docs link (3.x → 4.x), Guava Calendar version
+- **Updated:** All "Last Updated" dates to 2025-11-26
 
 ### v2.0 (2025-11-09) - Documentation Restructuring
 - **Major reorganization:** CLAUDE.md (1,863 lines → ~400 lines)
