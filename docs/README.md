@@ -2,7 +2,7 @@
 
 **Last Updated:** November 9, 2025
 
-Centralna nawigacja po dokumentacji projektu Laravel 12 + Filament 3.3.
+Centralna nawigacja po dokumentacji projektu Laravel 12 + Filament 4.2.3.
 
 ## 🚀 Quick Start
 
@@ -97,6 +97,35 @@ Multi-step appointment booking wizard (4 steps, vanilla JavaScript).
 
 ---
 
+### Content Management System (CMS)
+**Status:** ✅ Production Ready | **Docs:** [`features/cms-system/`](./features/cms-system/)
+
+Complete content management system with 4 content types, Filament admin panel, and public frontend.
+
+- **[Overview & Quick Start](./features/cms-system/README.md)** - Getting started guide
+- **[Content Types](./features/cms-system/content-types.md)** - Pages, Posts, Promotions, Portfolio reference
+- **[Admin Panel Guide](./features/cms-system/admin-panel.md)** - Filament Resources walkthrough
+- **[Frontend Rendering](./features/cms-system/frontend.md)** - Controllers, routes, Blade views
+- **[Content Blocks](./features/cms-system/content-blocks.md)** - Builder blocks reference
+
+**Content Types:**
+- **Pages** (`/strona/{slug}`) - Static pages with custom layouts (About, Services, Contact)
+- **Posts** (`/aktualnosci/{slug}`) - Blog posts/news articles with categories
+- **Promotions** (`/promocje/{slug}`) - Special offers and campaigns
+- **Portfolio** (`/portfolio/{slug}`) - Project showcase with before/after images
+
+**Key Features:**
+- Hybrid content system: RichEditor (main body) + Builder (advanced blocks)
+- Content blocks: image, gallery, video, CTA, columns, quotes
+- SEO fields: meta_title, meta_description, featured_image
+- Publishing states: draft → scheduled → published
+- Categories for Posts/Portfolio (hierarchical)
+- Before/After images for Portfolio Items
+- Preview buttons (open frontend in new tab)
+- Auto-slug generation from title
+
+---
+
 ## 🏗️ Architecture
 
 - **[Project Map](./project_map.md)** - Complete system overview, domain model, relationships
@@ -164,7 +193,7 @@ Complete technology stack with versions: [architecture/technology-stack.md](./ar
 
 **Backend:** Laravel 12.32.5, PHP 8.2.29, MySQL 8.0, Redis 7.2
 **Frontend:** Vite 7.1.9, Tailwind CSS 4.0, Livewire 3.6.4
-**Admin:** Filament v3.3.42
+**Admin:** Filament v4.2.3
 **DevOps:** Docker 29.0.0, Compose 2.40.3, Ubuntu 24.04 LTS
 
 ---
@@ -259,7 +288,7 @@ docs/
 - MySQL 8.0 (Docker)
 - Redis (queues, cache)
 - Laravel Horizon
-- Laravel Filament v3.3+
+- Laravel Filament v4.2.3
 - Spatie Laravel Permission v6.21
 - Guava Calendar v1.14.2
 
