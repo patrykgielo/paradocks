@@ -1,4 +1,4 @@
-# ADR-007: SMS Notification System Implementation
+# ADR-009: SMS Notification System Implementation
 
 **Date:** 2025-11-12
 **Status:** Accepted

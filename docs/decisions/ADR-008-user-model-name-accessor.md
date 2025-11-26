@@ -1,4 +1,4 @@
-# ADR-006: User Model Name Accessor Pattern
+# ADR-008: User Model Name Accessor Pattern
 
 **Date**: 2025-11-09
 **Status**: Accepted
