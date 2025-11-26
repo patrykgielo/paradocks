@@ -12,6 +12,7 @@ use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Actions;
 
 class SmsSendResource extends Resource
 {
@@ -98,7 +99,7 @@ class SmsSendResource extends Resource
                     ]),
             ])
             ->recordActions([
-                Tables\Actions\ViewAction::make(),
+                Actions\ViewAction::make(),
             ])
             ->toolbarActions([])
             ->defaultSort('created_at', 'desc');

@@ -11,11 +11,14 @@ use App\Models\SmsTemplate;
 use App\Services\Sms\SmsService;
 use Filament\Forms;
 use Filament\Schemas\Schema;
-use Filament\Forms\Get;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Actions;
 use Illuminate\Support\HtmlString;
 
 class SmsTemplateResource extends Resource
@@ -43,7 +46,7 @@ class SmsTemplateResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-                Forms\Components\Section::make('Template Details')
+                Section::make('Template Details')
                     ->schema([
                         Forms\Components\Select::make('key')
                             ->label('Template Key')
@@ -86,7 +89,7 @@ class SmsTemplateResource extends Resource
                     ])
                     ->columns(4),
 
-                Forms\Components\Section::make('SMS Content')
+                Section::make('SMS Content')
                     ->schema([
                         Forms\Components\Textarea::make('message_body')
                             ->label('Message Body')
@@ -96,7 +99,7 @@ class SmsTemplateResource extends Resource
                             ->placeholder('Witaj {{customer_name}}! Przypominamy o wizycie {{appointment_date}} o {{appointment_time}}.')
                             ->helperText('Use {{variable}} syntax for placeholders. Keep it short!')
                             ->live()
-                            ->afterStateUpdated(function ($state, Forms\Set $set) {
+                            ->afterStateUpdated(function ($state, Set $set) {
                                 $length = mb_strlen($state ?? '');
                                 $set('character_count', $length);
                             }),
@@ -106,7 +109,7 @@ class SmsTemplateResource extends Resource
                             ->content(fn (Get $get): string => mb_strlen($get('message_body') ?? '') . ' characters'),
                     ]),
 
-                Forms\Components\Section::make('Available Variables')
+                Section::make('Available Variables')
                     ->schema([
                         Forms\Components\Placeholder::make('variable_legend')
                             ->label('')
@@ -116,7 +119,7 @@ class SmsTemplateResource extends Resource
                     ->description('Variables you can use in the message body')
                     ->collapsible(),
 
-                Forms\Components\Section::make('Advanced Settings')
+                Section::make('Advanced Settings')
                     ->schema([
                         Forms\Components\TagsInput::make('variables')
                             ->label('Available Variables')
@@ -195,7 +198,7 @@ class SmsTemplateResource extends Resource
                     ->falseLabel('Inactive only'),
             ])
             ->recordActions([
-                Tables\Actions\Action::make('testSend')
+                Actions\Action::make('testSend')
                     ->label('Test Send')
                     ->icon('heroicon-o-paper-airplane')
                     ->color('success')
@@ -245,14 +248,14 @@ class SmsTemplateResource extends Resource
                     ->modalHeading('Send Test SMS')
                     ->modalDescription('This will send a test SMS with example data to verify the template rendering.'),
 
-                Tables\Actions\EditAction::make(),
+                Actions\EditAction::make(),
 
-                Tables\Actions\DeleteAction::make()
+                Actions\DeleteAction::make()
                     ->requiresConfirmation(),
             ])
             ->toolbarActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make()
                         ->requiresConfirmation(),
                 ]),
             ])

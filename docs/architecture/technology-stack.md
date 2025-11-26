@@ -141,7 +141,7 @@ opcache.enable = 1
 
 ## Admin Panel
 
-### Filament v3.3.42
+### Filament v4.2.3
 
 **Purpose**: Modern admin panel built on Laravel and Livewire
 
@@ -610,7 +610,7 @@ docker-compose -f docker-compose.prod.yml logs -f nginx
 | Nginx | 1.25.5 | `paradocks-nginx` |
 | Node.js | 20.19.5 | Build-time only |
 | Vite | 7.1.9 | Build-time only |
-| Filament | 3.3.42 | Application |
+| Filament | 4.2.3 | Application |
 | Livewire | 3.6.4 | Application |
 | Tailwind CSS | 4.0 | Build-time only |
 | Docker | 29.0.0 | Host system |

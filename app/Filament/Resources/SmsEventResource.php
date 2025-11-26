@@ -12,6 +12,7 @@ use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Actions;
 
 class SmsEventResource extends Resource
 {
@@ -79,7 +80,7 @@ class SmsEventResource extends Resource
                     ]),
             ])
             ->recordActions([
-                Tables\Actions\ViewAction::make(),
+                Actions\ViewAction::make(),
             ])
             ->toolbarActions([])
             ->defaultSort('occurred_at', 'desc');

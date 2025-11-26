@@ -10,9 +10,11 @@ use App\Filament\Resources\SmsSuppressionResource\Pages;
 use App\Models\SmsSuppression;
 use Filament\Forms;
 use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Actions;
 
 class SmsSuppressionResource extends Resource
 {
@@ -29,7 +31,7 @@ class SmsSuppressionResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-                Forms\Components\Section::make('Suppression Details')
+                Section::make('Suppression Details')
                     ->schema([
                         Forms\Components\TextInput::make('phone')
                             ->label('Phone Number')
@@ -103,16 +105,16 @@ class SmsSuppressionResource extends Resource
                     ]),
             ])
             ->recordActions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make()
+                Actions\EditAction::make(),
+                Actions\DeleteAction::make()
                     ->label('Unsuppress')
                     ->requiresConfirmation()
                     ->modalHeading('Remove from Suppression List')
                     ->modalDescription('This phone number will be able to receive SMS again.'),
             ])
             ->toolbarActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make()
                         ->label('Unsuppress Selected')
                         ->requiresConfirmation(),
                 ]),

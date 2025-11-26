@@ -6,10 +6,20 @@ use App\Http\Controllers\Api\VehicleDataController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\PageController;
+use App\Http\Controllers\PortfolioController;
+use App\Http\Controllers\PostController;
+use App\Http\Controllers\PromotionController;
 use Illuminate\Support\Facades\Route;
 
 // Public routes
 Route::get('/', [HomeController::class, 'index'])->name('home');
+
+// CMS Content routes
+Route::get('/strona/{slug}', [PageController::class, 'show'])->name('page.show');
+Route::get('/aktualnosci/{slug}', [PostController::class, 'show'])->name('post.show');
+Route::get('/promocje/{slug}', [PromotionController::class, 'show'])->name('promotion.show');
+Route::get('/portfolio/{slug}', [PortfolioController::class, 'show'])->name('portfolio.show');
 
 // Authentication routes
 Auth::routes();

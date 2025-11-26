@@ -15,7 +15,7 @@ The application follows a traditional **Model-View-Controller (MVC)** pattern en
 - **Thin Controllers:** Controllers handle HTTP concerns (request/response, validation)
 - **Service Layer:** Complex business logic extracted to `AppointmentService`
 - **Rich Models:** Models use query scopes and accessors for data retrieval patterns
-- **Filament Admin:** Complete admin panel using Laravel Filament v3.3+
+- **Filament Admin:** Complete admin panel using Laravel Filament v4.2.3
 - **Role-Based Access Control:** Spatie Laravel Permission package
 
 ## Core Models
@@ -282,6 +282,165 @@ The application follows a traditional **Model-View-Controller (MVC)** pattern en
 
 ---
 
+### Page
+**Location:** `/var/www/projects/paradocks/app/app/Models/Page.php`
+
+**Purpose:** Static content pages with customizable layouts (About Us, Services, Contact, etc.)
+
+**Relationships:** None (standalone content)
+
+**Key Scopes:**
+- `scopePublished($query)` - Filter pages with published_at <= now()
+- `scopeDraft($query)` - Filter pages without published_at
+
+**Fillable Attributes:**
+- `title` - Page title
+- `slug` - URL-friendly identifier (unique)
+- `body` - Main content (TEXT, RichEditor)
+- `content` - Advanced blocks (JSON, Builder)
+- `layout` - enum('default', 'full-width', 'minimal')
+- `published_at` - Publication date (nullable for drafts)
+- `meta_title`, `meta_description`, `featured_image` - SEO fields
+
+**Routes:** `GET /strona/{slug}` → PageController@show
+
+**Notes:**
+- Hybrid content system: `body` for simple text + `content` for advanced blocks
+- Three layout options: default (with sidebars), full-width, minimal (narrow)
+
+---
+
+### Post
+**Location:** `/var/www/projects/paradocks/app/app/Models/Post.php`
+
+**Purpose:** Blog posts and news articles with categories
+
+**Relationships:**
+- `category()` → belongsTo(Category) - Post category
+
+**Key Scopes:**
+- `scopePublished($query)` - Published posts only
+- `scopeDraft($query)` - Draft posts only
+- `scopeInCategory($query, $categoryId)` - Filter by category
+
+**Fillable Attributes:**
+- `title`, `slug` - Title and URL identifier
+- `excerpt` - Short description (TEXT, displayed in lists)
+- `body` - Main content (TEXT, RichEditor)
+- `content` - Advanced blocks (JSON, Builder)
+- `category_id` - Foreign key to categories table
+- `published_at` - Publication date
+- `meta_title`, `meta_description`, `featured_image` - SEO fields
+
+**Routes:** `GET /aktualnosci/{slug}` → PostController@show
+
+**Notes:**
+- Used for blog/news section
+- Category is optional but recommended for organization
+
+---
+
+### Promotion
+**Location:** `/var/www/projects/paradocks/app/app/Models/Promotion.php`
+
+**Purpose:** Special offers, discounts, and promotional campaigns
+
+**Relationships:** None (standalone content)
+
+**Key Scopes:**
+- `scopeActive($query)` - Active promotions (active = true)
+- `scopeValid($query)` - Within valid_from/valid_until range
+- `scopeActiveAndValid($query)` - Both active AND valid
+
+**Fillable Attributes:**
+- `title`, `slug` - Title and URL identifier
+- `body` - Main content (TEXT, RichEditor)
+- `content` - Advanced blocks (JSON, Builder)
+- `active` - Boolean toggle for enabling/disabling
+- `valid_from`, `valid_until` - Date range (nullable, no limits if empty)
+- `meta_title`, `meta_description`, `featured_image` - SEO fields
+
+**Routes:** `GET /promocje/{slug}` → PromotionController@show
+
+**Methods:**
+- `isActiveAndValid(): bool` - Check if promotion is active AND within date range
+
+**Notes:**
+- `active` flag allows quick enable/disable without deleting
+- Date range is optional (null = no time restrictions)
+
+---
+
+### PortfolioItem
+**Location:** `/var/www/projects/paradocks/app/app/Models/PortfolioItem.php`
+
+**Purpose:** Showcase completed detailing projects with before/after images
+
+**Relationships:**
+- `category()` → belongsTo(Category) - Portfolio category
+
+**Key Scopes:**
+- `scopePublished($query)` - Published items only
+- `scopeDraft($query)` - Draft items only
+- `scopeInCategory($query, $categoryId)` - Filter by category
+
+**Fillable Attributes:**
+- `title`, `slug` - Project title and URL identifier
+- `body` - Project description (TEXT, RichEditor)
+- `content` - Client testimonials/quotes (JSON, Builder)
+- `category_id` - Foreign key to categories table
+- `before_image` - Image before work (single file)
+- `after_image` - Image after work (single file)
+- `gallery` - Additional images (JSON array of file paths)
+- `published_at` - Publication date
+- `meta_title`, `meta_description` - SEO fields
+
+**Casts:**
+- `gallery` → array - JSON array of image paths
+
+**Routes:** `GET /portfolio/{slug}` → PortfolioController@show
+
+**Notes:**
+- Before/After images are the hero feature
+- Gallery field stores additional project photos as JSON array
+- Content field typically used for client testimonials (quote blocks)
+
+---
+
+### Category
+**Location:** `/var/www/projects/paradocks/app/app/Models/Category.php`
+
+**Purpose:** Hierarchical categories for Posts and Portfolio Items
+
+**Relationships:**
+- `parent()` → belongsTo(Category) - Parent category (nullable)
+- `children()` → hasMany(Category) - Child categories
+- `posts()` → hasMany(Post) - Posts in this category
+- `portfolioItems()` → hasMany(PortfolioItem) - Portfolio items in this category
+
+**Key Scopes:**
+- `scopePostCategories($query)` - Categories with type = 'post'
+- `scopePortfolioCategories($query)` - Categories with type = 'portfolio'
+- `scopeRootCategories($query)` - Top-level categories (parent_id = null)
+
+**Fillable Attributes:**
+- `name` - Category name
+- `slug` - URL-friendly identifier (unique)
+- `description` - Category description (TEXT, nullable)
+- `parent_id` - Parent category ID (nullable for root categories)
+- `type` - enum('post', 'portfolio') - Category type
+
+**Database Constraints:**
+- Unique: slug (per type)
+- Foreign key: parent_id → categories.id (nullable)
+
+**Notes:**
+- Supports nested categories (parent → children)
+- Type field separates Post categories from Portfolio categories
+- Can be managed in Filament admin: `/admin/categories`
+
+---
+
 ## Controllers
 
 ### HomeController
@@ -384,6 +543,97 @@ The application follows a traditional **Model-View-Controller (MVC)** pattern en
 - **MISSING:** No update/reschedule functionality
 - **MISSING:** No payment integration
 - **MISSING:** No email notifications
+
+---
+
+### PageController
+**Location:** `/var/www/projects/paradocks/app/app/Http/Controllers/PageController.php`
+
+**Purpose:** Display published static pages on frontend
+
+**Methods:**
+1. `show(string $slug)` - Display single page
+   - Finds page by slug
+   - Filters: published_at <= now()
+   - Returns: `pages.show` view with `$page` variable
+   - Throws 404 if not found or not published
+
+**Routes:**
+- `GET /strona/{slug}` → show()
+
+**Notes:**
+- No authentication required (public content)
+- Only published pages are accessible
+- Uses `firstOrFail()` for automatic 404 handling
+
+---
+
+### PostController
+**Location:** `/var/www/projects/paradocks/app/app/Http/Controllers/PostController.php`
+
+**Purpose:** Display published blog posts/news articles on frontend
+
+**Methods:**
+1. `show(string $slug)` - Display single post
+   - Finds post by slug
+   - Filters: published_at <= now()
+   - Eager loads: category relationship
+   - Returns: `posts.show` view with `$post` variable
+   - Throws 404 if not found or not published
+
+**Routes:**
+- `GET /aktualnosci/{slug}` → show()
+
+**Notes:**
+- No authentication required (public content)
+- Category is eager-loaded for display
+- Frontend shows category badge + post metadata
+
+---
+
+### PromotionController
+**Location:** `/var/www/projects/paradocks/app/app/Http/Controllers/PromotionController.php`
+
+**Purpose:** Display active and valid promotions on frontend
+
+**Methods:**
+1. `show(string $slug)` - Display single promotion
+   - Finds promotion by slug
+   - Filters: active = true AND valid date range
+   - Complex query: (valid_from <= now OR null) AND (valid_until >= now OR null)
+   - Returns: `promotions.show` view with `$promotion` variable
+   - Throws 404 if not found or not active/valid
+
+**Routes:**
+- `GET /promocje/{slug}` → show()
+
+**Notes:**
+- No authentication required (public content)
+- Only shows active promotions within valid date range
+- Date range is optional (null = no restrictions)
+
+---
+
+### PortfolioController
+**Location:** `/var/www/projects/paradocks/app/app/Http/Controllers/PortfolioController.php`
+
+**Purpose:** Display published portfolio projects on frontend
+
+**Methods:**
+1. `show(string $slug)` - Display single portfolio item
+   - Finds portfolio item by slug
+   - Filters: published_at <= now()
+   - Eager loads: category relationship
+   - Returns: `portfolio.show` view with `$portfolioItem` variable
+   - Throws 404 if not found or not published
+
+**Routes:**
+- `GET /portfolio/{slug}` → show()
+
+**Notes:**
+- No authentication required (public content)
+- Showcases before/after images + gallery
+- Content field typically contains client testimonials
 
 ---
 

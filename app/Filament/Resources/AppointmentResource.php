@@ -10,9 +10,11 @@ use BackedEnum;
 use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Actions;
 use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
@@ -129,7 +131,7 @@ class AppointmentResource extends Resource
                     ->visible(fn (callable $get) => $get('status') === 'cancelled')
                     ->columnSpanFull(),
 
-                Forms\Components\Section::make('Lokalizacja')
+                Section::make('Lokalizacja')
                     ->schema([
                         Forms\Components\TextInput::make('location_address')
                             ->label('Adres')
@@ -192,7 +194,7 @@ class AppointmentResource extends Resource
                     ->collapsible()
                     ->collapsed(),
 
-                Forms\Components\Section::make('Pojazd')
+                Section::make('Pojazd')
                     ->schema([
                         Forms\Components\Select::make('vehicle_type_id')
                             ->label('Typ pojazdu')
@@ -315,13 +317,13 @@ class AppointmentResource extends Resource
                     ->getOptionLabelFromRecordUsing(fn (User $record) => $record->full_name),
             ])
             ->recordActions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Actions\ViewAction::make(),
+                Actions\EditAction::make(),
+                Actions\DeleteAction::make(),
             ])
             ->toolbarActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }

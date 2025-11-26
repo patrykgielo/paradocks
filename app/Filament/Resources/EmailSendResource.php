@@ -16,6 +16,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Actions;
 use Illuminate\Database\Eloquent\Builder;
 
 class EmailSendResource extends Resource
@@ -141,9 +142,9 @@ class EmailSendResource extends Resource
                     }),
             ])
             ->recordActions([
-                Tables\Actions\ViewAction::make(),
+                Actions\ViewAction::make(),
 
-                Tables\Actions\Action::make('resend')
+                Actions\Action::make('resend')
                     ->label('Resend')
                     ->icon('heroicon-o-arrow-path')
                     ->color('warning')
@@ -204,8 +205,8 @@ class EmailSendResource extends Resource
                     }),
             ])
             ->toolbarActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\BulkAction::make('export')
+                Actions\BulkActionGroup::make([
+                    Actions\BulkAction::make('export')
                         ->label('Export Selected')
                         ->icon('heroicon-o-arrow-down-tray')
                         ->action(function ($records) {

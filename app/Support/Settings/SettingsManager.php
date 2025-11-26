@@ -258,6 +258,26 @@ class SettingsManager
     }
 
     /**
+     * Get cancellation policy hours.
+     *
+     * @return int
+     */
+    public function cancellationHours(): int
+    {
+        return (int) $this->get('booking.cancellation_hours', 24);
+    }
+
+    /**
+     * Get time slot interval in minutes.
+     *
+     * @return int
+     */
+    public function slotIntervalMinutes(): int
+    {
+        return (int) $this->get('booking.slot_interval_minutes', 30);
+    }
+
+    /**
      * Get all map configuration settings.
      *
      * @return array<string, mixed>
