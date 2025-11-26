@@ -101,14 +101,12 @@ class PostResource extends Resource
                                 'bold', 'italic', 'underline', 'strike',
                                 'link', 'bulletList', 'orderedList',
                                 'h2', 'h3', 'blockquote',
-                                'attachFiles', 'table',
+                                'table',
                                 'undo', 'redo',
                             ])
-                            ->fileAttachmentsDisk('public')
-                            ->fileAttachmentsDirectory('posts/attachments')
                             ->columnSpanFull()
                             ->extraInputAttributes(['style' => 'height: 30rem;'])
-                            ->helperText('Główna treść wpisu - zacznij pisać od razu!'),
+                            ->helperText('Główna treść wpisu. Obrazki dodaj przez bloki poniżej.'),
                     ]),
 
                 Section::make('Zaawansowane bloki (opcjonalnie)')

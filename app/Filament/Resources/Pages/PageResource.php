@@ -83,14 +83,12 @@ class PageResource extends Resource
                                 'bold', 'italic', 'underline', 'strike',
                                 'link', 'bulletList', 'orderedList',
                                 'h2', 'h3', 'blockquote',
-                                'attachFiles', 'table',
+                                'table',
                                 'undo', 'redo',
                             ])
-                            ->fileAttachmentsDisk('public')
-                            ->fileAttachmentsDirectory('pages/attachments')
                             ->columnSpanFull()
                             ->extraInputAttributes(['style' => 'height: 30rem;'])
-                            ->helperText('Główna treść strony - zacznij pisać od razu!'),
+                            ->helperText('Główna treść strony. Obrazki dodaj przez bloki poniżej.'),
                     ]),
 
                 Section::make('Zaawansowane bloki (opcjonalnie)')

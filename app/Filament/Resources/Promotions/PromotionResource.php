@@ -82,14 +82,11 @@ class PromotionResource extends Resource
                                 'bold', 'italic', 'underline', 'strike',
                                 'link', 'bulletList', 'orderedList',
                                 'h2', 'h3', 'blockquote',
-                                'attachFiles',
                                 'undo', 'redo',
                             ])
-                            ->fileAttachmentsDisk('public')
-                            ->fileAttachmentsDirectory('promotions/attachments')
                             ->columnSpanFull()
                             ->extraInputAttributes(['style' => 'height: 30rem;'])
-                            ->helperText('Główna treść promocji - opisz ofertę!'),
+                            ->helperText('Główna treść promocji. Obrazki dodaj przez bloki poniżej.'),
                     ]),
 
                 Section::make('Zaawansowane bloki (opcjonalnie)')
