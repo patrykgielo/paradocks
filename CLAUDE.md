@@ -353,6 +353,54 @@ Complete content management system with 4 content types, Filament admin panel, a
 
 **See:** [CMS System Documentation](app/docs/features/cms-system/README.md)
 
+### Customer Profile & Settings
+
+Complete user profile management system with sidebar navigation and 5 dedicated subpages.
+
+- **Architecture:** Separate subpages (NOT tabs) with shared sidebar layout
+- **Service Layer:** ProfileService, UserAddressService, UserVehicleService
+- **Address Integration:** Google Maps Places Autocomplete (same as booking wizard)
+- **Validation:** Form Requests with `prepareForValidation()` for JSON decoding
+
+**Public URLs (Polish):**
+- `/moje-konto` - Redirects to `/moje-konto/dane-osobowe`
+- `/moje-konto/dane-osobowe` - Personal info (name, phone)
+- `/moje-konto/pojazd` - Vehicle management (type, brand, model, year)
+- `/moje-konto/adres` - Address with Google Maps autocomplete
+- `/moje-konto/powiadomienia` - Notification preferences (SMS, email, marketing)
+- `/moje-konto/bezpieczenstwo` - Password change, email change, account deletion
+
+**Key Files:**
+- `app/Http/Controllers/ProfileController.php` - 5 view methods + update handlers
+- `app/Http/Controllers/UserVehicleController.php` - CRUD for vehicles
+- `app/Http/Controllers/UserAddressController.php` - CRUD for addresses
+- `resources/views/profile/layout.blade.php` - Responsive sidebar layout
+- `resources/views/profile/pages/*.blade.php` - 5 subpage views
+- `resources/views/profile/partials/icons/*.blade.php` - SVG icons
+
+**UX Design (ADR: Separate Subpages vs Tabs):**
+- **Problem:** Tab-based navigation loses state after form submission
+- **Solution:** Separate subpages with sidebar navigation
+- **Mobile:** Horizontal scrollable navigation bar
+- **Desktop:** Vertical sidebar with active state highlighting
+- **Benefit:** Direct URL access, proper form redirect handling, browser history support
+
+**Form Request Pattern (JSON Components):**
+```php
+// StoreAddressRequest.php, UpdateAddressRequest.php
+protected function prepareForValidation(): void
+{
+    if ($this->has('components') && is_string($this->components)) {
+        $decoded = json_decode($this->components, true);
+        $this->merge([
+            'components' => is_array($decoded) ? $decoded : null,
+        ]);
+    }
+}
+```
+
+**See:** [Customer Profile Documentation](app/docs/features/customer-profile/README.md)
+
 ## Production Build
 
 **IMPORTANT:** This project uses Tailwind CSS 4.0 with `@tailwindcss/vite` plugin.

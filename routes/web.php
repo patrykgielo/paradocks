@@ -9,7 +9,10 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PortfolioController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PromotionController;
+use App\Http\Controllers\UserAddressController;
+use App\Http\Controllers\UserVehicleController;
 use Illuminate\Support\Facades\Route;
 
 // Public routes
@@ -44,6 +47,47 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/my-appointments', [AppointmentController::class, 'index'])->name('appointments.index');
     Route::post('/appointments', [AppointmentController::class, 'store'])->name('appointments.store');
     Route::post('/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel'])->name('appointments.cancel');
+
+    // Profile routes
+    Route::prefix('moje-konto')->name('profile.')->group(function () {
+        // Redirect from base to personal page
+        Route::get('/', fn () => redirect()->route('profile.personal'))->name('index');
+
+        // Profile pages
+        Route::get('/dane-osobowe', [ProfileController::class, 'personal'])->name('personal');
+        Route::get('/pojazd', [ProfileController::class, 'vehicle'])->name('vehicle');
+        Route::get('/adres', [ProfileController::class, 'address'])->name('address');
+        Route::get('/powiadomienia', [ProfileController::class, 'notifications'])->name('notifications');
+        Route::get('/bezpieczenstwo', [ProfileController::class, 'security'])->name('security');
+
+        // Personal Info update
+        Route::patch('/dane-osobowe', [ProfileController::class, 'updatePersonalInfo'])->name('personal.update');
+
+        // Email Change
+        Route::post('/email/zmien', [ProfileController::class, 'requestEmailChange'])->name('email.change');
+        Route::get('/email/potwierdz/{token}', [ProfileController::class, 'confirmEmailChange'])->name('email.confirm');
+
+        // Password
+        Route::patch('/haslo', [ProfileController::class, 'changePassword'])->name('password.update');
+
+        // Notifications update
+        Route::patch('/powiadomienia/zapisz', [ProfileController::class, 'updateNotifications'])->name('notifications.update');
+
+        // Vehicle (single)
+        Route::post('/pojazd/zapisz', [UserVehicleController::class, 'store'])->name('vehicle.store');
+        Route::patch('/pojazd/{vehicle}', [UserVehicleController::class, 'update'])->name('vehicle.update');
+        Route::delete('/pojazd/{vehicle}', [UserVehicleController::class, 'destroy'])->name('vehicle.destroy');
+
+        // Address (single)
+        Route::post('/adres/zapisz', [UserAddressController::class, 'store'])->name('address.store');
+        Route::patch('/adres/{address}', [UserAddressController::class, 'update'])->name('address.update');
+        Route::delete('/adres/{address}', [UserAddressController::class, 'destroy'])->name('address.destroy');
+
+        // Account Deletion
+        Route::post('/usun-konto', [ProfileController::class, 'requestDeletion'])->name('delete.request');
+        Route::get('/usun-konto/potwierdz/{token}', [ProfileController::class, 'confirmDeletion'])->name('delete.confirm');
+        Route::post('/usun-konto/anuluj', [ProfileController::class, 'cancelDeletion'])->name('delete.cancel');
+    });
 });
 
 
