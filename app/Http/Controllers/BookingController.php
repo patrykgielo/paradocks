@@ -29,9 +29,23 @@ class BookingController extends Controller
         // Staff is automatically assigned based on availability
         $user = Auth::user();
 
+        // Load user's saved default vehicle and address for prefilling
+        $savedVehicle = null;
+        $savedAddress = null;
+
+        if ($user) {
+            // Get default vehicle or first vehicle if no default
+            $savedVehicle = $user->vehicle ?? $user->vehicles()->first();
+
+            // Get default address or first address if no default
+            $savedAddress = $user->address ?? $user->addresses()->first();
+        }
+
         return view('booking.create', [
             'service' => $service,
             'user' => $user,
+            'savedVehicle' => $savedVehicle,
+            'savedAddress' => $savedAddress,
             'bookingConfig' => $this->settings->bookingConfiguration(),
             'mapConfig' => $this->settings->mapConfiguration(),
             'marketingContent' => $this->settings->marketingContent(),

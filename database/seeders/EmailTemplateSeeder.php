@@ -10,7 +10,7 @@ use Illuminate\Database\Seeder;
 /**
  * Email Template Seeder
  *
- * Seeds 18 email templates (9 types × 2 languages: PL, EN)
+ * Seeds 28 email templates (14 types × 2 languages: PL, EN)
  */
 class EmailTemplateSeeder extends Seeder
 {
@@ -217,6 +217,120 @@ class EmailTemplateSeeder extends Seeder
                 'variables' => ['admin_name', 'date', 'appointment_count', 'appointment_list', 'app_name'],
                 'active' => true,
             ],
+
+            // =================================================================
+            // PROFILE FEATURE TEMPLATES (10 templates: 5 types × 2 languages)
+            // =================================================================
+
+            // 10. Email Change Requested - Sent to OLD email
+            [
+                'key' => 'email-change-requested',
+                'language' => 'pl',
+                'subject' => 'Żądanie zmiany adresu email - {{app_name}}',
+                'html_body' => '<h1>Cześć {{customer_name}},</h1><p>Otrzymaliśmy żądanie zmiany adresu email Twojego konta na: <strong>{{new_email}}</strong></p><p>Jeśli to nie Ty złożyłeś to żądanie, możesz je anulować w ustawieniach profilu:</p><p><a href="{{cancel_url}}" style="background-color: #EF4444; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Anuluj zmianę</a></p><p>Jeśli to Ty, poczekaj na email weryfikacyjny wysłany na nowy adres.</p><p>Pozdrawiamy,<br>Zespół {{app_name}}</p>',
+                'text_body' => 'Cześć {{customer_name}}, Otrzymaliśmy żądanie zmiany adresu email Twojego konta na: {{new_email}}. Jeśli to nie Ty, anuluj zmianę: {{cancel_url}}. Pozdrawiamy, Zespół {{app_name}}',
+                'blade_path' => 'emails.email-change-requested-pl',
+                'variables' => ['customer_name', 'new_email', 'cancel_url', 'app_name'],
+                'active' => true,
+            ],
+            [
+                'key' => 'email-change-requested',
+                'language' => 'en',
+                'subject' => 'Email Change Request - {{app_name}}',
+                'html_body' => '<h1>Hello {{customer_name}},</h1><p>We received a request to change your email address to: <strong>{{new_email}}</strong></p><p>If you did not make this request, you can cancel it in your profile settings:</p><p><a href="{{cancel_url}}" style="background-color: #EF4444; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Cancel Change</a></p><p>If this was you, please wait for the verification email sent to the new address.</p><p>Best regards,<br>The {{app_name}} Team</p>',
+                'text_body' => 'Hello {{customer_name}}, We received a request to change your email address to: {{new_email}}. If you did not make this request, cancel it here: {{cancel_url}}. Best regards, The {{app_name}} Team',
+                'blade_path' => 'emails.email-change-requested-en',
+                'variables' => ['customer_name', 'new_email', 'cancel_url', 'app_name'],
+                'active' => true,
+            ],
+
+            // 11. Email Change Verification - Sent to NEW email
+            [
+                'key' => 'email-change-verification',
+                'language' => 'pl',
+                'subject' => 'Potwierdź nowy adres email - {{app_name}}',
+                'html_body' => '<h1>Cześć {{customer_name}},</h1><p>Aby potwierdzić zmianę adresu email, kliknij poniższy przycisk:</p><p><a href="{{verification_url}}" style="background-color: #22C55E; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Potwierdź adres email</a></p><p>Link jest ważny przez {{expires_in}}.</p><p>Jeśli nie zainicjowałeś tej zmiany, zignoruj tę wiadomość.</p><p>Pozdrawiamy,<br>Zespół {{app_name}}</p>',
+                'text_body' => 'Cześć {{customer_name}}, Aby potwierdzić zmianę adresu email, kliknij link: {{verification_url}}. Link jest ważny przez {{expires_in}}. Jeśli nie zainicjowałeś tej zmiany, zignoruj tę wiadomość. Pozdrawiamy, Zespół {{app_name}}',
+                'blade_path' => 'emails.email-change-verification-pl',
+                'variables' => ['customer_name', 'verification_url', 'expires_in', 'app_name'],
+                'active' => true,
+            ],
+            [
+                'key' => 'email-change-verification',
+                'language' => 'en',
+                'subject' => 'Confirm Your New Email Address - {{app_name}}',
+                'html_body' => '<h1>Hello {{customer_name}},</h1><p>To confirm your email address change, please click the button below:</p><p><a href="{{verification_url}}" style="background-color: #22C55E; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Confirm Email Address</a></p><p>This link is valid for {{expires_in}}.</p><p>If you did not initiate this change, please ignore this email.</p><p>Best regards,<br>The {{app_name}} Team</p>',
+                'text_body' => 'Hello {{customer_name}}, To confirm your email address change, click here: {{verification_url}}. This link is valid for {{expires_in}}. If you did not initiate this change, please ignore this email. Best regards, The {{app_name}} Team',
+                'blade_path' => 'emails.email-change-verification-en',
+                'variables' => ['customer_name', 'verification_url', 'expires_in', 'app_name'],
+                'active' => true,
+            ],
+
+            // 12. Email Change Completed - Sent to OLD email
+            [
+                'key' => 'email-change-completed',
+                'language' => 'pl',
+                'subject' => 'Adres email został zmieniony - {{app_name}}',
+                'html_body' => '<h1>Cześć {{customer_name}},</h1><p>Twój adres email został pomyślnie zmieniony na: <strong>{{new_email}}</strong></p><p>Jeśli to nie Ty dokonałeś tej zmiany, natychmiast skontaktuj się z nami.</p><p>Pozdrawiamy,<br>Zespół {{app_name}}</p>',
+                'text_body' => 'Cześć {{customer_name}}, Twój adres email został pomyślnie zmieniony na: {{new_email}}. Jeśli to nie Ty dokonałeś tej zmiany, natychmiast skontaktuj się z nami. Pozdrawiamy, Zespół {{app_name}}',
+                'blade_path' => 'emails.email-change-completed-pl',
+                'variables' => ['customer_name', 'new_email', 'app_name'],
+                'active' => true,
+            ],
+            [
+                'key' => 'email-change-completed',
+                'language' => 'en',
+                'subject' => 'Email Address Changed - {{app_name}}',
+                'html_body' => '<h1>Hello {{customer_name}},</h1><p>Your email address has been successfully changed to: <strong>{{new_email}}</strong></p><p>If you did not make this change, please contact us immediately.</p><p>Best regards,<br>The {{app_name}} Team</p>',
+                'text_body' => 'Hello {{customer_name}}, Your email address has been successfully changed to: {{new_email}}. If you did not make this change, please contact us immediately. Best regards, The {{app_name}} Team',
+                'blade_path' => 'emails.email-change-completed-en',
+                'variables' => ['customer_name', 'new_email', 'app_name'],
+                'active' => true,
+            ],
+
+            // 13. Account Deletion Requested
+            [
+                'key' => 'account-deletion-requested',
+                'language' => 'pl',
+                'subject' => 'Potwierdzenie żądania usunięcia konta - {{app_name}}',
+                'html_body' => '<h1>Cześć {{customer_name}},</h1><p>Otrzymaliśmy żądanie usunięcia Twojego konta.</p><p><strong>Ważne:</strong> Jeśli potwierdzisz usunięcie, Twoje dane zostaną zanonimizowane. Ta operacja jest nieodwracalna.</p><p>Aby potwierdzić usunięcie konta, kliknij poniższy przycisk:</p><p><a href="{{confirm_url}}" style="background-color: #EF4444; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Potwierdź usunięcie konta</a></p><p>Jeśli chcesz zachować swoje konto, możesz anulować żądanie:</p><p><a href="{{cancel_url}}" style="background-color: #6B7280; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Anuluj usunięcie</a></p><p>Pozdrawiamy,<br>Zespół {{app_name}}</p>',
+                'text_body' => 'Cześć {{customer_name}}, Otrzymaliśmy żądanie usunięcia Twojego konta. Aby potwierdzić: {{confirm_url}}. Aby anulować: {{cancel_url}}. Pozdrawiamy, Zespół {{app_name}}',
+                'blade_path' => 'emails.account-deletion-requested-pl',
+                'variables' => ['customer_name', 'deletion_date', 'confirm_url', 'cancel_url', 'app_name'],
+                'active' => true,
+            ],
+            [
+                'key' => 'account-deletion-requested',
+                'language' => 'en',
+                'subject' => 'Account Deletion Request Confirmation - {{app_name}}',
+                'html_body' => '<h1>Hello {{customer_name}},</h1><p>We received a request to delete your account.</p><p><strong>Important:</strong> If you confirm the deletion, your data will be anonymized. This action is irreversible.</p><p>To confirm account deletion, click the button below:</p><p><a href="{{confirm_url}}" style="background-color: #EF4444; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Confirm Account Deletion</a></p><p>If you want to keep your account, you can cancel the request:</p><p><a href="{{cancel_url}}" style="background-color: #6B7280; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Cancel Deletion</a></p><p>Best regards,<br>The {{app_name}} Team</p>',
+                'text_body' => 'Hello {{customer_name}}, We received a request to delete your account. To confirm: {{confirm_url}}. To cancel: {{cancel_url}}. Best regards, The {{app_name}} Team',
+                'blade_path' => 'emails.account-deletion-requested-en',
+                'variables' => ['customer_name', 'deletion_date', 'confirm_url', 'cancel_url', 'app_name'],
+                'active' => true,
+            ],
+
+            // 14. Account Deletion Completed
+            [
+                'key' => 'account-deletion-completed',
+                'language' => 'pl',
+                'subject' => 'Twoje konto zostało usunięte - {{app_name}}',
+                'html_body' => '<h1>Do widzenia {{customer_name}},</h1><p>Twoje konto w {{app_name}} zostało usunięte zgodnie z Twoim żądaniem.</p><p>Wszystkie Twoje dane osobowe zostały zanonimizowane zgodnie z wymogami RODO.</p><p>Dziękujemy za korzystanie z naszych usług. Jeśli kiedykolwiek będziesz chciał wrócić, zawsze możesz założyć nowe konto.</p><p>Pozdrawiamy,<br>Zespół {{app_name}}</p>',
+                'text_body' => 'Do widzenia {{customer_name}}, Twoje konto w {{app_name}} zostało usunięte zgodnie z Twoim żądaniem. Wszystkie Twoje dane osobowe zostały zanonimizowane. Dziękujemy za korzystanie z naszych usług. Pozdrawiamy, Zespół {{app_name}}',
+                'blade_path' => 'emails.account-deletion-completed-pl',
+                'variables' => ['customer_name', 'app_name'],
+                'active' => true,
+            ],
+            [
+                'key' => 'account-deletion-completed',
+                'language' => 'en',
+                'subject' => 'Your Account Has Been Deleted - {{app_name}}',
+                'html_body' => '<h1>Goodbye {{customer_name}},</h1><p>Your {{app_name}} account has been deleted as per your request.</p><p>All your personal data has been anonymized in accordance with GDPR requirements.</p><p>Thank you for using our services. If you ever want to return, you can always create a new account.</p><p>Best regards,<br>The {{app_name}} Team</p>',
+                'text_body' => 'Goodbye {{customer_name}}, Your {{app_name}} account has been deleted as per your request. All your personal data has been anonymized. Thank you for using our services. Best regards, The {{app_name}} Team',
+                'blade_path' => 'emails.account-deletion-completed-en',
+                'variables' => ['customer_name', 'app_name'],
+                'active' => true,
+            ],
         ];
 
         foreach ($templates as $template) {
@@ -229,6 +343,6 @@ class EmailTemplateSeeder extends Seeder
             );
         }
 
-        $this->command->info('✓ Email templates seeded successfully (18 templates)');
+        $this->command->info('✓ Email templates seeded successfully (28 templates)');
     }
 }

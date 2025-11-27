@@ -75,16 +75,33 @@ class SmsService
         }
 
         // Step 3: Check SMS consent (GDPR compliance)
+        // Determine if this is marketing SMS based on template key or metadata
+        $isMarketingSms = $this->isMarketingTemplate($templateKey, $metadata);
+
         if (isset($metadata['user_id'])) {
             $user = \App\Models\User::find($metadata['user_id']);
-            if ($user && !$user->hasSmsConsent()) {
-                Log::warning('SMS blocked: user has not given consent or has opted out', [
-                    'recipient' => PrivacyHelper::maskPhone($recipient),
-                    'user_id' => $metadata['user_id'],
-                    'template' => $templateKey,
-                ]);
+            if ($user) {
+                // Marketing SMS requires explicit marketing consent
+                if ($isMarketingSms && !$user->hasSmsMarketingConsent()) {
+                    Log::warning('SMS marketing blocked: user has not given marketing consent', [
+                        'recipient' => PrivacyHelper::maskPhone($recipient),
+                        'user_id' => $metadata['user_id'],
+                        'template' => $templateKey,
+                    ]);
 
-                throw new \Exception("User has not given SMS consent or has opted out.");
+                    throw new \Exception("User has not given SMS marketing consent or has opted out.");
+                }
+
+                // Transactional SMS requires basic SMS consent
+                if (!$isMarketingSms && !$user->hasSmsConsent()) {
+                    Log::warning('SMS blocked: user has not given consent or has opted out', [
+                        'recipient' => PrivacyHelper::maskPhone($recipient),
+                        'user_id' => $metadata['user_id'],
+                        'template' => $templateKey,
+                    ]);
+
+                    throw new \Exception("User has not given SMS consent or has opted out.");
+                }
             }
         }
 
@@ -402,5 +419,41 @@ class SmsService
         // TODO: Send email notification
         // This would typically use Laravel's Mail facade:
         // Mail::to($email)->send(new SmsSpendingAlertMail($period, $currentCount, $limit, $percentage));
+    }
+
+    /**
+     * Check if a template is for marketing purposes.
+     *
+     * Marketing templates require explicit marketing consent (GDPR).
+     * Transactional templates (reminders, confirmations) only need basic SMS consent.
+     *
+     * @param string $templateKey Template identifier
+     * @param array $metadata Additional metadata (may contain 'is_marketing' flag)
+     * @return bool True if marketing template, false if transactional
+     */
+    private function isMarketingTemplate(string $templateKey, array $metadata): bool
+    {
+        // Allow explicit override via metadata
+        if (isset($metadata['is_marketing'])) {
+            return (bool) $metadata['is_marketing'];
+        }
+
+        // Marketing template keys (require explicit consent)
+        $marketingTemplates = [
+            'promotion-',
+            'marketing-',
+            'offer-',
+            'discount-',
+            'newsletter-',
+            'campaign-',
+        ];
+
+        foreach ($marketingTemplates as $prefix) {
+            if (str_starts_with($templateKey, $prefix)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
