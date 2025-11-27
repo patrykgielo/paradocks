@@ -9,6 +9,7 @@ use App\Models\EmailEvent;
 use App\Models\EmailSend;
 use App\Models\EmailSuppression;
 use App\Models\EmailTemplate;
+use App\Models\User;
 use App\Support\Settings\SettingsManager;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Log;
@@ -34,6 +35,13 @@ class EmailService
     }
 
     /**
+     * Email types for consent checking.
+     */
+    public const TYPE_TRANSACTIONAL = 'transactional';
+    public const TYPE_MARKETING = 'marketing';
+    public const TYPE_NEWSLETTER = 'newsletter';
+
+    /**
      * Send email from template with full tracking and error handling.
      *
      * This is the main entry point for sending emails in the application.
@@ -43,6 +51,7 @@ class EmailService
      * @param string $recipient Recipient email address
      * @param array $data Variables to render in template
      * @param array $metadata Additional data for tracking (user_id, appointment_id, etc.)
+     * @param string $type Email type (transactional, marketing, newsletter) - affects consent check
      * @return \App\Models\EmailSend The email send record
      * @throws \Exception If email is suppressed or template not found
      */
@@ -51,7 +60,8 @@ class EmailService
         string $language,
         string $recipient,
         array $data,
-        array $metadata = []
+        array $metadata = [],
+        string $type = self::TYPE_TRANSACTIONAL
     ): EmailSend {
         // Step 1: Check suppression list
         if (EmailSuppression::isSuppressed($recipient)) {
@@ -61,6 +71,30 @@ class EmailService
             ]);
 
             throw new \Exception("Email address {$recipient} is suppressed and cannot receive emails.");
+        }
+
+        // Step 1.5: Check marketing/newsletter consent (GDPR compliance)
+        if ($type !== self::TYPE_TRANSACTIONAL && isset($metadata['user_id'])) {
+            $user = User::find($metadata['user_id']);
+
+            if ($user) {
+                $hasConsent = match ($type) {
+                    self::TYPE_MARKETING => $user->hasEmailMarketingConsent(),
+                    self::TYPE_NEWSLETTER => $user->hasEmailNewsletterConsent(),
+                    default => true,
+                };
+
+                if (!$hasConsent) {
+                    Log::warning('Email blocked: user has not given consent or has opted out', [
+                        'recipient' => $recipient,
+                        'user_id' => $metadata['user_id'],
+                        'template' => $templateKey,
+                        'email_type' => $type,
+                    ]);
+
+                    throw new \Exception("User has not given {$type} email consent or has opted out.");
+                }
+            }
         }
 
         // Step 2: Fetch template from database

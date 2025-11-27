@@ -45,6 +45,7 @@
         vehicleTypes: [],
         carBrands: [],
         carModels: [],
+        savedVehicleData: null, // Saved vehicle from profile
         loading: false,
         errors: {},
         availableSlots: [],
@@ -199,6 +200,10 @@
         // Load customer data (if authenticated)
         loadCustomerData();
 
+        // Load saved vehicle and address from profile
+        loadSavedVehicle();
+        loadSavedAddress();
+
         // Setup event listeners
         setupEventListeners();
 
@@ -212,7 +217,38 @@
         // Show first step
         updateUI();
 
+        // Prefill address fields if saved address was loaded
+        prefillAddressFields();
+
         console.log('✅ Booking Wizard ready');
+    }
+
+    /**
+     * Prefill address form fields from state (after saved address is loaded)
+     */
+    function prefillAddressFields() {
+        if (state.customer.location_address) {
+            // Update autocomplete input
+            if (elements.placeAutocomplete) {
+                elements.placeAutocomplete.value = state.customer.location_address;
+            }
+
+            // Update address display
+            if (elements.locationAddressDisplay) {
+                elements.locationAddressDisplay.style.display = 'block';
+            }
+            if (elements.locationAddressText) {
+                elements.locationAddressText.textContent = state.customer.location_address;
+            }
+
+            // Update form fields
+            if (elements.streetNameInput) elements.streetNameInput.value = state.customer.street_name || '';
+            if (elements.streetNumberInput) elements.streetNumberInput.value = state.customer.street_number || '';
+            if (elements.cityInput) elements.cityInput.value = state.customer.city || '';
+            if (elements.postalCodeInput) elements.postalCodeInput.value = state.customer.postal_code || '';
+
+            console.log('✅ Address fields prefilled from saved data');
+        }
     }
 
     function loadServiceData() {
@@ -250,6 +286,106 @@
             console.log('Customer data loaded:', state.customer);
         } catch (error) {
             console.error('Error loading customer data:', error);
+        }
+    }
+
+    /**
+     * Load saved vehicle data from profile (if exists)
+     */
+    function loadSavedVehicle() {
+        const wizardContainer = document.querySelector('[data-wizard]');
+        if (!wizardContainer || !wizardContainer.dataset.savedVehicle) return;
+
+        try {
+            const savedVehicle = JSON.parse(wizardContainer.dataset.savedVehicle);
+            console.log('📦 Saved vehicle loaded:', savedVehicle);
+
+            // Store for later use after vehicle types are loaded
+            state.savedVehicleData = savedVehicle;
+        } catch (error) {
+            console.error('Error loading saved vehicle:', error);
+        }
+    }
+
+    /**
+     * Load saved address data from profile (if exists)
+     */
+    function loadSavedAddress() {
+        const wizardContainer = document.querySelector('[data-wizard]');
+        if (!wizardContainer || !wizardContainer.dataset.savedAddress) return;
+
+        try {
+            const savedAddress = JSON.parse(wizardContainer.dataset.savedAddress);
+            console.log('📦 Saved address loaded:', savedAddress);
+
+            // Prefill location data
+            if (savedAddress.address) {
+                state.customer.location_address = savedAddress.address;
+                state.customer.location_latitude = parseFloat(savedAddress.latitude);
+                state.customer.location_longitude = parseFloat(savedAddress.longitude);
+                state.customer.location_place_id = savedAddress.place_id || '';
+                state.customer.location_components = savedAddress.address_components || {};
+
+                // Parse address components for form fields
+                const components = savedAddress.address_components || {};
+                state.customer.street_name = components.route?.long_name || '';
+                state.customer.street_number = components.street_number?.long_name || '';
+                state.customer.city = components.locality?.long_name || components.postal_town?.long_name || '';
+                state.customer.postal_code = components.postal_code?.long_name || '';
+
+                console.log('✅ Location prefilled from saved address');
+            }
+        } catch (error) {
+            console.error('Error loading saved address:', error);
+        }
+    }
+
+    /**
+     * Apply saved vehicle data after vehicle types and brands are loaded
+     */
+    function applySavedVehicleData() {
+        if (!state.savedVehicleData) return;
+
+        const saved = state.savedVehicleData;
+        console.log('🔧 Applying saved vehicle data:', saved);
+
+        // Find and select vehicle type
+        if (saved.vehicle_type_id) {
+            const vehicleType = state.vehicleTypes.find(t => t.id === saved.vehicle_type_id);
+            if (vehicleType) {
+                selectVehicleType(vehicleType);
+
+                // After type is selected, apply brand/model/year with delay
+                setTimeout(async () => {
+                    // Wait for brands to load
+                    await new Promise(resolve => setTimeout(resolve, 300));
+
+                    // Select brand
+                    if (saved.car_brand_id && elements.carBrandSelect) {
+                        elements.carBrandSelect.value = saved.car_brand_id;
+                        const brandEvent = new Event('change', { bubbles: true });
+                        elements.carBrandSelect.dispatchEvent(brandEvent);
+
+                        // Wait for models to load
+                        await new Promise(resolve => setTimeout(resolve, 300));
+
+                        // Select model
+                        if (saved.car_model_id && elements.carModelSelect) {
+                            elements.carModelSelect.value = saved.car_model_id;
+                            const modelEvent = new Event('change', { bubbles: true });
+                            elements.carModelSelect.dispatchEvent(modelEvent);
+                        }
+                    }
+
+                    // Select year
+                    if (saved.year && elements.vehicleYearSelect) {
+                        elements.vehicleYearSelect.value = saved.year;
+                        state.vehicle.year = saved.year;
+                    }
+
+                    console.log('✅ Saved vehicle applied');
+                }, 100);
+            }
         }
     }
 
@@ -1221,6 +1357,11 @@
                 state.vehicleTypes = data.data;
                 renderVehicleTypeCards();
                 console.log('✅ Vehicle types loaded:', state.vehicleTypes.length);
+
+                // Apply saved vehicle data if exists
+                if (state.savedVehicleData) {
+                    applySavedVehicleData();
+                }
             }
         } catch (error) {
             console.error('❌ Error fetching vehicle types:', error);

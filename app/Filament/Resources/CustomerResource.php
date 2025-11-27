@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use BackedEnum;
 use UnitEnum;
 use App\Filament\Resources\CustomerResource\Pages;
+use App\Filament\Resources\CustomerResource\RelationManagers;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Schemas\Schema;
@@ -127,6 +128,62 @@ class CustomerResource extends Resource
                             ->content('Ten użytkownik będzie miał automatycznie przypisaną rolę: Klient')
                             ->helperText('Aby zmienić rolę użytkownika, przejdź do sekcji Użytkownicy'),
                     ]),
+
+                Section::make('Limity profilu')
+                    ->schema([
+                        Forms\Components\TextInput::make('max_vehicles')
+                            ->label('Limit pojazdów')
+                            ->numeric()
+                            ->default(1)
+                            ->minValue(1)
+                            ->maxValue(10)
+                            ->helperText('Ile pojazdów klient może zapisać w profilu'),
+                        Forms\Components\TextInput::make('max_addresses')
+                            ->label('Limit adresów')
+                            ->numeric()
+                            ->default(1)
+                            ->minValue(1)
+                            ->maxValue(10)
+                            ->helperText('Ile adresów klient może zapisać w profilu'),
+                    ])->columns(2)->collapsible(),
+
+                Section::make('Zgody marketingowe')
+                    ->schema([
+                        Forms\Components\Placeholder::make('email_marketing_status')
+                            ->label('Email marketing')
+                            ->content(fn ($record) => $record?->hasEmailMarketingConsent()
+                                ? '✅ Zgoda udzielona: ' . $record->email_marketing_consent_at?->format('d.m.Y H:i')
+                                : '❌ Brak zgody'),
+                        Forms\Components\Placeholder::make('email_newsletter_status')
+                            ->label('Email newsletter')
+                            ->content(fn ($record) => $record?->hasEmailNewsletterConsent()
+                                ? '✅ Zgoda udzielona: ' . $record->email_newsletter_consent_at?->format('d.m.Y H:i')
+                                : '❌ Brak zgody'),
+                        Forms\Components\Placeholder::make('sms_consent_status')
+                            ->label('SMS powiadomienia')
+                            ->content(fn ($record) => $record?->hasSmsConsent()
+                                ? '✅ Zgoda udzielona: ' . $record->sms_consent_given_at?->format('d.m.Y H:i')
+                                : '❌ Brak zgody'),
+                        Forms\Components\Placeholder::make('sms_marketing_status')
+                            ->label('SMS marketing')
+                            ->content(fn ($record) => $record?->hasSmsMarketingConsent()
+                                ? '✅ Zgoda udzielona: ' . $record->sms_marketing_consent_at?->format('d.m.Y H:i')
+                                : '❌ Brak zgody'),
+                    ])->columns(2)->collapsible()->hiddenOn('create'),
+
+                Section::make('Status konta')
+                    ->schema([
+                        Forms\Components\Placeholder::make('pending_deletion_status')
+                            ->label('Żądanie usunięcia')
+                            ->content(fn ($record) => $record?->hasPendingDeletion()
+                                ? '⚠️ Klient złożył żądanie usunięcia konta: ' . $record->deletion_requested_at?->format('d.m.Y H:i')
+                                : '✅ Konto aktywne'),
+                        Forms\Components\Placeholder::make('pending_email_status')
+                            ->label('Zmiana email')
+                            ->content(fn ($record) => $record?->hasPendingEmailChange()
+                                ? '⚠️ Oczekuje na zmianę email na: ' . $record->pending_email
+                                : '✅ Brak oczekujących zmian'),
+                    ])->columns(2)->collapsible()->hiddenOn('create'),
             ]);
     }
 
@@ -203,7 +260,8 @@ class CustomerResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\VehiclesRelationManager::class,
+            RelationManagers\AddressesRelationManager::class,
         ];
     }
 

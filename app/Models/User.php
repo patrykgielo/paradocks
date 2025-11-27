@@ -7,8 +7,11 @@ use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasName;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements FilamentUser, HasName
@@ -39,6 +42,23 @@ class User extends Authenticatable implements FilamentUser, HasName
         'sms_consent_user_agent',
         'sms_opted_out_at',
         'sms_opt_out_method',
+        // Profile feature fields
+        'max_vehicles',
+        'max_addresses',
+        'email_marketing_consent_at',
+        'email_marketing_consent_ip',
+        'email_marketing_opted_out_at',
+        'email_newsletter_consent_at',
+        'email_newsletter_consent_ip',
+        'email_newsletter_opted_out_at',
+        'sms_marketing_consent_at',
+        'sms_marketing_consent_ip',
+        'sms_marketing_opted_out_at',
+        'pending_email',
+        'pending_email_token',
+        'pending_email_expires_at',
+        'deletion_requested_at',
+        'deletion_token',
     ];
 
     /**
@@ -63,6 +83,17 @@ class User extends Authenticatable implements FilamentUser, HasName
             'password' => 'hashed',
             'sms_consent_given_at' => 'datetime',
             'sms_opted_out_at' => 'datetime',
+            // Profile feature casts
+            'max_vehicles' => 'integer',
+            'max_addresses' => 'integer',
+            'email_marketing_consent_at' => 'datetime',
+            'email_marketing_opted_out_at' => 'datetime',
+            'email_newsletter_consent_at' => 'datetime',
+            'email_newsletter_opted_out_at' => 'datetime',
+            'sms_marketing_consent_at' => 'datetime',
+            'sms_marketing_opted_out_at' => 'datetime',
+            'pending_email_expires_at' => 'datetime',
+            'deletion_requested_at' => 'datetime',
         ];
     }
 
@@ -237,5 +268,339 @@ class User extends Authenticatable implements FilamentUser, HasName
     {
         return $this->belongsToMany(Service::class, 'service_staff', 'user_id', 'service_id')
                     ->withTimestamps();
+    }
+
+    // =========================================================================
+    // PROFILE FEATURE: Vehicles & Addresses
+    // =========================================================================
+
+    /**
+     * Get all vehicles for this user.
+     */
+    public function vehicles(): HasMany
+    {
+        return $this->hasMany(UserVehicle::class);
+    }
+
+    /**
+     * Get the default vehicle for this user.
+     */
+    public function vehicle(): HasOne
+    {
+        return $this->hasOne(UserVehicle::class)->where('is_default', true);
+    }
+
+    /**
+     * Get all saved addresses for this user.
+     */
+    public function addresses(): HasMany
+    {
+        return $this->hasMany(UserAddress::class);
+    }
+
+    /**
+     * Get the default address for this user.
+     */
+    public function address(): HasOne
+    {
+        return $this->hasOne(UserAddress::class)->where('is_default', true);
+    }
+
+    /**
+     * Check if user can add more vehicles.
+     */
+    public function canAddVehicle(): bool
+    {
+        return $this->vehicles()->count() < $this->getVehicleLimitAttribute();
+    }
+
+    /**
+     * Check if user can add more addresses.
+     */
+    public function canAddAddress(): bool
+    {
+        return $this->addresses()->count() < $this->getAddressLimitAttribute();
+    }
+
+    /**
+     * Get the vehicle limit for this user.
+     */
+    public function getVehicleLimitAttribute(): int
+    {
+        return $this->max_vehicles ?? 1;
+    }
+
+    /**
+     * Get the address limit for this user.
+     */
+    public function getAddressLimitAttribute(): int
+    {
+        return $this->max_addresses ?? 1;
+    }
+
+    // =========================================================================
+    // PROFILE FEATURE: Email Marketing Consent
+    // =========================================================================
+
+    /**
+     * Check if user has email marketing consent (not opted out).
+     */
+    public function hasEmailMarketingConsent(): bool
+    {
+        return $this->email_marketing_consent_at !== null
+            && $this->email_marketing_opted_out_at === null;
+    }
+
+    /**
+     * Grant email marketing consent.
+     */
+    public function grantEmailMarketingConsent(?string $ip = null): void
+    {
+        $this->update([
+            'email_marketing_consent_at' => now(),
+            'email_marketing_consent_ip' => $ip,
+            'email_marketing_opted_out_at' => null,
+        ]);
+    }
+
+    /**
+     * Revoke email marketing consent.
+     */
+    public function revokeEmailMarketingConsent(): void
+    {
+        $this->update([
+            'email_marketing_opted_out_at' => now(),
+        ]);
+    }
+
+    // =========================================================================
+    // PROFILE FEATURE: Email Newsletter Consent
+    // =========================================================================
+
+    /**
+     * Check if user has email newsletter consent (not opted out).
+     */
+    public function hasEmailNewsletterConsent(): bool
+    {
+        return $this->email_newsletter_consent_at !== null
+            && $this->email_newsletter_opted_out_at === null;
+    }
+
+    /**
+     * Grant email newsletter consent.
+     */
+    public function grantEmailNewsletterConsent(?string $ip = null): void
+    {
+        $this->update([
+            'email_newsletter_consent_at' => now(),
+            'email_newsletter_consent_ip' => $ip,
+            'email_newsletter_opted_out_at' => null,
+        ]);
+    }
+
+    /**
+     * Revoke email newsletter consent.
+     */
+    public function revokeEmailNewsletterConsent(): void
+    {
+        $this->update([
+            'email_newsletter_opted_out_at' => now(),
+        ]);
+    }
+
+    // =========================================================================
+    // PROFILE FEATURE: SMS Marketing Consent
+    // =========================================================================
+
+    /**
+     * Check if user has SMS marketing consent (not opted out).
+     */
+    public function hasSmsMarketingConsent(): bool
+    {
+        return $this->sms_marketing_consent_at !== null
+            && $this->sms_marketing_opted_out_at === null;
+    }
+
+    /**
+     * Grant SMS marketing consent.
+     */
+    public function grantSmsMarketingConsent(?string $ip = null): void
+    {
+        $this->update([
+            'sms_marketing_consent_at' => now(),
+            'sms_marketing_consent_ip' => $ip,
+            'sms_marketing_opted_out_at' => null,
+        ]);
+    }
+
+    /**
+     * Revoke SMS marketing consent.
+     */
+    public function revokeSmsMarketingConsent(): void
+    {
+        $this->update([
+            'sms_marketing_opted_out_at' => now(),
+        ]);
+    }
+
+    // =========================================================================
+    // PROFILE FEATURE: Email Change Flow
+    // =========================================================================
+
+    /**
+     * Request email change (generates token, stores pending email).
+     *
+     * @param string $newEmail The new email to change to
+     * @return string The verification token
+     */
+    public function requestEmailChange(string $newEmail): string
+    {
+        $token = Str::random(64);
+
+        $this->update([
+            'pending_email' => $newEmail,
+            'pending_email_token' => $token,
+            'pending_email_expires_at' => now()->addHours(24),
+        ]);
+
+        return $token;
+    }
+
+    /**
+     * Confirm email change with token.
+     *
+     * @param string $token The verification token
+     * @return bool True if successful, false if invalid/expired
+     */
+    public function confirmEmailChange(string $token): bool
+    {
+        if ($this->pending_email_token !== $token) {
+            return false;
+        }
+
+        if ($this->pending_email_expires_at && $this->pending_email_expires_at->isPast()) {
+            return false;
+        }
+
+        $newEmail = $this->pending_email;
+
+        $this->update([
+            'email' => $newEmail,
+            'pending_email' => null,
+            'pending_email_token' => null,
+            'pending_email_expires_at' => null,
+        ]);
+
+        return true;
+    }
+
+    /**
+     * Cancel pending email change.
+     */
+    public function cancelEmailChange(): void
+    {
+        $this->update([
+            'pending_email' => null,
+            'pending_email_token' => null,
+            'pending_email_expires_at' => null,
+        ]);
+    }
+
+    /**
+     * Check if there's a pending email change.
+     */
+    public function hasPendingEmailChange(): bool
+    {
+        return $this->pending_email !== null
+            && $this->pending_email_expires_at
+            && $this->pending_email_expires_at->isFuture();
+    }
+
+    // =========================================================================
+    // PROFILE FEATURE: Account Deletion (GDPR Art. 17)
+    // =========================================================================
+
+    /**
+     * Request account deletion.
+     *
+     * @return string The confirmation token
+     */
+    public function requestAccountDeletion(): string
+    {
+        $token = Str::random(64);
+
+        $this->update([
+            'deletion_requested_at' => now(),
+            'deletion_token' => $token,
+        ]);
+
+        return $token;
+    }
+
+    /**
+     * Confirm account deletion with token.
+     * Anonymizes user data instead of hard delete (preserves appointment history).
+     *
+     * @param string $token The confirmation token
+     * @return bool True if successful
+     */
+    public function confirmAccountDeletion(string $token): bool
+    {
+        if ($this->deletion_token !== $token) {
+            return false;
+        }
+
+        // Anonymize user data
+        $this->update([
+            'first_name' => 'Usunięty',
+            'last_name' => 'Użytkownik',
+            'email' => "deleted_{$this->id}@deleted.local",
+            'phone_e164' => null,
+            'street_name' => null,
+            'street_number' => null,
+            'city' => null,
+            'postal_code' => null,
+            'access_notes' => null,
+            'password' => bcrypt(Str::random(32)),
+            'remember_token' => null,
+            // Clear all consent data
+            'sms_consent_given_at' => null,
+            'sms_consent_ip' => null,
+            'sms_consent_user_agent' => null,
+            'email_marketing_consent_at' => null,
+            'email_marketing_consent_ip' => null,
+            'email_newsletter_consent_at' => null,
+            'email_newsletter_consent_ip' => null,
+            'sms_marketing_consent_at' => null,
+            'sms_marketing_consent_ip' => null,
+            // Clear deletion request
+            'deletion_requested_at' => null,
+            'deletion_token' => null,
+        ]);
+
+        // Delete related data
+        $this->vehicles()->delete();
+        $this->addresses()->delete();
+
+        return true;
+    }
+
+    /**
+     * Cancel account deletion request.
+     */
+    public function cancelAccountDeletion(): void
+    {
+        $this->update([
+            'deletion_requested_at' => null,
+            'deletion_token' => null,
+        ]);
+    }
+
+    /**
+     * Check if there's a pending deletion request.
+     */
+    public function hasPendingDeletion(): bool
+    {
+        return $this->deletion_requested_at !== null;
     }
 }
