@@ -125,7 +125,7 @@ class PortfolioItemResource extends Resource
                                 'undo', 'redo',
                             ])
                             ->columnSpanFull()
-                            ->extraInputAttributes(['style' => 'height: 30rem;'])
+                            ->extraInputAttributes(['style' => 'min-height: 30rem;'])
                             ->helperText('Opisz szczegóły projektu, przebieg prac, użyte materiały'),
                     ]),
 
