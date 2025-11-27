@@ -189,6 +189,12 @@
     // ===================================================================
 
     function init() {
+        // ⚠️ GUARD: Only initialize on booking pages (prevents clearing form fields on other pages)
+        const wizardContainer = document.querySelector('[data-wizard]');
+        if (!wizardContainer) {
+            return; // Not on a booking page, skip initialization
+        }
+
         console.log('🚀 Booking Wizard - Vanilla JS initialized');
 
         // Cache DOM elements

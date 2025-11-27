@@ -105,7 +105,7 @@ class PostResource extends Resource
                                 'undo', 'redo',
                             ])
                             ->columnSpanFull()
-                            ->extraInputAttributes(['style' => 'height: 30rem;'])
+                            ->extraInputAttributes(['style' => 'min-height: 30rem;'])
                             ->helperText('Główna treść wpisu. Obrazki dodaj przez bloki poniżej.'),
                     ]),
 
