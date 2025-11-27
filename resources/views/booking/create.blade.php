@@ -34,6 +34,28 @@
              'postal_code' => $user->postal_code ?? '',
              'access_notes' => $user->access_notes ?? ''
          ]) }}'
+         @if($savedVehicle)
+         data-saved-vehicle='{{ json_encode([
+             'vehicle_type_id' => $savedVehicle->vehicle_type_id,
+             'car_brand_id' => $savedVehicle->car_brand_id,
+             'car_model_id' => $savedVehicle->car_model_id,
+             'custom_brand' => $savedVehicle->custom_brand,
+             'custom_model' => $savedVehicle->custom_model,
+             'year' => $savedVehicle->year,
+             'brand_name' => $savedVehicle->brand_name,
+             'model_name' => $savedVehicle->model_name,
+         ]) }}'
+         @endif
+         @if($savedAddress)
+         data-saved-address='{{ json_encode([
+             'address' => $savedAddress->address,
+             'latitude' => $savedAddress->latitude,
+             'longitude' => $savedAddress->longitude,
+             'place_id' => $savedAddress->place_id,
+             'address_components' => $savedAddress->address_components,
+             'nickname' => $savedAddress->nickname,
+         ]) }}'
+         @endif
          @endauth
          class="mb-12">
 
