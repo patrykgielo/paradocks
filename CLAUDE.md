@@ -402,6 +402,61 @@ protected function prepareForValidation(): void
 
 **See:** [Customer Profile Documentation](app/docs/features/customer-profile/README.md)
 
+### Maintenance Mode
+
+Professional maintenance mode system with Redis-based state management, multiple maintenance types, and Docker-aware architecture.
+
+- **Types**: Deployment (60s), Pre-launch (3600s), Scheduled (300s), Emergency (120s)
+- **State Storage**: Redis (`maintenance:mode`, `maintenance:config`, `maintenance:enabled_at`, `maintenance:secret_token`)
+- **Bypass Methods**: Role-based (admin, super-admin), secret token, NO bypass (pre-launch)
+- **Nginx Optimization**: Pre-launch mode uses file trigger + static HTML (zero PHP overhead)
+- **Filament UI**: `/admin/system/maintenance-mode` - Enable/disable with visual status indicators
+- **Audit Trail**: All events logged to `maintenance_events` table with user, IP, metadata
+
+**CLI Commands**:
+```bash
+# Enable maintenance
+docker compose exec app php artisan maintenance:enable --type=deployment --message="System update" --duration="15 minutes"
+
+# Check status
+docker compose exec app php artisan maintenance:status --history
+
+# Disable maintenance
+docker compose exec app php artisan maintenance:disable --force
+```
+
+**Key Files**:
+- `app/Services/MaintenanceService.php` - Core business logic (15+ methods)
+- `app/Enums/MaintenanceType.php` - DEPLOYMENT, PRELAUNCH, SCHEDULED, EMERGENCY
+- `app/Http/Middleware/CheckMaintenanceMode.php` - Request filtering middleware
+- `app/Filament/Pages/MaintenanceSettings.php` - Admin panel page
+- `resources/views/errors/maintenance-*.blade.php` - Custom error pages
+- `docker/nginx/app.conf` - Nginx pre-launch file check
+
+**Bypass Examples**:
+```php
+// Role-based bypass (automatic for admins)
+if (Auth::user()->hasAnyRole(['super-admin', 'admin'])) {
+    // Access granted
+}
+
+// Secret token bypass
+https://paradocks.local:8444?maintenance_token=paradocks-xxxxx...
+
+// Programmatic usage
+$service = app(MaintenanceService::class);
+$service->enable(MaintenanceType::DEPLOYMENT, Auth::user(), ['message' => 'Deploying v2.0']);
+```
+
+**Important Notes**:
+- **PRELAUNCH mode**: Complete lockdown, NO bypass allowed (not even admins!)
+- **Deployment mode**: Admins can bypass, secret token generated
+- **Redis keys persist** across container restarts (not file-based like Laravel's default)
+- **Nginx serves static HTML** for pre-launch (no PHP processing)
+- **Health endpoint** `/up` bypasses maintenance for Docker healthchecks
+
+**See:** [Maintenance Mode Documentation](app/docs/features/maintenance-mode/README.md)
+
 ## Production Build
 
 **IMPORTANT:** This project uses Tailwind CSS 4.0 with `@tailwindcss/vite` plugin.
