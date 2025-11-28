@@ -28,6 +28,7 @@ use App\Services\Email\EmailGatewayInterface;
 use App\Services\Email\EmailService;
 use App\Services\Email\SmtpMailer;
 use App\Services\Sms\SmsApiGateway;
+use App\Services\MaintenanceService;
 use App\Services\Sms\SmsGatewayInterface;
 use App\Services\Sms\SmsService;
 use App\Support\Settings\SettingsManager;
@@ -43,6 +44,9 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register SettingsManager as singleton
         $this->app->singleton(SettingsManager::class);
+
+        // Register MaintenanceService as singleton
+        $this->app->singleton(MaintenanceService::class);
 
         // Bind EmailGateway interface to SMTP implementation
         $this->app->bind(EmailGatewayInterface::class, SmtpMailer::class);
