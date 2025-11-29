@@ -61,7 +61,7 @@ class AdminPanelProvider extends PanelProvider
                 'Customer Management',
                 'User Management',
                 'Settings',
-                'System'
+                'System',
             ]);
     }
 }

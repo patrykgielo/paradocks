@@ -3,12 +3,12 @@
 namespace App\Filament\Resources\EmployeeResource\RelationManagers;
 
 use App\Models\StaffVacationPeriod;
+use Filament\Actions;
 use Filament\Forms;
-use Filament\Schemas\Schema;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Actions;
 
 class VacationPeriodsRelationManager extends RelationManager
 {
@@ -21,26 +21,26 @@ class VacationPeriodsRelationManager extends RelationManager
     public function form(Schema $schema): Schema
     {
         return $schema->components([
-                Forms\Components\DatePicker::make('start_date')
-                    ->label('Data rozpoczęcia')
-                    ->native(false)
-                    ->required(),
+            Forms\Components\DatePicker::make('start_date')
+                ->label('Data rozpoczęcia')
+                ->native(false)
+                ->required(),
 
-                Forms\Components\DatePicker::make('end_date')
-                    ->label('Data zakończenia')
-                    ->native(false)
-                    ->required()
-                    ->after('start_date'),
+            Forms\Components\DatePicker::make('end_date')
+                ->label('Data zakończenia')
+                ->native(false)
+                ->required()
+                ->after('start_date'),
 
-                Forms\Components\Textarea::make('reason')
-                    ->label('Powód')
-                    ->rows(2)
-                    ->columnSpanFull(),
+            Forms\Components\Textarea::make('reason')
+                ->label('Powód')
+                ->rows(2)
+                ->columnSpanFull(),
 
-                Forms\Components\Toggle::make('is_approved')
-                    ->label('Zatwierdzony')
-                    ->default(false),
-            ]);
+            Forms\Components\Toggle::make('is_approved')
+                ->label('Zatwierdzony')
+                ->default(false),
+        ]);
     }
 
     public function table(Table $table): Table
@@ -61,7 +61,8 @@ class VacationPeriodsRelationManager extends RelationManager
                     ->label('Długość')
                     ->formatStateUsing(function (StaffVacationPeriod $record) {
                         $days = $record->getDurationInDays();
-                        return $days . ' ' . ($days === 1 ? 'dzień' : 'dni');
+
+                        return $days.' '.($days === 1 ? 'dzień' : 'dni');
                     })
                     ->badge()
                     ->color('info'),

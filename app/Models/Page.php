@@ -75,7 +75,7 @@ class Page extends Model
      */
     public function isDraft(): bool
     {
-        return !$this->isPublished();
+        return ! $this->isPublished();
     }
 
     /**

@@ -20,17 +20,14 @@ use Illuminate\Support\Facades\Log;
  * Sent when an appointment date/time is changed.
  * Informs customer about the new schedule.
  */
-class AppointmentRescheduledNotification extends Notification implements ShouldQueue, ShouldBeUnique
+class AppointmentRescheduledNotification extends Notification implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;
 
     /**
      * Create a new notification instance.
      *
-     * @param \App\Models\Appointment $appointment
-     * @param \Carbon\Carbon $oldDate
-     * @param \Carbon\Carbon $newDate
-     * @param string $whoChanged 'customer' or 'staff'
+     * @param  string  $whoChanged  'customer' or 'staff'
      */
     public function __construct(
         public Appointment $appointment,
@@ -43,18 +40,14 @@ class AppointmentRescheduledNotification extends Notification implements ShouldQ
 
     /**
      * Get the unique ID for the notification.
-     *
-     * @return string
      */
     public function uniqueId(): string
     {
-        return 'appointment-rescheduled:' . $this->appointment->id . ':' . $this->newDate->timestamp;
+        return 'appointment-rescheduled:'.$this->appointment->id.':'.$this->newDate->timestamp;
     }
 
     /**
      * Get the number of seconds the unique lock should be maintained.
-     *
-     * @return int
      */
     public function uniqueFor(): int
     {
@@ -64,7 +57,7 @@ class AppointmentRescheduledNotification extends Notification implements ShouldQ
     /**
      * Get the notification's delivery channels.
      *
-     * @param mixed $notifiable
+     * @param  mixed  $notifiable
      * @return array<int, string>
      */
     public function via(object $notifiable): array
@@ -75,8 +68,7 @@ class AppointmentRescheduledNotification extends Notification implements ShouldQ
     /**
      * Get the mail representation of the notification.
      *
-     * @param mixed $notifiable
-     * @return \Illuminate\Notifications\Messages\MailMessage
+     * @param  mixed  $notifiable
      */
     public function toMail(object $notifiable): MailMessage
     {

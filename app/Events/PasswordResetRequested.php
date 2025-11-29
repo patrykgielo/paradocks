@@ -22,12 +22,11 @@ class PasswordResetRequested
     /**
      * Create a new event instance.
      *
-     * @param \App\Models\User $user The user requesting password reset
-     * @param string $token The password reset token
+     * @param  \App\Models\User  $user  The user requesting password reset
+     * @param  string  $token  The password reset token
      */
     public function __construct(
         public User $user,
         public string $token
-    ) {
-    }
+    ) {}
 }

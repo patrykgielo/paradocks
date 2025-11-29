@@ -32,7 +32,7 @@ use Illuminate\Support\Facades\Log;
  * Scheduled: Hourly via Laravel Scheduler
  * Queue: emails
  */
-class SendFollowUpEmailsJob implements ShouldQueue, ShouldBeUnique
+class SendFollowUpEmailsJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -59,7 +59,7 @@ class SendFollowUpEmailsJob implements ShouldQueue, ShouldBeUnique
      */
     public function uniqueId(): string
     {
-        return 'send-followup-emails:' . now()->format('Y-m-d-H');
+        return 'send-followup-emails:'.now()->format('Y-m-d-H');
     }
 
     /**
@@ -99,6 +99,7 @@ class SendFollowUpEmailsJob implements ShouldQueue, ShouldBeUnique
                         'email' => $appointment->customer_email,
                     ]);
                     $stats['skipped']++;
+
                     continue;
                 }
 
@@ -115,8 +116,8 @@ class SendFollowUpEmailsJob implements ShouldQueue, ShouldBeUnique
                     'app_name' => config('app.name'),
                     'contact_email' => config('mail.from.address'),
                     'contact_phone' => app(\App\Support\Settings\SettingsManager::class)->get('contact.phone', ''),
-                    'booking_url' => config('app.url') . '/booking',
-                    'review_url' => config('app.url') . '/review',
+                    'booking_url' => config('app.url').'/booking',
+                    'review_url' => config('app.url').'/review',
                 ];
 
                 // Send email

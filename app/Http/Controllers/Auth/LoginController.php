@@ -39,7 +39,7 @@ class LoginController extends Controller
                     return route('filament.admin.pages.dashboard');
                 }
             } catch (\Exception $e) {
-                \Log::error('Error checking user roles in LoginController: ' . $e->getMessage());
+                \Log::error('Error checking user roles in LoginController: '.$e->getMessage());
             }
         }
 

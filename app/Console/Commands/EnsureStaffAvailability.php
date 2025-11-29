@@ -38,6 +38,7 @@ class EnsureStaffAvailability extends Command
 
         if ($staffMembers->isEmpty()) {
             $this->warn('No staff members found.');
+
             return Command::SUCCESS;
         }
 
@@ -51,6 +52,7 @@ class EnsureStaffAvailability extends Command
 
         if ($staffWithoutAvailability->isEmpty()) {
             $this->info('✓ All staff members have availability configured.');
+
             return Command::SUCCESS;
         }
 
@@ -76,6 +78,7 @@ class EnsureStaffAvailability extends Command
         if ($this->option('check')) {
             $this->newLine();
             $this->info('Use --fix option to create default availability for these staff members.');
+
             return Command::SUCCESS;
         }
 
@@ -101,10 +104,11 @@ class EnsureStaffAvailability extends Command
 
         if ($services->isEmpty()) {
             $this->error('No services found. Please create services first.');
+
             return Command::FAILURE;
         }
 
-        $this->info("Creating default availability (Monday-Friday, 9:00-17:00) for all services...");
+        $this->info('Creating default availability (Monday-Friday, 9:00-17:00) for all services...');
         $this->newLine();
 
         $created = 0;

@@ -43,17 +43,19 @@ class TestEmail extends Command
         $language = $this->option('language') ?? 'pl';
 
         // Validate recipient email
-        if (!$to) {
+        if (! $to) {
             $this->error('❌ Recipient email is required. Use --to=email@example.com');
+
             return self::FAILURE;
         }
 
-        if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
+        if (! filter_var($to, FILTER_VALIDATE_EMAIL)) {
             $this->error("❌ Invalid email address: {$to}");
+
             return self::FAILURE;
         }
 
-        $this->info("📧 Testing email system...");
+        $this->info('📧 Testing email system...');
         $this->info("   Recipient: {$to}");
         $this->info("   Language: {$language}");
         $this->newLine();
@@ -68,12 +70,6 @@ class TestEmail extends Command
 
     /**
      * Test a single template.
-     *
-     * @param \App\Services\Email\EmailService $emailService
-     * @param string $templateKey
-     * @param string $language
-     * @param string $to
-     * @return int
      */
     private function testSingleTemplate(
         EmailService $emailService,
@@ -98,25 +94,23 @@ class TestEmail extends Command
                 $this->info("✅ Template '{$templateKey}' sent successfully!");
                 $this->info("   Email Send ID: {$emailSend->id}");
                 $this->info("   Subject: {$emailSend->subject}");
+
                 return self::SUCCESS;
             } else {
                 $this->error("❌ Template '{$templateKey}' failed to send.");
                 $this->error("   Error: {$emailSend->error_message}");
+
                 return self::FAILURE;
             }
         } catch (\Exception $e) {
             $this->error("❌ Error: {$e->getMessage()}");
+
             return self::FAILURE;
         }
     }
 
     /**
      * Test all available templates.
-     *
-     * @param \App\Services\Email\EmailService $emailService
-     * @param string $language
-     * @param string $to
-     * @return int
      */
     private function testAllTemplates(
         EmailService $emailService,
@@ -129,6 +123,7 @@ class TestEmail extends Command
 
         if ($templates->isEmpty()) {
             $this->warn("⚠️  No active templates found for language: {$language}");
+
             return self::FAILURE;
         }
 
@@ -168,19 +163,16 @@ class TestEmail extends Command
         }
 
         // Summary
-        $this->info("📊 Test Results:");
+        $this->info('📊 Test Results:');
         $this->info("   ✅ Successful: {$successCount}");
         $this->info("   ❌ Failed: {$failureCount}");
-        $this->info("   📧 Total: " . ($successCount + $failureCount));
+        $this->info('   📧 Total: '.($successCount + $failureCount));
 
         return $failureCount === 0 ? self::SUCCESS : self::FAILURE;
     }
 
     /**
      * Get test data for a specific template.
-     *
-     * @param string $templateKey
-     * @return array
      */
     private function getTestData(string $templateKey): array
     {

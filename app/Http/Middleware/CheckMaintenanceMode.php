@@ -37,13 +37,13 @@ class CheckMaintenanceMode
     public function handle(Request $request, Closure $next): Response
     {
         // Skip if maintenance mode is not active
-        if (!$this->maintenanceService->isActive()) {
+        if (! $this->maintenanceService->isActive()) {
             return $next($request);
         }
 
         $type = $this->maintenanceService->getType();
 
-        if (!$type) {
+        if (! $type) {
             return $next($request);
         }
 
@@ -53,6 +53,7 @@ class CheckMaintenanceMode
             if ($this->maintenanceService->checkSecretToken($token)) {
                 // Store token in session for subsequent requests
                 session(['maintenance_bypass_token' => $token]);
+
                 return $next($request);
             }
         }
@@ -86,7 +87,7 @@ class CheckMaintenanceMode
         $config = $this->maintenanceService->getConfig();
 
         // Determine view template based on type
-        $view = match($type) {
+        $view = match ($type) {
             MaintenanceType::PRELAUNCH => 'errors.maintenance-prelaunch',
             default => 'errors.maintenance-deployment',
         };

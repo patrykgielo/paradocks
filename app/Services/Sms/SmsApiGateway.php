@@ -31,21 +31,19 @@ class SmsApiGateway implements SmsGatewayInterface
 
     /**
      * Create a new SMSAPI Gateway instance.
-     *
-     * @param \App\Support\Settings\SettingsManager $settings
      */
     public function __construct(
         private readonly SettingsManager $settings
-    ) {
-    }
+    ) {}
 
     /**
      * Send an SMS via SMSAPI.pl.
      *
-     * @param string $to Recipient phone number in international format (+48...)
-     * @param string $message SMS message content (plain text)
-     * @param array $metadata Additional data (sender_name, test_mode, etc.)
+     * @param  string  $to  Recipient phone number in international format (+48...)
+     * @param  string  $message  SMS message content (plain text)
+     * @param  array  $metadata  Additional data (sender_name, test_mode, etc.)
      * @return array{sms_id: string, message_length: int, message_parts: int} SMS ID and metadata
+     *
      * @throws \Exception If sending fails
      */
     public function send(
@@ -66,7 +64,7 @@ class SmsApiGateway implements SmsGatewayInterface
             $to = $this->normalizePhoneNumber($to);
 
             // Validate phone number
-            if (!$this->validatePhoneNumber($to)) {
+            if (! $this->validatePhoneNumber($to)) {
                 throw new \Exception("Invalid phone number format: {$to}. Must be in international format (e.g., +48501234567)");
             }
 
@@ -89,7 +87,7 @@ class SmsApiGateway implements SmsGatewayInterface
                 'test_mode' => $testMode,
                 'message_length' => $lengthInfo['length'],
                 'message_parts' => $lengthInfo['parts'],
-                'message_preview' => mb_substr($message, 0, 50) . '...',
+                'message_preview' => mb_substr($message, 0, 50).'...',
             ]);
 
             // Send SMS via SMSAPI
@@ -132,7 +130,7 @@ class SmsApiGateway implements SmsGatewayInterface
      *
      * Checks if phone number is in international format (+48...).
      *
-     * @param string $phoneNumber Phone number to validate
+     * @param  string  $phoneNumber  Phone number to validate
      * @return bool True if valid international format
      */
     public function validatePhoneNumber(string $phoneNumber): bool
@@ -149,7 +147,7 @@ class SmsApiGateway implements SmsGatewayInterface
      * GSM-7 encoding: 160 chars per part (153 for multi-part)
      * Unicode encoding: 70 chars per part (67 for multi-part)
      *
-     * @param string $message SMS message content
+     * @param  string  $message  SMS message content
      * @return array{length: int, parts: int, encoding: string} Length info
      */
     public function calculateMessageLength(string $message): array
@@ -186,6 +184,7 @@ class SmsApiGateway implements SmsGatewayInterface
      * Initialize and return SMSAPI service (PlService or ComService).
      *
      * @return \Smsapi\Client\Service\SmsapiPlService|\Smsapi\Client\Service\SmsapiComService
+     *
      * @throws \Exception If configuration is invalid
      */
     private function getService()
@@ -205,7 +204,7 @@ class SmsApiGateway implements SmsGatewayInterface
         $serviceType = $smsSettings['service'] ?? config('services.smsapi.service', 'pl');
 
         // Create SMSAPI HTTP client (Curl adapter)
-        $client = new SmsapiHttpClient();
+        $client = new SmsapiHttpClient;
 
         // Get the appropriate service (pl or com)
         if ($serviceType === 'pl') {
@@ -216,7 +215,7 @@ class SmsApiGateway implements SmsGatewayInterface
 
         Log::debug('SMSAPI service initialized', [
             'service' => $serviceType,
-            'token_prefix' => substr($apiToken, 0, 10) . '...',
+            'token_prefix' => substr($apiToken, 0, 10).'...',
         ]);
 
         return $this->service;
@@ -225,7 +224,7 @@ class SmsApiGateway implements SmsGatewayInterface
     /**
      * Normalize phone number by removing spaces and dashes.
      *
-     * @param string $phoneNumber Phone number to normalize
+     * @param  string  $phoneNumber  Phone number to normalize
      * @return string Normalized phone number
      */
     private function normalizePhoneNumber(string $phoneNumber): string
@@ -236,7 +235,7 @@ class SmsApiGateway implements SmsGatewayInterface
     /**
      * Check if message contains Unicode characters.
      *
-     * @param string $message Message to check
+     * @param  string  $message  Message to check
      * @return bool True if contains Unicode
      */
     private function containsUnicode(string $message): bool

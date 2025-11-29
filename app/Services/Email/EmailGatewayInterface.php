@@ -15,12 +15,13 @@ interface EmailGatewayInterface
     /**
      * Send an email via the gateway.
      *
-     * @param string $to Recipient email address
-     * @param string $subject Email subject line
-     * @param string $htmlBody HTML email body
-     * @param string|null $textBody Plain text email body (optional)
-     * @param array $metadata Additional data (CC, BCC, attachments, headers, etc.)
+     * @param  string  $to  Recipient email address
+     * @param  string  $subject  Email subject line
+     * @param  string  $htmlBody  HTML email body
+     * @param  string|null  $textBody  Plain text email body (optional)
+     * @param  array  $metadata  Additional data (CC, BCC, attachments, headers, etc.)
      * @return bool True if sent successfully
+     *
      * @throws \Exception If sending fails
      */
     public function send(

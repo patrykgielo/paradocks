@@ -23,14 +23,13 @@ class AppointmentRescheduled
     /**
      * Create a new event instance.
      *
-     * @param \App\Models\Appointment $appointment The rescheduled appointment
-     * @param \Carbon\Carbon $oldDate Original appointment date/time
-     * @param \Carbon\Carbon $newDate New appointment date/time
+     * @param  \App\Models\Appointment  $appointment  The rescheduled appointment
+     * @param  \Carbon\Carbon  $oldDate  Original appointment date/time
+     * @param  \Carbon\Carbon  $newDate  New appointment date/time
      */
     public function __construct(
         public Appointment $appointment,
         public Carbon $oldDate,
         public Carbon $newDate
-    ) {
-    }
+    ) {}
 }

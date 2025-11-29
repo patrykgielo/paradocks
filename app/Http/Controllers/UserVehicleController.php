@@ -13,8 +13,7 @@ class UserVehicleController extends Controller
 {
     public function __construct(
         protected UserVehicleService $vehicleService
-    ) {
-    }
+    ) {}
 
     /**
      * Store a new vehicle.

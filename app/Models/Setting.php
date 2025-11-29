@@ -43,10 +43,6 @@ class Setting extends Model
 
     /**
      * Scope a query to only include settings of a given group.
-     *
-     * @param Builder $query
-     * @param string $group
-     * @return Builder
      */
     public function scopeGroup(Builder $query, string $group): Builder
     {
@@ -55,10 +51,6 @@ class Setting extends Model
 
     /**
      * Scope a query to only include settings with a given key.
-     *
-     * @param Builder $query
-     * @param string $key
-     * @return Builder
      */
     public function scopeKey(Builder $query, string $key): Builder
     {

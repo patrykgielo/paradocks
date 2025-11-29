@@ -52,8 +52,7 @@ class SmsSuppression extends Model
     /**
      * Scope a query to filter by suppression reason.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $reason
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeReason($query, string $reason)
@@ -66,7 +65,7 @@ class SmsSuppression extends Model
      *
      * Currently returns all suppressions. Can be extended with TTL logic if needed.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeActive($query)
@@ -78,9 +77,6 @@ class SmsSuppression extends Model
 
     /**
      * Check if a phone number is suppressed.
-     *
-     * @param string $phone
-     * @return bool
      */
     public static function isSuppressed(string $phone): bool
     {
@@ -92,10 +88,6 @@ class SmsSuppression extends Model
 
     /**
      * Suppress a phone number with a reason.
-     *
-     * @param string $phone
-     * @param string $reason
-     * @return \App\Models\SmsSuppression
      */
     public static function suppress(string $phone, string $reason): self
     {
@@ -112,9 +104,6 @@ class SmsSuppression extends Model
 
     /**
      * Remove a phone number from the suppression list.
-     *
-     * @param string $phone
-     * @return bool
      */
     public static function unsuppress(string $phone): bool
     {
@@ -165,9 +154,6 @@ class SmsSuppression extends Model
 
     /**
      * Normalize phone number by removing spaces and dashes.
-     *
-     * @param string $phone
-     * @return string
      */
     protected static function normalizePhone(string $phone): string
     {

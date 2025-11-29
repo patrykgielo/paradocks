@@ -9,24 +9,24 @@ use App\Filament\Resources\Promotions\Pages\EditPromotion;
 use App\Filament\Resources\Promotions\Pages\ListPromotions;
 use App\Models\Promotion;
 use BackedEnum;
-use UnitEnum;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Resources\Resource;
-use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
+use UnitEnum;
 
 class PromotionResource extends Resource
 {
     protected static ?string $model = Promotion::class;
 
-    protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedTag;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTag;
 
-    protected static string | UnitEnum | null $navigationGroup = 'Content';
+    protected static string|UnitEnum|null $navigationGroup = 'Content';
 
     protected static ?int $navigationSort = 3;
 
@@ -167,7 +167,7 @@ class PromotionResource extends Resource
                                             ->required()
                                             ->toolbarButtons([
                                                 'bold', 'italic', 'link', 'bulletList',
-                                                'orderedList', 'h3'
+                                                'orderedList', 'h3',
                                             ]),
 
                                         Forms\Components\RichEditor::make('right_column')
@@ -175,7 +175,7 @@ class PromotionResource extends Resource
                                             ->required()
                                             ->toolbarButtons([
                                                 'bold', 'italic', 'link', 'bulletList',
-                                                'orderedList', 'h3'
+                                                'orderedList', 'h3',
                                             ]),
                                     ]),
                             ])
@@ -242,8 +242,7 @@ class PromotionResource extends Resource
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
                     ->badge()
-                    ->getStateUsing(fn (Promotion $record) =>
-                        $record->isActiveAndValid() ? 'active' : 'inactive'
+                    ->getStateUsing(fn (Promotion $record) => $record->isActiveAndValid() ? 'active' : 'inactive'
                     )
                     ->color(fn (string $state): string => match ($state) {
                         'active' => 'success',

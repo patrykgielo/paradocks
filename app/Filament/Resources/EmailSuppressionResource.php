@@ -4,26 +4,26 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
-use BackedEnum;
-use UnitEnum;
 use App\Filament\Resources\EmailSuppressionResource\Pages;
 use App\Models\EmailSuppression;
+use BackedEnum;
+use Filament\Actions;
 use Filament\Forms;
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Section;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Actions;
 use Illuminate\Database\Eloquent\Builder;
+use UnitEnum;
 
 class EmailSuppressionResource extends Resource
 {
     protected static ?string $model = EmailSuppression::class;
 
-    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-no-symbol';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-no-symbol';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Email';
+    protected static string|UnitEnum|null $navigationGroup = 'Email';
 
     protected static ?int $navigationSort = 4;
 
@@ -32,47 +32,47 @@ class EmailSuppressionResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-                Section::make('Suppression Details')
-                    ->schema([
-                        Forms\Components\TextInput::make('email')
-                            ->label('Email Address')
-                            ->email()
-                            ->required()
-                            ->unique(ignoreRecord: true)
-                            ->maxLength(255)
-                            ->placeholder('user@example.com')
-                            ->helperText('Email address to suppress from sending')
-                            ->columnSpanFull(),
+            Section::make('Suppression Details')
+                ->schema([
+                    Forms\Components\TextInput::make('email')
+                        ->label('Email Address')
+                        ->email()
+                        ->required()
+                        ->unique(ignoreRecord: true)
+                        ->maxLength(255)
+                        ->placeholder('user@example.com')
+                        ->helperText('Email address to suppress from sending')
+                        ->columnSpanFull(),
 
-                        Forms\Components\Select::make('reason')
-                            ->label('Suppression Reason')
-                            ->required()
-                            ->options([
-                                'bounced' => 'Bounced (email address invalid)',
-                                'complained' => 'Complained (marked as spam)',
-                                'unsubscribed' => 'Unsubscribed (user opt-out)',
-                                'manual' => 'Manual (administrative decision)',
-                            ])
-                            ->helperText('Reason for suppressing this email'),
+                    Forms\Components\Select::make('reason')
+                        ->label('Suppression Reason')
+                        ->required()
+                        ->options([
+                            'bounced' => 'Bounced (email address invalid)',
+                            'complained' => 'Complained (marked as spam)',
+                            'unsubscribed' => 'Unsubscribed (user opt-out)',
+                            'manual' => 'Manual (administrative decision)',
+                        ])
+                        ->helperText('Reason for suppressing this email'),
 
-                        Forms\Components\DateTimePicker::make('suppressed_at')
-                            ->label('Suppressed At')
-                            ->default(now())
-                            ->required()
-                            ->helperText('When this email was suppressed'),
-                    ])
-                    ->columns(2),
+                    Forms\Components\DateTimePicker::make('suppressed_at')
+                        ->label('Suppressed At')
+                        ->default(now())
+                        ->required()
+                        ->helperText('When this email was suppressed'),
+                ])
+                ->columns(2),
 
-                Section::make('Warning')
-                    ->schema([
-                        Forms\Components\Placeholder::make('warning')
-                            ->content('Suppressed emails will NOT receive any automated emails from the system. Remove from this list to re-enable sending.')
-                            ->extraAttributes([
-                                'class' => 'text-sm text-yellow-600 dark:text-yellow-400',
-                            ]),
-                    ])
-                    ->collapsed(false),
-            ]);
+            Section::make('Warning')
+                ->schema([
+                    Forms\Components\Placeholder::make('warning')
+                        ->content('Suppressed emails will NOT receive any automated emails from the system. Remove from this list to re-enable sending.')
+                        ->extraAttributes([
+                            'class' => 'text-sm text-yellow-600 dark:text-yellow-400',
+                        ]),
+                ])
+                ->collapsed(false),
+        ]);
     }
 
     public static function table(Table $table): Table
@@ -174,7 +174,7 @@ class EmailSuppressionResource extends Resource
                         ->label('Export Selected')
                         ->icon('heroicon-o-arrow-down-tray')
                         ->action(function ($records) {
-                            $filename = 'email-suppressions-' . now()->format('Y-m-d-His') . '.csv';
+                            $filename = 'email-suppressions-'.now()->format('Y-m-d-His').'.csv';
                             $headers = [
                                 'Content-Type' => 'text/csv',
                                 'Content-Disposition' => "attachment; filename=\"$filename\"",

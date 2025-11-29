@@ -40,7 +40,7 @@ class Service extends Model
     public function staff()
     {
         return $this->belongsToMany(User::class, 'service_staff', 'service_id', 'user_id')
-                    ->withTimestamps();
+            ->withTimestamps();
     }
 
     // Scopes
@@ -67,17 +67,17 @@ class Service extends Model
         $parts = [];
 
         if ($days > 0) {
-            $parts[] = $days . ' ' . ($days === 1 ? 'dzień' : 'dni');
+            $parts[] = $days.' '.($days === 1 ? 'dzień' : 'dni');
         }
 
         if ($hours > 0) {
-            $parts[] = $hours . ' ' . ($hours === 1 ? 'godz' : 'godz');
+            $parts[] = $hours.' '.($hours === 1 ? 'godz' : 'godz');
         }
 
         if ($minutes > 0) {
-            $parts[] = $minutes . ' min';
+            $parts[] = $minutes.' min';
         }
 
-        return !empty($parts) ? implode(', ', $parts) : '0 min';
+        return ! empty($parts) ? implode(', ', $parts) : '0 min';
     }
 }

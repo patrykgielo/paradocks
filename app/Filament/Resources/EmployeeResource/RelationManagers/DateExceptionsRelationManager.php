@@ -3,12 +3,12 @@
 namespace App\Filament\Resources\EmployeeResource\RelationManagers;
 
 use App\Models\StaffDateException;
+use Filament\Actions;
 use Filament\Forms;
-use Filament\Schemas\Schema;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Actions;
 
 class DateExceptionsRelationManager extends RelationManager
 {
@@ -21,34 +21,34 @@ class DateExceptionsRelationManager extends RelationManager
     public function form(Schema $schema): Schema
     {
         return $schema->components([
-                Forms\Components\DatePicker::make('exception_date')
-                    ->label('Data')
-                    ->native(false)
-                    ->required(),
+            Forms\Components\DatePicker::make('exception_date')
+                ->label('Data')
+                ->native(false)
+                ->required(),
 
-                Forms\Components\Radio::make('exception_type')
-                    ->label('Typ')
-                    ->options([
-                        StaffDateException::TYPE_UNAVAILABLE => 'Niedostępny',
-                        StaffDateException::TYPE_AVAILABLE => 'Dostępny',
-                    ])
-                    ->default(StaffDateException::TYPE_UNAVAILABLE)
-                    ->required(),
+            Forms\Components\Radio::make('exception_type')
+                ->label('Typ')
+                ->options([
+                    StaffDateException::TYPE_UNAVAILABLE => 'Niedostępny',
+                    StaffDateException::TYPE_AVAILABLE => 'Dostępny',
+                ])
+                ->default(StaffDateException::TYPE_UNAVAILABLE)
+                ->required(),
 
-                Forms\Components\TimePicker::make('start_time')
-                    ->label('Od godziny')
-                    ->seconds(false),
+            Forms\Components\TimePicker::make('start_time')
+                ->label('Od godziny')
+                ->seconds(false),
 
-                Forms\Components\TimePicker::make('end_time')
-                    ->label('Do godziny')
-                    ->seconds(false)
-                    ->after('start_time'),
+            Forms\Components\TimePicker::make('end_time')
+                ->label('Do godziny')
+                ->seconds(false)
+                ->after('start_time'),
 
-                Forms\Components\Textarea::make('reason')
-                    ->label('Powód')
-                    ->rows(2)
-                    ->columnSpanFull(),
-            ]);
+            Forms\Components\Textarea::make('reason')
+                ->label('Powód')
+                ->rows(2)
+                ->columnSpanFull(),
+        ]);
     }
 
     public function table(Table $table): Table
@@ -60,19 +60,18 @@ class DateExceptionsRelationManager extends RelationManager
                     ->date('Y-m-d')
                     ->sortable()
                     ->badge()
-                    ->color(fn (StaffDateException $record) =>
-                        $record->exception_date->isPast() ? 'gray' : 'info'
+                    ->color(fn (StaffDateException $record) => $record->exception_date->isPast() ? 'gray' : 'info'
                     ),
 
                 Tables\Columns\TextColumn::make('exception_type')
                     ->label('Typ')
                     ->badge()
-                    ->formatStateUsing(fn (string $state) => match($state) {
+                    ->formatStateUsing(fn (string $state) => match ($state) {
                         StaffDateException::TYPE_UNAVAILABLE => 'Niedostępny',
                         StaffDateException::TYPE_AVAILABLE => 'Dostępny',
                         default => $state,
                     })
-                    ->color(fn (string $state) => match($state) {
+                    ->color(fn (string $state) => match ($state) {
                         StaffDateException::TYPE_UNAVAILABLE => 'danger',
                         StaffDateException::TYPE_AVAILABLE => 'success',
                         default => 'gray',

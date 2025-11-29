@@ -22,12 +22,11 @@ class EmailDeliveryFailed
     /**
      * Create a new event instance.
      *
-     * @param \App\Models\EmailSend $emailSend The failed email send record
-     * @param string $error Error message from gateway
+     * @param  \App\Models\EmailSend  $emailSend  The failed email send record
+     * @param  string  $error  Error message from gateway
      */
     public function __construct(
         public EmailSend $emailSend,
         public string $error
-    ) {
-    }
+    ) {}
 }

@@ -30,9 +30,8 @@ class SettingsManager
      *
      * Example: get('booking.business_hours_start', '09:00')
      *
-     * @param string $path Dot notation path (group.key)
-     * @param mixed $default Default value if setting not found
-     * @return mixed
+     * @param  string  $path  Dot notation path (group.key)
+     * @param  mixed  $default  Default value if setting not found
      */
     public function get(string $path, mixed $default = null): mixed
     {
@@ -43,7 +42,7 @@ class SettingsManager
         return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($group, $key, $default) {
             $setting = Setting::group($group)->key($key)->first();
 
-            if (!$setting) {
+            if (! $setting) {
                 return $default;
             }
 
@@ -64,9 +63,8 @@ class SettingsManager
      *
      * Example: set('booking.business_hours_start', '10:00')
      *
-     * @param string $path Dot notation path (group.key)
-     * @param mixed $value Value to store
-     * @return bool
+     * @param  string  $path  Dot notation path (group.key)
+     * @param  mixed  $value  Value to store
      */
     public function set(string $path, mixed $value): bool
     {
@@ -91,8 +89,7 @@ class SettingsManager
      *
      * Example: updateGroups(['booking' => ['business_hours_start' => '10:00'], 'email' => [...]])
      *
-     * @param array<string, array<string, mixed>> $groups Associative array of groups and their key-value pairs
-     * @return bool
+     * @param  array<string, array<string, mixed>>  $groups  Associative array of groups and their key-value pairs
      */
     public function updateGroups(array $groups): bool
     {
@@ -137,7 +134,7 @@ class SettingsManager
      *
      * Example: group('booking') returns ['business_hours_start' => '09:00', ...]
      *
-     * @param string $group Group name
+     * @param  string  $group  Group name
      * @return array<string, mixed>
      */
     public function group(string $group): array
@@ -167,8 +164,9 @@ class SettingsManager
     /**
      * Parse dot notation path into group and key.
      *
-     * @param string $path Dot notation path (e.g., 'booking.business_hours_start')
+     * @param  string  $path  Dot notation path (e.g., 'booking.business_hours_start')
      * @return array{0: string, 1: string} [group, key]
+     *
      * @throws \InvalidArgumentException
      */
     private function parsePath(string $path): array
@@ -187,25 +185,23 @@ class SettingsManager
     /**
      * Generate cache key for a setting.
      *
-     * @param string $group Group name
-     * @param string|null $key Setting key (optional)
-     * @return string
+     * @param  string  $group  Group name
+     * @param  string|null  $key  Setting key (optional)
      */
     private function getCacheKey(string $group, ?string $key = null): string
     {
         if ($key === null) {
-            return self::CACHE_PREFIX . ":{$group}";
+            return self::CACHE_PREFIX.":{$group}";
         }
 
-        return self::CACHE_PREFIX . ":{$group}:{$key}";
+        return self::CACHE_PREFIX.":{$group}:{$key}";
     }
 
     /**
      * Clear cache for a specific setting or entire group.
      *
-     * @param string $group Group name
-     * @param string|null $key Setting key (optional, clears entire group if null)
-     * @return void
+     * @param  string  $group  Group name
+     * @param  string|null  $key  Setting key (optional, clears entire group if null)
      */
     private function clearCache(string $group, ?string $key = null): void
     {
@@ -249,8 +245,6 @@ class SettingsManager
 
     /**
      * Get advance booking hours requirement.
-     *
-     * @return int
      */
     public function advanceBookingHours(): int
     {
@@ -259,8 +253,6 @@ class SettingsManager
 
     /**
      * Get cancellation policy hours.
-     *
-     * @return int
      */
     public function cancellationHours(): int
     {
@@ -269,8 +261,6 @@ class SettingsManager
 
     /**
      * Get time slot interval in minutes.
-     *
-     * @return int
      */
     public function slotIntervalMinutes(): int
     {

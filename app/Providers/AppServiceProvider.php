@@ -27,8 +27,8 @@ use App\Observers\AppointmentObserver;
 use App\Services\Email\EmailGatewayInterface;
 use App\Services\Email\EmailService;
 use App\Services\Email\SmtpMailer;
-use App\Services\Sms\SmsApiGateway;
 use App\Services\MaintenanceService;
+use App\Services\Sms\SmsApiGateway;
 use App\Services\Sms\SmsGatewayInterface;
 use App\Services\Sms\SmsService;
 use App\Support\Settings\SettingsManager;
@@ -88,7 +88,7 @@ class AppServiceProvider extends ServiceProvider
             $emailSettings = $settingsManager->group('email');
 
             // Only override if SMTP host is configured
-            if (!empty($emailSettings['smtp_host'])) {
+            if (! empty($emailSettings['smtp_host'])) {
                 config([
                     'mail.mailers.smtp.host' => $emailSettings['smtp_host'],
                     'mail.mailers.smtp.port' => $emailSettings['smtp_port'] ?? 587,
@@ -194,9 +194,9 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Send SMS notification for appointment event.
      *
-     * @param string $templateKey Template key (e.g., 'booking_confirmation')
-     * @param \App\Models\Appointment $appointment The appointment
-     * @param string $settingKey Setting key to check if enabled (e.g., 'send_booking_confirmation')
+     * @param  string  $templateKey  Template key (e.g., 'booking_confirmation')
+     * @param  \App\Models\Appointment  $appointment  The appointment
+     * @param  string  $settingKey  Setting key to check if enabled (e.g., 'send_booking_confirmation')
      */
     private function sendSmsNotification(string $templateKey, $appointment, string $settingKey): void
     {
@@ -206,23 +206,24 @@ class AppServiceProvider extends ServiceProvider
             $smsSettings = $settingsManager->group('sms');
 
             // Check if SMS globally enabled
-            if (!($smsSettings['enabled'] ?? true)) {
+            if (! ($smsSettings['enabled'] ?? true)) {
                 return;
             }
 
             // Check if specific notification type is enabled
-            if (!($smsSettings[$settingKey] ?? true)) {
+            if (! ($smsSettings[$settingKey] ?? true)) {
                 return;
             }
 
             // Get customer phone number
             $customerPhone = $appointment->customer->phone ?? null;
-            if (!$customerPhone) {
-                \Log::warning("Cannot send SMS notification: customer has no phone number", [
+            if (! $customerPhone) {
+                \Log::warning('Cannot send SMS notification: customer has no phone number', [
                     'appointment_id' => $appointment->id,
                     'customer_id' => $appointment->customer->id,
                     'template_key' => $templateKey,
                 ]);
+
                 return;
             }
 
@@ -244,14 +245,14 @@ class AppServiceProvider extends ServiceProvider
                 ['appointment_id' => $appointment->id]
             );
 
-            \Log::info("SMS notification sent successfully", [
+            \Log::info('SMS notification sent successfully', [
                 'template_key' => $templateKey,
                 'appointment_id' => $appointment->id,
-                'phone' => substr($customerPhone, 0, 3) . '***', // Masked for privacy
+                'phone' => substr($customerPhone, 0, 3).'***', // Masked for privacy
             ]);
         } catch (\Exception $e) {
             // Log error but don't throw - SMS failure shouldn't block appointment flow
-            \Log::error("Failed to send SMS notification", [
+            \Log::error('Failed to send SMS notification', [
                 'template_key' => $templateKey,
                 'appointment_id' => $appointment->id ?? null,
                 'error' => $e->getMessage(),
@@ -259,4 +260,3 @@ class AppServiceProvider extends ServiceProvider
         }
     }
 }
-

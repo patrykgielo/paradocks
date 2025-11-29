@@ -2,10 +2,10 @@
 
 namespace App\Services;
 
-use App\Models\User;
-use App\Models\StaffSchedule;
 use App\Models\StaffDateException;
+use App\Models\StaffSchedule;
 use App\Models\StaffVacationPeriod;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
@@ -29,8 +29,8 @@ class StaffScheduleService
      * 2. Check date exceptions
      * 3. Check base schedule
      *
-     * @param User $staff Staff member to check
-     * @param Carbon $dateTime Date and time to check
+     * @param  User  $staff  Staff member to check
+     * @param  Carbon  $dateTime  Date and time to check
      * @return bool True if staff is available, false otherwise
      */
     public function isStaffAvailable(User $staff, Carbon $dateTime): bool
@@ -63,8 +63,8 @@ class StaffScheduleService
     /**
      * Check availability based on date exceptions.
      *
-     * @param Collection $exceptions Collection of StaffDateException
-     * @param Carbon $dateTime Date and time to check
+     * @param  Collection  $exceptions  Collection of StaffDateException
+     * @param  Carbon  $dateTime  Date and time to check
      * @return bool True if available
      */
     protected function checkExceptions(Collection $exceptions, Carbon $dateTime): bool
@@ -76,8 +76,8 @@ class StaffScheduleService
                 return $exception->isAvailable();
             } else {
                 // Time-specific exception
-                $exceptionStart = Carbon::parse($dateTime->format('Y-m-d') . ' ' . $exception->start_time);
-                $exceptionEnd = Carbon::parse($dateTime->format('Y-m-d') . ' ' . $exception->end_time);
+                $exceptionStart = Carbon::parse($dateTime->format('Y-m-d').' '.$exception->start_time);
+                $exceptionEnd = Carbon::parse($dateTime->format('Y-m-d').' '.$exception->end_time);
 
                 if ($dateTime->between($exceptionStart, $exceptionEnd)) {
                     return $exception->isAvailable();
@@ -92,8 +92,8 @@ class StaffScheduleService
     /**
      * Check availability based on base schedule.
      *
-     * @param User $staff Staff member
-     * @param Carbon $dateTime Date and time to check
+     * @param  User  $staff  Staff member
+     * @param  Carbon  $dateTime  Date and time to check
      * @return bool True if available
      */
     protected function checkBaseSchedule(User $staff, Carbon $dateTime): bool
@@ -113,8 +113,8 @@ class StaffScheduleService
 
         // Check if the time falls within any schedule
         foreach ($schedules as $schedule) {
-            $scheduleStart = Carbon::parse($dateTime->format('Y-m-d') . ' ' . $schedule->start_time);
-            $scheduleEnd = Carbon::parse($dateTime->format('Y-m-d') . ' ' . $schedule->end_time);
+            $scheduleStart = Carbon::parse($dateTime->format('Y-m-d').' '.$schedule->start_time);
+            $scheduleEnd = Carbon::parse($dateTime->format('Y-m-d').' '.$schedule->end_time);
 
             if ($dateTime->between($scheduleStart, $scheduleEnd)) {
                 return true;
@@ -127,8 +127,8 @@ class StaffScheduleService
     /**
      * Check if a staff member can perform a specific service.
      *
-     * @param User $staff Staff member
-     * @param int $serviceId Service ID
+     * @param  User  $staff  Staff member
+     * @param  int  $serviceId  Service ID
      * @return bool True if staff can perform this service
      */
     public function canPerformService(User $staff, int $serviceId): bool
@@ -139,10 +139,10 @@ class StaffScheduleService
     /**
      * Get all available time slots for a staff member on a given date.
      *
-     * @param User $staff Staff member
-     * @param Carbon $date Date to check
-     * @param int $serviceDurationMinutes Duration of service in minutes
-     * @param int $slotIntervalMinutes Interval between slots (default 30)
+     * @param  User  $staff  Staff member
+     * @param  Carbon  $date  Date to check
+     * @param  int  $serviceDurationMinutes  Duration of service in minutes
+     * @param  int  $slotIntervalMinutes  Interval between slots (default 30)
      * @return array Array of available time slots (Carbon instances)
      */
     public function getAvailableSlots(
@@ -185,8 +185,8 @@ class StaffScheduleService
 
         // Step 4: Generate slots based on schedule, applying exceptions
         foreach ($schedules as $schedule) {
-            $slotTime = Carbon::parse($date->format('Y-m-d') . ' ' . $schedule->start_time);
-            $endTime = Carbon::parse($date->format('Y-m-d') . ' ' . $schedule->end_time);
+            $slotTime = Carbon::parse($date->format('Y-m-d').' '.$schedule->start_time);
+            $endTime = Carbon::parse($date->format('Y-m-d').' '.$schedule->end_time);
 
             while ($slotTime->copy()->addMinutes($serviceDurationMinutes)->lte($endTime)) {
                 // Check if this slot is affected by an exception
@@ -195,17 +195,18 @@ class StaffScheduleService
                 foreach ($exceptions as $exception) {
                     if ($exception->isAllDay()) {
                         $affectedByException = true;
-                        if (!$exception->isAvailable()) {
+                        if (! $exception->isAvailable()) {
                             break 2; // Skip all slots for this schedule
                         }
                     } else {
-                        $exceptionStart = Carbon::parse($date->format('Y-m-d') . ' ' . $exception->start_time);
-                        $exceptionEnd = Carbon::parse($date->format('Y-m-d') . ' ' . $exception->end_time);
+                        $exceptionStart = Carbon::parse($date->format('Y-m-d').' '.$exception->start_time);
+                        $exceptionEnd = Carbon::parse($date->format('Y-m-d').' '.$exception->end_time);
 
                         if ($slotTime->between($exceptionStart, $exceptionEnd)) {
                             $affectedByException = true;
-                            if (!$exception->isAvailable()) {
+                            if (! $exception->isAvailable()) {
                                 $slotTime->addMinutes($slotIntervalMinutes);
+
                                 continue 2; // Skip this slot
                             }
                         }
@@ -224,8 +225,8 @@ class StaffScheduleService
     /**
      * Get all staff members available for a service at a specific date/time.
      *
-     * @param int $serviceId Service ID
-     * @param Carbon $dateTime Date and time
+     * @param  int  $serviceId  Service ID
+     * @param  Carbon  $dateTime  Date and time
      * @return Collection Collection of User models
      */
     public function getAvailableStaffForService(int $serviceId, Carbon $dateTime): Collection

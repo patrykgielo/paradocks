@@ -11,7 +11,7 @@ enum MaintenanceType: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::DEPLOYMENT => 'Deployment',
             self::PRELAUNCH => 'Pre-Launch',
             self::SCHEDULED => 'Scheduled',
@@ -21,7 +21,7 @@ enum MaintenanceType: string
 
     public function canBypass(): bool
     {
-        return match($this) {
+        return match ($this) {
             self::DEPLOYMENT, self::SCHEDULED, self::EMERGENCY => true,
             self::PRELAUNCH => false,
         };
@@ -29,7 +29,7 @@ enum MaintenanceType: string
 
     public function retryAfter(): int
     {
-        return match($this) {
+        return match ($this) {
             self::DEPLOYMENT => 60,
             self::SCHEDULED => 300,
             self::EMERGENCY => 120,

@@ -20,23 +20,21 @@ class SmtpMailer implements EmailGatewayInterface
 {
     /**
      * Create a new SMTP Mailer instance.
-     *
-     * @param \App\Support\Settings\SettingsManager $settings
      */
     public function __construct(
         private readonly SettingsManager $settings
-    ) {
-    }
+    ) {}
 
     /**
      * Send an email via SMTP.
      *
-     * @param string $to Recipient email address
-     * @param string $subject Email subject line
-     * @param string $htmlBody HTML email body
-     * @param string|null $textBody Plain text email body (optional)
-     * @param array $metadata Additional data (not used for basic SMTP)
+     * @param  string  $to  Recipient email address
+     * @param  string  $subject  Email subject line
+     * @param  string  $htmlBody  HTML email body
+     * @param  string|null  $textBody  Plain text email body (optional)
+     * @param  array  $metadata  Additional data (not used for basic SMTP)
      * @return bool True if sent successfully
+     *
      * @throws \Exception If sending fails
      */
     public function send(
@@ -86,8 +84,6 @@ class SmtpMailer implements EmailGatewayInterface
      * Configure Laravel's SMTP mailer at runtime using database settings.
      *
      * Overrides config/mail.php settings with values from SettingsManager.
-     *
-     * @return void
      */
     private function configureSmtp(): void
     {

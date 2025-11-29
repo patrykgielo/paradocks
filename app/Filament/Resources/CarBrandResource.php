@@ -2,25 +2,22 @@
 
 namespace App\Filament\Resources;
 
-use BackedEnum;
-use UnitEnum;
 use App\Filament\Resources\CarBrandResource\Pages;
-use App\Filament\Resources\CarBrandResource\RelationManagers;
 use App\Models\CarBrand;
+use BackedEnum;
+use Filament\Actions;
 use Filament\Forms;
-use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Actions;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use UnitEnum;
 
 class CarBrandResource extends Resource
 {
     protected static ?string $model = CarBrand::class;
 
-    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-building-office';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-building-office';
 
     protected static ?string $navigationLabel = 'Marki';
 
@@ -28,36 +25,36 @@ class CarBrandResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Marki';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Cars';
+    protected static string|UnitEnum|null $navigationGroup = 'Cars';
 
     protected static ?int $navigationSort = 2;
 
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-                Forms\Components\TextInput::make('name')
-                    ->label('Nazwa marki')
-                    ->required()
-                    ->maxLength(100)
-                    ->live(onBlur: true)
-                    ->afterStateUpdated(fn ($state, callable $set) => $set('slug', \Illuminate\Support\Str::slug($state))),
-                Forms\Components\TextInput::make('slug')
-                    ->label('Slug')
-                    ->required()
-                    ->maxLength(100)
-                    ->unique(ignoreRecord: true)
-                    ->helperText('Automatycznie generowany z nazwy'),
-                Forms\Components\Select::make('status')
-                    ->label('Status')
-                    ->options([
-                        'pending' => 'Oczekująca',
-                        'active' => 'Aktywna',
-                        'inactive' => 'Nieaktywna',
-                    ])
-                    ->default('active')
-                    ->required()
-                    ->native(false),
-            ])
+            Forms\Components\TextInput::make('name')
+                ->label('Nazwa marki')
+                ->required()
+                ->maxLength(100)
+                ->live(onBlur: true)
+                ->afterStateUpdated(fn ($state, callable $set) => $set('slug', \Illuminate\Support\Str::slug($state))),
+            Forms\Components\TextInput::make('slug')
+                ->label('Slug')
+                ->required()
+                ->maxLength(100)
+                ->unique(ignoreRecord: true)
+                ->helperText('Automatycznie generowany z nazwy'),
+            Forms\Components\Select::make('status')
+                ->label('Status')
+                ->options([
+                    'pending' => 'Oczekująca',
+                    'active' => 'Aktywna',
+                    'inactive' => 'Nieaktywna',
+                ])
+                ->default('active')
+                ->required()
+                ->native(false),
+        ])
             ->columns(2);
     }
 

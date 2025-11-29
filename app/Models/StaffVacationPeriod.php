@@ -2,11 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Builder;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class StaffVacationPeriod extends Model
 {
@@ -73,11 +73,11 @@ class StaffVacationPeriod extends Model
     {
         return $query->where(function ($q) use ($startDate, $endDate) {
             $q->whereBetween('start_date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
-              ->orWhereBetween('end_date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
-              ->orWhere(function ($q2) use ($startDate, $endDate) {
-                  $q2->where('start_date', '<=', $startDate->format('Y-m-d'))
-                     ->where('end_date', '>=', $endDate->format('Y-m-d'));
-              });
+                ->orWhereBetween('end_date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
+                ->orWhere(function ($q2) use ($startDate, $endDate) {
+                    $q2->where('start_date', '<=', $startDate->format('Y-m-d'))
+                        ->where('end_date', '>=', $endDate->format('Y-m-d'));
+                });
         });
     }
 
@@ -87,7 +87,7 @@ class StaffVacationPeriod extends Model
     public function scopeIncludesDate(Builder $query, Carbon $date): Builder
     {
         return $query->where('start_date', '<=', $date->format('Y-m-d'))
-                     ->where('end_date', '>=', $date->format('Y-m-d'));
+            ->where('end_date', '>=', $date->format('Y-m-d'));
     }
 
     /**
@@ -96,7 +96,7 @@ class StaffVacationPeriod extends Model
     public function includesDate(Carbon $date): bool
     {
         // Guard against null dates (e.g., during record creation)
-        if (!$this->start_date || !$this->end_date) {
+        if (! $this->start_date || ! $this->end_date) {
             return false;
         }
 
@@ -109,7 +109,7 @@ class StaffVacationPeriod extends Model
     public function getDurationInDays(): int
     {
         // Guard against null dates (e.g., during record creation)
-        if (!$this->start_date || !$this->end_date) {
+        if (! $this->start_date || ! $this->end_date) {
             return 0;
         }
 
@@ -127,11 +127,12 @@ class StaffVacationPeriod extends Model
     public function getDateRange(): array
     {
         // Guard against null dates (e.g., during record creation)
-        if (!$this->start_date || !$this->end_date) {
+        if (! $this->start_date || ! $this->end_date) {
             return [];
         }
 
         $period = CarbonPeriod::create($this->start_date, $this->end_date);
+
         return iterator_to_array($period);
     }
 }
