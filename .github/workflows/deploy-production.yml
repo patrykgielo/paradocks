@@ -289,7 +289,7 @@ jobs:
             cd /var/www/paradocks
             mkdir -p backups
             TIMESTAMP=\$(date +%Y%m%d-%H%M%S)
-            docker compose -f docker-compose.prod.yml exec -T mysql mysqldump -u root -p\${MYSQL_ROOT_PASSWORD:-secret} paradocks > "backups/db-${VERSION}-\${TIMESTAMP}.sql"
+            docker compose -f docker-compose.prod.yml exec -T mysql mysqldump -u \${DB_USERNAME:-paradocks} -p\${DB_PASSWORD} paradocks > "backups/db-${VERSION}-\${TIMESTAMP}.sql"
             echo "✅ Database backup created: backups/db-${VERSION}-\${TIMESTAMP}.sql"
           ENDSSH
 
