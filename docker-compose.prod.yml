@@ -4,6 +4,12 @@
 services:
   # PHP-FPM Application Container (Production optimized)
   app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USER_ID: ${DOCKER_USER_ID:-1000}
+        GROUP_ID: ${DOCKER_GROUP_ID:-1000}
     image: ghcr.io/patrykgielo/paradocks:${VERSION:-latest}
     container_name: paradocks-app-prod
     restart: unless-stopped
@@ -107,6 +113,12 @@ services:
 
   # Laravel Horizon (Queue Worker with Dashboard)
   horizon:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USER_ID: ${DOCKER_USER_ID:-1000}
+        GROUP_ID: ${DOCKER_GROUP_ID:-1000}
     image: ghcr.io/patrykgielo/paradocks:${VERSION:-latest}
     container_name: paradocks-horizon-prod
     restart: unless-stopped
@@ -134,6 +146,12 @@ services:
 
   # Laravel Scheduler (Cron jobs)
   scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USER_ID: ${DOCKER_USER_ID:-1000}
+        GROUP_ID: ${DOCKER_GROUP_ID:-1000}
     image: ghcr.io/patrykgielo/paradocks:${VERSION:-latest}
     container_name: paradocks-scheduler-prod
     restart: unless-stopped
