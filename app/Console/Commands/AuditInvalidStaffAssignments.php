@@ -8,6 +8,7 @@ use Illuminate\Console\Command;
 class AuditInvalidStaffAssignments extends Command
 {
     protected $signature = 'appointments:audit-staff';
+
     protected $description = 'Audit appointments for invalid staff assignments (non-staff roles)';
 
     public function handle(): int
@@ -18,20 +19,21 @@ class AuditInvalidStaffAssignments extends Command
         $invalidAppointments = Appointment::with(['staff', 'staff.roles'])
             ->get()
             ->filter(function ($appointment) {
-                return $appointment->staff && !$appointment->staff->hasRole('staff');
+                return $appointment->staff && ! $appointment->staff->hasRole('staff');
             });
 
         if ($invalidAppointments->isEmpty()) {
             $this->info('✓ No invalid staff assignments found!');
+
             return Command::SUCCESS;
         }
 
-        $this->error('✗ Found ' . $invalidAppointments->count() . ' appointment(s) with invalid staff assignments:');
+        $this->error('✗ Found '.$invalidAppointments->count().' appointment(s) with invalid staff assignments:');
         $this->newLine();
 
         $this->table(
             ['ID', 'Date', 'Time', 'Staff ID', 'Staff Name', 'Staff Roles', 'Status'],
-            $invalidAppointments->map(fn($apt) => [
+            $invalidAppointments->map(fn ($apt) => [
                 $apt->id,
                 $apt->appointment_date->format('Y-m-d'),
                 $apt->start_time->format('H:i'),

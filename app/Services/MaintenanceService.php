@@ -24,8 +24,11 @@ class MaintenanceService
      * Redis cache keys
      */
     private const CACHE_KEY_MODE = 'maintenance:mode';
+
     private const CACHE_KEY_CONFIG = 'maintenance:config';
+
     private const CACHE_KEY_ENABLED_AT = 'maintenance:enabled_at';
+
     private const CACHE_KEY_SECRET_TOKEN = 'maintenance:secret_token';
 
     public function __construct(
@@ -47,7 +50,7 @@ class MaintenanceService
     {
         $mode = Cache::store('redis')->get(self::CACHE_KEY_MODE);
 
-        if (!$mode) {
+        if (! $mode) {
             return null;
         }
 
@@ -67,13 +70,13 @@ class MaintenanceService
      */
     public function canBypass(?User $user): bool
     {
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
         $type = $this->getType();
 
-        if (!$type) {
+        if (! $type) {
             return true; // No maintenance active
         }
 
@@ -90,6 +93,7 @@ class MaintenanceService
                 'type' => $type->value,
                 'method' => 'role-based',
             ]);
+
             return true;
         }
 
@@ -103,7 +107,7 @@ class MaintenanceService
     {
         $storedToken = Cache::store('redis')->get(self::CACHE_KEY_SECRET_TOKEN);
 
-        if (!$storedToken) {
+        if (! $storedToken) {
             return false;
         }
 
@@ -164,8 +168,9 @@ class MaintenanceService
     {
         $type = $this->getType();
 
-        if (!$type) {
+        if (! $type) {
             Log::warning('Attempted to disable maintenance mode when not active');
+
             return;
         }
 
@@ -269,7 +274,7 @@ class MaintenanceService
      */
     private function generateSecretToken(): string
     {
-        return 'paradocks-' . Str::random(32);
+        return 'paradocks-'.Str::random(32);
     }
 
     /**

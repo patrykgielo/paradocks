@@ -2,12 +2,12 @@
 
 namespace App\Filament\Resources\EmployeeResource\RelationManagers;
 
+use Filament\Actions;
 use Filament\Forms;
-use Filament\Schemas\Schema;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Actions;
 
 class ServicesRelationManager extends RelationManager
 {
@@ -20,11 +20,11 @@ class ServicesRelationManager extends RelationManager
     public function form(Schema $schema): Schema
     {
         return $schema->components([
-                Forms\Components\Select::make('service_id')
-                    ->label('Usługa')
-                    ->relationship('services', 'name')
-                    ->required(),
-            ]);
+            Forms\Components\Select::make('service_id')
+                ->label('Usługa')
+                ->relationship('services', 'name')
+                ->required(),
+        ]);
     }
 
     public function table(Table $table): Table

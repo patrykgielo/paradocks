@@ -4,12 +4,12 @@ namespace App\Filament\Resources\CustomerResource\RelationManagers;
 
 use App\Models\CarBrand;
 use App\Models\VehicleType;
+use Filament\Actions;
 use Filament\Forms;
-use Filament\Schemas\Schema;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Actions;
 
 class VehiclesRelationManager extends RelationManager
 {
@@ -24,33 +24,33 @@ class VehiclesRelationManager extends RelationManager
     public function form(Schema $schema): Schema
     {
         return $schema->components([
-                Forms\Components\Select::make('vehicle_type_id')
-                    ->label('Typ pojazdu')
-                    ->options(VehicleType::active()->ordered()->pluck('name', 'id'))
-                    ->required(),
-                Forms\Components\Select::make('car_brand_id')
-                    ->label('Marka')
-                    ->options(CarBrand::where('status', 'active')->orderBy('name')->pluck('name', 'id'))
-                    ->nullable()
-                    ->searchable(),
-                Forms\Components\TextInput::make('custom_brand')
-                    ->label('Własna marka')
-                    ->maxLength(100),
-                Forms\Components\TextInput::make('custom_model')
-                    ->label('Model')
-                    ->maxLength(100),
-                Forms\Components\TextInput::make('year')
-                    ->label('Rok produkcji')
-                    ->numeric()
-                    ->minValue(1900)
-                    ->maxValue(date('Y') + 1),
-                Forms\Components\TextInput::make('nickname')
-                    ->label('Nazwa własna')
-                    ->maxLength(50),
-                Forms\Components\Toggle::make('is_default')
-                    ->label('Domyślny')
-                    ->helperText('Pojazd domyślny będzie automatycznie wybierany przy rezerwacji'),
-            ]);
+            Forms\Components\Select::make('vehicle_type_id')
+                ->label('Typ pojazdu')
+                ->options(VehicleType::active()->ordered()->pluck('name', 'id'))
+                ->required(),
+            Forms\Components\Select::make('car_brand_id')
+                ->label('Marka')
+                ->options(CarBrand::where('status', 'active')->orderBy('name')->pluck('name', 'id'))
+                ->nullable()
+                ->searchable(),
+            Forms\Components\TextInput::make('custom_brand')
+                ->label('Własna marka')
+                ->maxLength(100),
+            Forms\Components\TextInput::make('custom_model')
+                ->label('Model')
+                ->maxLength(100),
+            Forms\Components\TextInput::make('year')
+                ->label('Rok produkcji')
+                ->numeric()
+                ->minValue(1900)
+                ->maxValue(date('Y') + 1),
+            Forms\Components\TextInput::make('nickname')
+                ->label('Nazwa własna')
+                ->maxLength(50),
+            Forms\Components\Toggle::make('is_default')
+                ->label('Domyślny')
+                ->helperText('Pojazd domyślny będzie automatycznie wybierany przy rezerwacji'),
+        ]);
     }
 
     public function table(Table $table): Table

@@ -87,7 +87,7 @@ class UserVehicle extends Model
 
         // Year
         if ($this->year) {
-            $parts[] = '(' . $this->year . ')';
+            $parts[] = '('.$this->year.')';
         }
 
         if (empty($parts)) {

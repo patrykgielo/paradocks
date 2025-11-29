@@ -4,23 +4,23 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
-use BackedEnum;
-use UnitEnum;
 use App\Filament\Resources\SmsEventResource\Pages;
 use App\Models\SmsEvent;
-use Filament\Schemas\Schema;
+use BackedEnum;
+use Filament\Actions;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Actions;
+use UnitEnum;
 
 class SmsEventResource extends Resource
 {
     protected static ?string $model = SmsEvent::class;
 
-    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-bell-alert';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-bell-alert';
 
-    protected static string | UnitEnum | null $navigationGroup = 'SMS';
+    protected static string|UnitEnum|null $navigationGroup = 'SMS';
 
     protected static ?int $navigationSort = 3;
 

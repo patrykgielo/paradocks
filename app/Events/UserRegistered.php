@@ -22,10 +22,9 @@ class UserRegistered
     /**
      * Create a new event instance.
      *
-     * @param \App\Models\User $user The newly registered user
+     * @param  \App\Models\User  $user  The newly registered user
      */
     public function __construct(
         public User $user
-    ) {
-    }
+    ) {}
 }

@@ -66,7 +66,7 @@ return new class extends Migration
         $pages = DB::table('pages')->whereNotNull('content')->get();
         foreach ($pages as $page) {
             $content = json_decode($page->content, true);
-            if (is_array($content) && !empty($content)) {
+            if (is_array($content) && ! empty($content)) {
                 $body = $this->extractTextBlocks($content);
                 $remainingContent = $this->removeTextBlocks($content);
 
@@ -74,7 +74,7 @@ return new class extends Migration
                     ->where('id', $page->id)
                     ->update([
                         'body' => $body,
-                        'content' => !empty($remainingContent) ? json_encode($remainingContent) : null,
+                        'content' => ! empty($remainingContent) ? json_encode($remainingContent) : null,
                     ]);
             }
         }
@@ -83,7 +83,7 @@ return new class extends Migration
         $posts = DB::table('posts')->whereNotNull('content')->get();
         foreach ($posts as $post) {
             $content = json_decode($post->content, true);
-            if (is_array($content) && !empty($content)) {
+            if (is_array($content) && ! empty($content)) {
                 $body = $this->extractTextBlocks($content);
                 $remainingContent = $this->removeTextBlocks($content);
 
@@ -91,7 +91,7 @@ return new class extends Migration
                     ->where('id', $post->id)
                     ->update([
                         'body' => $body,
-                        'content' => !empty($remainingContent) ? json_encode($remainingContent) : null,
+                        'content' => ! empty($remainingContent) ? json_encode($remainingContent) : null,
                     ]);
             }
         }
@@ -100,7 +100,7 @@ return new class extends Migration
         $promotions = DB::table('promotions')->whereNotNull('content')->get();
         foreach ($promotions as $promotion) {
             $content = json_decode($promotion->content, true);
-            if (is_array($content) && !empty($content)) {
+            if (is_array($content) && ! empty($content)) {
                 $body = $this->extractTextBlocks($content);
                 $remainingContent = $this->removeTextBlocks($content);
 
@@ -108,7 +108,7 @@ return new class extends Migration
                     ->where('id', $promotion->id)
                     ->update([
                         'body' => $body,
-                        'content' => !empty($remainingContent) ? json_encode($remainingContent) : null,
+                        'content' => ! empty($remainingContent) ? json_encode($remainingContent) : null,
                     ]);
             }
         }
@@ -117,7 +117,7 @@ return new class extends Migration
         $portfolioItems = DB::table('portfolio_items')->whereNotNull('content')->get();
         foreach ($portfolioItems as $item) {
             $content = json_decode($item->content, true);
-            if (is_array($content) && !empty($content)) {
+            if (is_array($content) && ! empty($content)) {
                 $body = $this->extractTextBlocks($content);
                 $remainingContent = $this->removeTextBlocks($content);
 
@@ -125,7 +125,7 @@ return new class extends Migration
                     ->where('id', $item->id)
                     ->update([
                         'body' => $body,
-                        'content' => !empty($remainingContent) ? json_encode($remainingContent) : null,
+                        'content' => ! empty($remainingContent) ? json_encode($remainingContent) : null,
                     ]);
             }
         }
@@ -144,7 +144,7 @@ return new class extends Migration
             }
         }
 
-        return !empty($textBlocks) ? implode("\n\n", $textBlocks) : null;
+        return ! empty($textBlocks) ? implode("\n\n", $textBlocks) : null;
     }
 
     /**
@@ -153,7 +153,7 @@ return new class extends Migration
     private function removeTextBlocks(array $content): array
     {
         return array_filter($content, function ($block) {
-            return !isset($block['type']) || $block['type'] !== 'text';
+            return ! isset($block['type']) || $block['type'] !== 'text';
         });
     }
 };

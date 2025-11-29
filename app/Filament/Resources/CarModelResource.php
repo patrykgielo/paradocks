@@ -2,25 +2,22 @@
 
 namespace App\Filament\Resources;
 
-use BackedEnum;
-use UnitEnum;
 use App\Filament\Resources\CarModelResource\Pages;
-use App\Filament\Resources\CarModelResource\RelationManagers;
 use App\Models\CarModel;
+use BackedEnum;
+use Filament\Actions;
 use Filament\Forms;
-use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Actions;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use UnitEnum;
 
 class CarModelResource extends Resource
 {
     protected static ?string $model = CarModel::class;
 
-    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-truck';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-truck';
 
     protected static ?string $navigationLabel = 'Modele';
 
@@ -28,71 +25,71 @@ class CarModelResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Modele';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Cars';
+    protected static string|UnitEnum|null $navigationGroup = 'Cars';
 
     protected static ?int $navigationSort = 3;
 
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-                Forms\Components\Select::make('car_brand_id')
-                    ->label('Marka')
-                    ->relationship('brand', 'name')
-                    ->searchable()
-                    ->preload()
-                    ->required()
-                    ->createOptionForm([
-                        Forms\Components\TextInput::make('name')
-                            ->label('Nazwa marki')
-                            ->required()
-                            ->maxLength(100)
-                            ->live(onBlur: true)
-                            ->afterStateUpdated(fn ($state, callable $set) => $set('slug', \Illuminate\Support\Str::slug($state))),
-                        Forms\Components\TextInput::make('slug')
-                            ->label('Slug')
-                            ->required()
-                            ->maxLength(100),
-                    ]),
-                Forms\Components\TextInput::make('name')
-                    ->label('Nazwa modelu')
-                    ->required()
-                    ->maxLength(100)
-                    ->live(onBlur: true)
-                    ->afterStateUpdated(fn ($state, callable $set) => $set('slug', \Illuminate\Support\Str::slug($state))),
-                Forms\Components\TextInput::make('slug')
-                    ->label('Slug')
-                    ->required()
-                    ->maxLength(100)
-                    ->helperText('Automatycznie generowany z nazwy'),
-                Forms\Components\CheckboxList::make('vehicleTypes')
-                    ->label('Typy pojazdów')
-                    ->relationship('vehicleTypes', 'name')
-                    ->columns(2)
-                    ->helperText('Wybierz do jakich typów należy ten model')
-                    ->columnSpanFull(),
-                Forms\Components\TextInput::make('year_from')
-                    ->label('Rok od')
-                    ->numeric()
-                    ->minValue(1990)
-                    ->maxValue(date('Y'))
-                    ->helperText('Opcjonalnie - pierwszy rok produkcji'),
-                Forms\Components\TextInput::make('year_to')
-                    ->label('Rok do')
-                    ->numeric()
-                    ->minValue(1990)
-                    ->maxValue(date('Y') + 1)
-                    ->helperText('Opcjonalnie - ostatni rok produkcji'),
-                Forms\Components\Select::make('status')
-                    ->label('Status')
-                    ->options([
-                        'pending' => 'Oczekujący',
-                        'active' => 'Aktywny',
-                        'inactive' => 'Nieaktywny',
-                    ])
-                    ->default('active')
-                    ->required()
-                    ->native(false),
-            ])
+            Forms\Components\Select::make('car_brand_id')
+                ->label('Marka')
+                ->relationship('brand', 'name')
+                ->searchable()
+                ->preload()
+                ->required()
+                ->createOptionForm([
+                    Forms\Components\TextInput::make('name')
+                        ->label('Nazwa marki')
+                        ->required()
+                        ->maxLength(100)
+                        ->live(onBlur: true)
+                        ->afterStateUpdated(fn ($state, callable $set) => $set('slug', \Illuminate\Support\Str::slug($state))),
+                    Forms\Components\TextInput::make('slug')
+                        ->label('Slug')
+                        ->required()
+                        ->maxLength(100),
+                ]),
+            Forms\Components\TextInput::make('name')
+                ->label('Nazwa modelu')
+                ->required()
+                ->maxLength(100)
+                ->live(onBlur: true)
+                ->afterStateUpdated(fn ($state, callable $set) => $set('slug', \Illuminate\Support\Str::slug($state))),
+            Forms\Components\TextInput::make('slug')
+                ->label('Slug')
+                ->required()
+                ->maxLength(100)
+                ->helperText('Automatycznie generowany z nazwy'),
+            Forms\Components\CheckboxList::make('vehicleTypes')
+                ->label('Typy pojazdów')
+                ->relationship('vehicleTypes', 'name')
+                ->columns(2)
+                ->helperText('Wybierz do jakich typów należy ten model')
+                ->columnSpanFull(),
+            Forms\Components\TextInput::make('year_from')
+                ->label('Rok od')
+                ->numeric()
+                ->minValue(1990)
+                ->maxValue(date('Y'))
+                ->helperText('Opcjonalnie - pierwszy rok produkcji'),
+            Forms\Components\TextInput::make('year_to')
+                ->label('Rok do')
+                ->numeric()
+                ->minValue(1990)
+                ->maxValue(date('Y') + 1)
+                ->helperText('Opcjonalnie - ostatni rok produkcji'),
+            Forms\Components\Select::make('status')
+                ->label('Status')
+                ->options([
+                    'pending' => 'Oczekujący',
+                    'active' => 'Aktywny',
+                    'inactive' => 'Nieaktywny',
+                ])
+                ->default('active')
+                ->required()
+                ->native(false),
+        ])
             ->columns(2);
     }
 

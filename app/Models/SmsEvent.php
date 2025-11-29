@@ -56,8 +56,6 @@ class SmsEvent extends Model
 
     /**
      * Get the SMS send associated with this event.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function smsSend(): BelongsTo
     {
@@ -67,8 +65,7 @@ class SmsEvent extends Model
     /**
      * Scope a query to filter by event type.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $type
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeType($query, string $type)
@@ -79,7 +76,7 @@ class SmsEvent extends Model
     /**
      * Scope a query to only include events from the last 30 days.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeRecent($query)
@@ -89,8 +86,6 @@ class SmsEvent extends Model
 
     /**
      * Check if this is a sent event.
-     *
-     * @return bool
      */
     public function isSent(): bool
     {
@@ -99,8 +94,6 @@ class SmsEvent extends Model
 
     /**
      * Check if this is a delivered event.
-     *
-     * @return bool
      */
     public function isDelivered(): bool
     {
@@ -109,8 +102,6 @@ class SmsEvent extends Model
 
     /**
      * Check if this is a failed event.
-     *
-     * @return bool
      */
     public function isFailed(): bool
     {
@@ -119,8 +110,6 @@ class SmsEvent extends Model
 
     /**
      * Check if this is an invalid number event.
-     *
-     * @return bool
      */
     public function isInvalidNumber(): bool
     {
@@ -129,8 +118,6 @@ class SmsEvent extends Model
 
     /**
      * Check if this is an expired event.
-     *
-     * @return bool
      */
     public function isExpired(): bool
     {

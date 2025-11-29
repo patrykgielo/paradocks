@@ -76,6 +76,7 @@ class UserAddress extends Model
 
             if ($street && $city) {
                 $streetWithNumber = isset($streetNumber) ? "$street $streetNumber" : $street;
+
                 return "$streetWithNumber, $city";
             }
         }
@@ -83,7 +84,7 @@ class UserAddress extends Model
         // Fall back to truncated full address
         $address = $this->address;
         if (strlen($address) > 50) {
-            return substr($address, 0, 47) . '...';
+            return substr($address, 0, 47).'...';
         }
 
         return $address;

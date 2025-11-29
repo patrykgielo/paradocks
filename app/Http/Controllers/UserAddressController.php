@@ -13,8 +13,7 @@ class UserAddressController extends Controller
 {
     public function __construct(
         protected UserAddressService $addressService
-    ) {
-    }
+    ) {}
 
     /**
      * Store a new address.

@@ -16,7 +16,7 @@ class UserVehicleService
      */
     public function create(User $user, array $data): UserVehicle
     {
-        if (!$user->canAddVehicle()) {
+        if (! $user->canAddVehicle()) {
             throw ValidationException::withMessages([
                 'vehicle' => [__('Osiągnięto limit pojazdów. Skontaktuj się z administratorem, aby zwiększyć limit.')],
             ]);
@@ -103,7 +103,7 @@ class UserVehicleService
             ->where('id', $vehicleId)
             ->first();
 
-        if (!$vehicle) {
+        if (! $vehicle) {
             throw new ModelNotFoundException('Vehicle not found.');
         }
 

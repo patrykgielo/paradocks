@@ -13,10 +13,44 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PromotionController;
 use App\Http\Controllers\UserAddressController;
 use App\Http\Controllers\UserVehicleController;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
 // Public routes
 Route::get('/', [HomeController::class, 'index'])->name('home');
+
+// Health check endpoint (for CI/CD deployment verification)
+Route::get('/health', function () {
+    try {
+        // Check database connection
+        DB::connection()->getPdo();
+
+        // Check Redis connection
+        Cache::store('redis')->get('health-check-probe');
+
+        // Check critical services
+        $checks = [
+            'database' => DB::connection()->getPdo() !== null,
+            'redis' => Cache::store('redis')->connection()->ping(),
+        ];
+
+        $allHealthy = collect($checks)->every(fn ($status) => $status === true || $status === 'PONG');
+
+        return response()->json([
+            'status' => $allHealthy ? 'healthy' : 'degraded',
+            'checks' => $checks,
+            'timestamp' => now()->toIso8601String(),
+            'version' => config('app.version', 'unknown'),
+        ], $allHealthy ? 200 : 503);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'unhealthy',
+            'error' => $e->getMessage(),
+            'timestamp' => now()->toIso8601String(),
+        ], 500);
+    }
+})->name('health');
 
 // CMS Content routes
 Route::get('/strona/{slug}', [PageController::class, 'show'])->name('page.show');
@@ -89,7 +123,6 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/usun-konto/anuluj', [ProfileController::class, 'cancelDeletion'])->name('delete.cancel');
     });
 });
-
 
 Route::prefix('api')->name('api.')->middleware(['auth'])->group(function () {
     Route::get('/vehicle-types', [VehicleDataController::class, 'vehicleTypes'])->name('vehicle-types');

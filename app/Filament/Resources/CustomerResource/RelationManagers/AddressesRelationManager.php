@@ -2,12 +2,12 @@
 
 namespace App\Filament\Resources\CustomerResource\RelationManagers;
 
+use Filament\Actions;
 use Filament\Forms;
-use Filament\Schemas\Schema;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Actions;
 
 class AddressesRelationManager extends RelationManager
 {
@@ -22,30 +22,30 @@ class AddressesRelationManager extends RelationManager
     public function form(Schema $schema): Schema
     {
         return $schema->components([
-                Forms\Components\TextInput::make('address')
-                    ->label('Adres')
-                    ->required()
-                    ->maxLength(500)
-                    ->columnSpanFull(),
-                Forms\Components\TextInput::make('latitude')
-                    ->label('Szerokość geograficzna')
-                    ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('longitude')
-                    ->label('Długość geograficzna')
-                    ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('place_id')
-                    ->label('Google Place ID')
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('nickname')
-                    ->label('Nazwa własna')
-                    ->maxLength(50)
-                    ->placeholder('np. Dom, Praca'),
-                Forms\Components\Toggle::make('is_default')
-                    ->label('Domyślny')
-                    ->helperText('Adres domyślny będzie automatycznie wybierany przy rezerwacji usług mobilnych'),
-            ]);
+            Forms\Components\TextInput::make('address')
+                ->label('Adres')
+                ->required()
+                ->maxLength(500)
+                ->columnSpanFull(),
+            Forms\Components\TextInput::make('latitude')
+                ->label('Szerokość geograficzna')
+                ->required()
+                ->numeric(),
+            Forms\Components\TextInput::make('longitude')
+                ->label('Długość geograficzna')
+                ->required()
+                ->numeric(),
+            Forms\Components\TextInput::make('place_id')
+                ->label('Google Place ID')
+                ->maxLength(255),
+            Forms\Components\TextInput::make('nickname')
+                ->label('Nazwa własna')
+                ->maxLength(50)
+                ->placeholder('np. Dom, Praca'),
+            Forms\Components\Toggle::make('is_default')
+                ->label('Domyślny')
+                ->helperText('Adres domyślny będzie automatycznie wybierany przy rezerwacji usług mobilnych'),
+        ]);
     }
 
     public function table(Table $table): Table

@@ -2,25 +2,22 @@
 
 namespace App\Filament\Resources;
 
-use BackedEnum;
-use UnitEnum;
 use App\Filament\Resources\VehicleTypeResource\Pages;
-use App\Filament\Resources\VehicleTypeResource\RelationManagers;
 use App\Models\VehicleType;
+use BackedEnum;
+use Filament\Actions;
 use Filament\Forms;
-use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Actions;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use UnitEnum;
 
 class VehicleTypeResource extends Resource
 {
     protected static ?string $model = VehicleType::class;
 
-    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-tag';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-tag';
 
     protected static ?string $navigationLabel = 'Typy Pojazdów';
 
@@ -28,43 +25,43 @@ class VehicleTypeResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Typy Pojazdów';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Cars';
+    protected static string|UnitEnum|null $navigationGroup = 'Cars';
 
     protected static ?int $navigationSort = 1;
 
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-                Forms\Components\TextInput::make('name')
-                    ->label('Nazwa')
-                    ->required()
-                    ->maxLength(100),
-                Forms\Components\TextInput::make('slug')
-                    ->label('Slug')
-                    ->required()
-                    ->maxLength(100)
-                    ->unique(ignoreRecord: true)
-                    ->helperText('Unikalny identyfikator (np. city_car)'),
-                Forms\Components\Textarea::make('description')
-                    ->label('Opis')
-                    ->rows(3)
-                    ->columnSpanFull(),
-                Forms\Components\TextInput::make('examples')
-                    ->label('Przykłady')
-                    ->maxLength(500)
-                    ->helperText('Lista przykładowych pojazdów (np. Toyota Aygo, Fiat 500...)')
-                    ->columnSpanFull(),
-                Forms\Components\TextInput::make('sort_order')
-                    ->label('Kolejność')
-                    ->required()
-                    ->numeric()
-                    ->default(0)
-                    ->helperText('Kolejność wyświetlania (niższe = wyżej)'),
-                Forms\Components\Toggle::make('is_active')
-                    ->label('Aktywny')
-                    ->default(true)
-                    ->required(),
-            ])
+            Forms\Components\TextInput::make('name')
+                ->label('Nazwa')
+                ->required()
+                ->maxLength(100),
+            Forms\Components\TextInput::make('slug')
+                ->label('Slug')
+                ->required()
+                ->maxLength(100)
+                ->unique(ignoreRecord: true)
+                ->helperText('Unikalny identyfikator (np. city_car)'),
+            Forms\Components\Textarea::make('description')
+                ->label('Opis')
+                ->rows(3)
+                ->columnSpanFull(),
+            Forms\Components\TextInput::make('examples')
+                ->label('Przykłady')
+                ->maxLength(500)
+                ->helperText('Lista przykładowych pojazdów (np. Toyota Aygo, Fiat 500...)')
+                ->columnSpanFull(),
+            Forms\Components\TextInput::make('sort_order')
+                ->label('Kolejność')
+                ->required()
+                ->numeric()
+                ->default(0)
+                ->helperText('Kolejność wyświetlania (niższe = wyżej)'),
+            Forms\Components\Toggle::make('is_active')
+                ->label('Aktywny')
+                ->default(true)
+                ->required(),
+        ])
             ->columns(2);
     }
 

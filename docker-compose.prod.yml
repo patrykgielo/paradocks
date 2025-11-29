@@ -4,11 +4,7 @@
 services:
   # PHP-FPM Application Container (Production optimized)
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - PHP_VERSION=8.2
+    image: ghcr.io/patrykgielo/paradocks:${VERSION:-latest}
     container_name: paradocks-app-prod
     restart: unless-stopped
     working_dir: /var/www
@@ -111,9 +107,7 @@ services:
 
   # Laravel Horizon (Queue Worker with Dashboard)
   horizon:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/patrykgielo/paradocks:${VERSION:-latest}
     container_name: paradocks-horizon-prod
     restart: unless-stopped
     working_dir: /var/www
@@ -140,9 +134,7 @@ services:
 
   # Laravel Scheduler (Cron jobs)
   scheduler:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/patrykgielo/paradocks:${VERSION:-latest}
     container_name: paradocks-scheduler-prod
     restart: unless-stopped
     working_dir: /var/www

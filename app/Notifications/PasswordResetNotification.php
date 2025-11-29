@@ -19,15 +19,14 @@ use Illuminate\Support\Facades\Log;
  * Sent when a user requests a password reset.
  * Contains secure token link for resetting password.
  */
-class PasswordResetNotification extends Notification implements ShouldQueue, ShouldBeUnique
+class PasswordResetNotification extends Notification implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;
 
     /**
      * Create a new notification instance.
      *
-     * @param \App\Models\User $user
-     * @param string $token Password reset token
+     * @param  string  $token  Password reset token
      */
     public function __construct(
         public User $user,
@@ -38,18 +37,14 @@ class PasswordResetNotification extends Notification implements ShouldQueue, Sho
 
     /**
      * Get the unique ID for the notification.
-     *
-     * @return string
      */
     public function uniqueId(): string
     {
-        return 'password-reset:' . $this->user->id . ':' . substr($this->token, 0, 8);
+        return 'password-reset:'.$this->user->id.':'.substr($this->token, 0, 8);
     }
 
     /**
      * Get the number of seconds the unique lock should be maintained.
-     *
-     * @return int
      */
     public function uniqueFor(): int
     {
@@ -59,7 +54,7 @@ class PasswordResetNotification extends Notification implements ShouldQueue, Sho
     /**
      * Get the notification's delivery channels.
      *
-     * @param mixed $notifiable
+     * @param  mixed  $notifiable
      * @return array<int, string>
      */
     public function via(object $notifiable): array
@@ -70,8 +65,7 @@ class PasswordResetNotification extends Notification implements ShouldQueue, Sho
     /**
      * Get the mail representation of the notification.
      *
-     * @param mixed $notifiable
-     * @return \Illuminate\Notifications\Messages\MailMessage
+     * @param  mixed  $notifiable
      */
     public function toMail(object $notifiable): MailMessage
     {

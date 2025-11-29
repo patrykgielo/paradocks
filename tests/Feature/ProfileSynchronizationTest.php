@@ -6,7 +6,6 @@ use App\Models\Service;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class ProfileSynchronizationTest extends TestCase
@@ -14,7 +13,9 @@ class ProfileSynchronizationTest extends TestCase
     use RefreshDatabase;
 
     protected User $user;
+
     protected User $staff;
+
     protected Service $service;
 
     protected function setUp(): void

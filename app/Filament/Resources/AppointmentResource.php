@@ -8,13 +8,13 @@ use App\Models\Service;
 use App\Models\User;
 use BackedEnum;
 use Carbon\Carbon;
+use Filament\Actions;
 use Filament\Forms;
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Section;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Actions;
 use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
@@ -22,7 +22,7 @@ class AppointmentResource extends Resource
 {
     protected static ?string $model = Appointment::class;
 
-    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-calendar';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-calendar';
 
     protected static ?string $navigationLabel = 'Wizyty';
 
@@ -30,7 +30,7 @@ class AppointmentResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Wizyty';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Service Management';
+    protected static string|UnitEnum|null $navigationGroup = 'Service Management';
 
     public static function form(Schema $schema): Schema
     {

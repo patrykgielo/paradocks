@@ -45,8 +45,7 @@ class EmailSuppression extends Model
     /**
      * Scope a query to filter by suppression reason.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $reason
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeReason($query, string $reason)
@@ -59,7 +58,7 @@ class EmailSuppression extends Model
      *
      * Currently returns all suppressions. Can be extended with TTL logic if needed.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeActive($query)
@@ -71,9 +70,6 @@ class EmailSuppression extends Model
 
     /**
      * Check if an email address is suppressed.
-     *
-     * @param string $email
-     * @return bool
      */
     public static function isSuppressed(string $email): bool
     {
@@ -82,10 +78,6 @@ class EmailSuppression extends Model
 
     /**
      * Suppress an email address with a reason.
-     *
-     * @param string $email
-     * @param string $reason
-     * @return \App\Models\EmailSuppression
      */
     public static function suppress(string $email, string $reason): self
     {
@@ -100,9 +92,6 @@ class EmailSuppression extends Model
 
     /**
      * Remove an email address from the suppression list.
-     *
-     * @param string $email
-     * @return bool
      */
     public static function unsuppress(string $email): bool
     {

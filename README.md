@@ -69,25 +69,64 @@ See comprehensive guide: **[`docs/deployment/VPS_SETUP.md`](docs/deployment/VPS_
 
 ## 🚢 Deployment
 
-### Automated Deployment Script
+[![Deploy](https://github.com/patrykgielo/paradocks/actions/workflows/deploy-production.yml/badge.svg)](https://github.com/patrykgielo/paradocks/actions/workflows/deploy-production.yml)
+
+### CI/CD Automated Deployment
+
+**Modern, automated deployment with GitHub Actions + Docker + MaintenanceService integration.**
+
+#### Creating a Release
 
 ```bash
-# Deploy latest code from main branch
-./scripts/deploy.sh
+# Feature release (v1.0.0 → v1.1.0)
+./scripts/release.sh minor
 
-# Deploy with options
-./scripts/deploy.sh --skip-backup --force
+# Bug fix (v1.1.0 → v1.1.1)
+./scripts/release.sh patch
+
+# Breaking change (v1.1.1 → v2.0.0)
+./scripts/release.sh major
 ```
 
-### Backup Database
+**What happens automatically:**
+1. ✅ Build Docker image (tagged with version)
+2. ✅ Run PHPUnit tests + Laravel Pint
+3. ✅ Scan for vulnerabilities (Trivy)
+4. ✅ Wait for manual approval (production environment)
+5. ✅ Deploy to VPS with MaintenanceService
+6. ✅ Run migrations & health checks
+7. ✅ Automatic rollback on failure
+
+#### Monitor Deployment
+
+- **GitHub Actions:** https://github.com/patrykgielo/paradocks/actions
+- **Production Health:** https://paradocks.local:8444/health
+- **Manual Approval:** Actions → Deploy to Production → Review deployments
+
+#### Manual Deployment (SSH)
 
 ```bash
-# Manual backup
-./scripts/backup-database.sh
+# SSH to VPS
+ssh deploy@72.60.17.138
 
-# Automated (cron - daily at 3:00 AM)
-0 3 * * * /var/www/paradocks/scripts/backup-database.sh
+# Deploy specific version
+cd /var/www/paradocks
+./scripts/deploy-update.sh v1.2.3
 ```
+
+### Backup & Rollback
+
+```bash
+# Automated backup before every deployment
+# Location: /var/www/paradocks/backups/db-v1.0.0-20251128.sql
+
+# Rollback to previous version
+ssh deploy@72.60.17.138
+cd /var/www/paradocks
+./scripts/deploy-update.sh v1.0.4  # Previous working version
+```
+
+**See:** [Deployment Runbook](docs/deployment/runbooks/ci-cd-deployment.md) for complete procedures.
 
 ---
 

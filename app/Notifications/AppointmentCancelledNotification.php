@@ -19,15 +19,14 @@ use Illuminate\Support\Facades\Log;
  * Sent when an appointment is cancelled.
  * Includes cancellation reason if provided.
  */
-class AppointmentCancelledNotification extends Notification implements ShouldQueue, ShouldBeUnique
+class AppointmentCancelledNotification extends Notification implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;
 
     /**
      * Create a new notification instance.
      *
-     * @param \App\Models\Appointment $appointment
-     * @param string|null $reason Cancellation reason
+     * @param  string|null  $reason  Cancellation reason
      */
     public function __construct(
         public Appointment $appointment,
@@ -38,18 +37,14 @@ class AppointmentCancelledNotification extends Notification implements ShouldQue
 
     /**
      * Get the unique ID for the notification.
-     *
-     * @return string
      */
     public function uniqueId(): string
     {
-        return 'appointment-cancelled:' . $this->appointment->id;
+        return 'appointment-cancelled:'.$this->appointment->id;
     }
 
     /**
      * Get the number of seconds the unique lock should be maintained.
-     *
-     * @return int
      */
     public function uniqueFor(): int
     {
@@ -59,7 +54,7 @@ class AppointmentCancelledNotification extends Notification implements ShouldQue
     /**
      * Get the notification's delivery channels.
      *
-     * @param mixed $notifiable
+     * @param  mixed  $notifiable
      * @return array<int, string>
      */
     public function via(object $notifiable): array
@@ -70,8 +65,7 @@ class AppointmentCancelledNotification extends Notification implements ShouldQue
     /**
      * Get the mail representation of the notification.
      *
-     * @param mixed $notifiable
-     * @return \Illuminate\Notifications\Messages\MailMessage
+     * @param  mixed  $notifiable
      */
     public function toMail(object $notifiable): MailMessage
     {

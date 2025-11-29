@@ -32,7 +32,7 @@ use Illuminate\Support\Facades\Log;
  * Scheduled: Hourly via Laravel Scheduler
  * Queue: reminders
  */
-class SendReminderEmailsJob implements ShouldQueue, ShouldBeUnique
+class SendReminderEmailsJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -59,7 +59,7 @@ class SendReminderEmailsJob implements ShouldQueue, ShouldBeUnique
      */
     public function uniqueId(): string
     {
-        return 'send-reminder-emails:' . now()->format('Y-m-d-H');
+        return 'send-reminder-emails:'.now()->format('Y-m-d-H');
     }
 
     /**
@@ -115,6 +115,7 @@ class SendReminderEmailsJob implements ShouldQueue, ShouldBeUnique
                         'email' => $appointment->customer_email,
                     ]);
                     $stats['24h_skipped']++;
+
                     continue;
                 }
 
@@ -196,6 +197,7 @@ class SendReminderEmailsJob implements ShouldQueue, ShouldBeUnique
                         'email' => $appointment->customer_email,
                     ]);
                     $stats['2h_skipped']++;
+
                     continue;
                 }
 

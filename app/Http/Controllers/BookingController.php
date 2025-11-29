@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Service;
-use App\Models\ServiceAvailability;
 use App\Models\User;
 use App\Services\AppointmentService;
 use App\Support\Settings\SettingsManager;
@@ -14,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 class BookingController extends Controller
 {
     protected AppointmentService $appointmentService;
+
     protected SettingsManager $settings;
 
     public function __construct(AppointmentService $appointmentService, SettingsManager $settings)
@@ -65,16 +65,16 @@ class BookingController extends Controller
         // Check if date meets 24-hour advance booking requirement
         // We check the EARLIEST possible slot (business hours start) to be conservative
         $businessHours = $this->settings->bookingBusinessHours();
-        $earliestSlotDateTime = Carbon::parse($date->format('Y-m-d') . ' ' . $businessHours['start']);
+        $earliestSlotDateTime = Carbon::parse($date->format('Y-m-d').' '.$businessHours['start']);
 
-        if (!$this->appointmentService->meetsAdvanceBookingRequirement($earliestSlotDateTime)) {
+        if (! $this->appointmentService->meetsAdvanceBookingRequirement($earliestSlotDateTime)) {
             $minDateTime = now()->addHours($this->settings->advanceBookingHours());
 
             return response()->json([
                 'slots' => [],
                 'date' => $date->format('Y-m-d'),
-                'message' => 'Rezerwacje możliwe dopiero od ' . $minDateTime->format('d.m.Y H:i'),
-                'reason' => 'advance_booking_not_met'
+                'message' => 'Rezerwacje możliwe dopiero od '.$minDateTime->format('d.m.Y H:i'),
+                'reason' => 'advance_booking_not_met',
             ]);
         }
 

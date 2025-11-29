@@ -20,8 +20,8 @@ return new class extends Migration
             $table->longText('body_html')->comment('Rendered HTML body');
             $table->text('body_text')->nullable()->comment('Rendered plain text body');
             $table->enum('status', ['pending', 'sent', 'failed', 'bounced'])
-                  ->default('pending')
-                  ->comment('Email delivery status');
+                ->default('pending')
+                ->comment('Email delivery status');
             $table->timestamp('sent_at')->nullable()->comment('When email was sent');
             $table->json('metadata')->nullable()->comment('User ID, appointment ID, etc.');
             $table->string('message_key', 255)->unique()->comment('Idempotency key');

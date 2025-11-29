@@ -9,24 +9,24 @@ use App\Filament\Resources\Pages\Pages\EditPage;
 use App\Filament\Resources\Pages\Pages\ListPages;
 use App\Models\Page;
 use BackedEnum;
-use UnitEnum;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Resources\Resource;
-use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
+use UnitEnum;
 
 class PageResource extends Resource
 {
     protected static ?string $model = Page::class;
 
-    protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedDocumentText;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;
 
-    protected static string | UnitEnum | null $navigationGroup = 'Content';
+    protected static string|UnitEnum|null $navigationGroup = 'Content';
 
     protected static ?int $navigationSort = 1;
 
@@ -208,7 +208,7 @@ class PageResource extends Resource
                                             ->required()
                                             ->toolbarButtons([
                                                 'bold', 'italic', 'link', 'bulletList',
-                                                'orderedList', 'h3', 'blockquote'
+                                                'orderedList', 'h3', 'blockquote',
                                             ]),
 
                                         Forms\Components\RichEditor::make('right_column')
@@ -216,7 +216,7 @@ class PageResource extends Resource
                                             ->required()
                                             ->toolbarButtons([
                                                 'bold', 'italic', 'link', 'bulletList',
-                                                'orderedList', 'h3', 'blockquote'
+                                                'orderedList', 'h3', 'blockquote',
                                             ]),
                                     ]),
 
@@ -228,21 +228,21 @@ class PageResource extends Resource
                                             ->label('Kolumna 1')
                                             ->required()
                                             ->toolbarButtons([
-                                                'bold', 'italic', 'link', 'bulletList'
+                                                'bold', 'italic', 'link', 'bulletList',
                                             ]),
 
                                         Forms\Components\RichEditor::make('column_2')
                                             ->label('Kolumna 2')
                                             ->required()
                                             ->toolbarButtons([
-                                                'bold', 'italic', 'link', 'bulletList'
+                                                'bold', 'italic', 'link', 'bulletList',
                                             ]),
 
                                         Forms\Components\RichEditor::make('column_3')
                                             ->label('Kolumna 3')
                                             ->required()
                                             ->toolbarButtons([
-                                                'bold', 'italic', 'link', 'bulletList'
+                                                'bold', 'italic', 'link', 'bulletList',
                                             ]),
                                     ]),
 
@@ -336,8 +336,7 @@ class PageResource extends Resource
                     ->badge()
                     ->dateTime('Y-m-d H:i')
                     ->color(fn ($state) => $state && $state->isPast() ? 'success' : 'warning')
-                    ->formatStateUsing(fn ($state) =>
-                        $state
+                    ->formatStateUsing(fn ($state) => $state
                             ? ($state->isPast() ? 'Opublikowano' : 'Zaplanowano')
                             : 'Wersja robocza'
                     )

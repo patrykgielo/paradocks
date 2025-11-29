@@ -23,27 +23,24 @@ class SmsService
 {
     /**
      * Create a new SMS Service instance.
-     *
-     * @param \App\Services\Sms\SmsGatewayInterface $gateway
-     * @param \App\Support\Settings\SettingsManager $settings
      */
     public function __construct(
         private readonly SmsGatewayInterface $gateway,
         private readonly SettingsManager $settings
-    ) {
-    }
+    ) {}
 
     /**
      * Send SMS from template with full tracking and error handling.
      *
      * This is the main entry point for sending SMS in the application.
      *
-     * @param string $templateKey Template identifier (e.g., 'appointment-reminder-24h')
-     * @param string $language Language code ('pl', 'en')
-     * @param string $recipient Recipient phone number in international format (+48...)
-     * @param array $data Variables to render in template
-     * @param array $metadata Additional data for tracking (user_id, appointment_id, etc.)
+     * @param  string  $templateKey  Template identifier (e.g., 'appointment-reminder-24h')
+     * @param  string  $language  Language code ('pl', 'en')
+     * @param  string  $recipient  Recipient phone number in international format (+48...)
+     * @param  array  $data  Variables to render in template
+     * @param  array  $metadata  Additional data for tracking (user_id, appointment_id, etc.)
      * @return \App\Models\SmsSend The SMS send record
+     *
      * @throws \Exception If SMS is suppressed or template not found
      */
     public function sendFromTemplate(
@@ -55,7 +52,7 @@ class SmsService
     ): SmsSend {
         // Step 1: Check if SMS is enabled globally
         $smsSettings = $this->settings->group('sms');
-        if (!($smsSettings['enabled'] ?? true)) {
+        if (! ($smsSettings['enabled'] ?? true)) {
             Log::warning('SMS sending is disabled globally', [
                 'recipient' => PrivacyHelper::maskPhone($recipient),
                 'template' => $templateKey,
@@ -82,25 +79,25 @@ class SmsService
             $user = \App\Models\User::find($metadata['user_id']);
             if ($user) {
                 // Marketing SMS requires explicit marketing consent
-                if ($isMarketingSms && !$user->hasSmsMarketingConsent()) {
+                if ($isMarketingSms && ! $user->hasSmsMarketingConsent()) {
                     Log::warning('SMS marketing blocked: user has not given marketing consent', [
                         'recipient' => PrivacyHelper::maskPhone($recipient),
                         'user_id' => $metadata['user_id'],
                         'template' => $templateKey,
                     ]);
 
-                    throw new \Exception("User has not given SMS marketing consent or has opted out.");
+                    throw new \Exception('User has not given SMS marketing consent or has opted out.');
                 }
 
                 // Transactional SMS requires basic SMS consent
-                if (!$isMarketingSms && !$user->hasSmsConsent()) {
+                if (! $isMarketingSms && ! $user->hasSmsConsent()) {
                     Log::warning('SMS blocked: user has not given consent or has opted out', [
                         'recipient' => PrivacyHelper::maskPhone($recipient),
                         'user_id' => $metadata['user_id'],
                         'template' => $templateKey,
                     ]);
 
-                    throw new \Exception("User has not given SMS consent or has opted out.");
+                    throw new \Exception('User has not given SMS consent or has opted out.');
                 }
             }
         }
@@ -114,7 +111,7 @@ class SmsService
             ->where('active', true)
             ->first();
 
-        if (!$template) {
+        if (! $template) {
             throw new \Exception("SMS template '{$templateKey}' not found for language '{$language}'.");
         }
 
@@ -233,8 +230,7 @@ class SmsService
      *
      * Converts {{variable}} syntax to {{ $variable }} and renders with Blade.
      *
-     * @param \App\Models\SmsTemplate $template
-     * @param array $data Variables to render
+     * @param  array  $data  Variables to render
      * @return string Rendered message body
      */
     public function renderTemplate(SmsTemplate $template, array $data): string
@@ -257,11 +253,6 @@ class SmsService
      * Generate unique message key for idempotency.
      *
      * Format: md5("{template_key}:{recipient}:{metadata_json}")
-     *
-     * @param string $templateKey
-     * @param string $recipient
-     * @param array $metadata
-     * @return string
      */
     private function generateMessageKey(string $templateKey, string $recipient, array $metadata): string
     {
@@ -273,9 +264,9 @@ class SmsService
     /**
      * Send test SMS to verify configuration.
      *
-     * @param string $recipient Phone number to send test SMS
-     * @param string $language Language code ('pl', 'en')
-     * @return \App\Models\SmsSend
+     * @param  string  $recipient  Phone number to send test SMS
+     * @param  string  $language  Language code ('pl', 'en')
+     *
      * @throws \Exception
      */
     public function sendTestSms(string $recipient, string $language = 'pl'): SmsSend
@@ -292,7 +283,7 @@ class SmsService
             'message_body' => $testMessage,
             'status' => 'pending',
             'metadata' => ['type' => 'test'],
-            'message_key' => md5('test:' . $recipient . ':' . now()->timestamp),
+            'message_key' => md5('test:'.$recipient.':'.now()->timestamp),
         ]);
 
         try {
@@ -335,7 +326,6 @@ class SmsService
      * Throws exception if limits are exceeded.
      * Sends alert email when threshold is reached.
      *
-     * @return void
      * @throws \Exception If spending limit is exceeded
      */
     private function checkSpendingLimits(): void
@@ -379,25 +369,24 @@ class SmsService
         $dailyThreshold = ($dailyLimit * $alertThreshold) / 100;
         $monthlyThreshold = ($monthlyLimit * $alertThreshold) / 100;
 
-        if ($todayCount >= $dailyThreshold && !cache()->has('sms_daily_alert_sent_' . today()->toDateString())) {
+        if ($todayCount >= $dailyThreshold && ! cache()->has('sms_daily_alert_sent_'.today()->toDateString())) {
             $this->sendSpendingAlert('daily', $todayCount, $dailyLimit, $alertEmail);
-            cache()->put('sms_daily_alert_sent_' . today()->toDateString(), true, now()->endOfDay());
+            cache()->put('sms_daily_alert_sent_'.today()->toDateString(), true, now()->endOfDay());
         }
 
-        if ($monthCount >= $monthlyThreshold && !cache()->has('sms_monthly_alert_sent_' . now()->format('Y-m'))) {
+        if ($monthCount >= $monthlyThreshold && ! cache()->has('sms_monthly_alert_sent_'.now()->format('Y-m'))) {
             $this->sendSpendingAlert('monthly', $monthCount, $monthlyLimit, $alertEmail);
-            cache()->put('sms_monthly_alert_sent_' . now()->format('Y-m'), true, now()->endOfMonth());
+            cache()->put('sms_monthly_alert_sent_'.now()->format('Y-m'), true, now()->endOfMonth());
         }
     }
 
     /**
      * Send spending alert email to admin.
      *
-     * @param string $period 'daily' or 'monthly'
-     * @param int $currentCount Current SMS count
-     * @param int $limit SMS limit
-     * @param string|null $email Alert email address
-     * @return void
+     * @param  string  $period  'daily' or 'monthly'
+     * @param  int  $currentCount  Current SMS count
+     * @param  int  $limit  SMS limit
+     * @param  string|null  $email  Alert email address
      */
     private function sendSpendingAlert(string $period, int $currentCount, int $limit, ?string $email): void
     {
@@ -427,8 +416,8 @@ class SmsService
      * Marketing templates require explicit marketing consent (GDPR).
      * Transactional templates (reminders, confirmations) only need basic SMS consent.
      *
-     * @param string $templateKey Template identifier
-     * @param array $metadata Additional metadata (may contain 'is_marketing' flag)
+     * @param  string  $templateKey  Template identifier
+     * @param  array  $metadata  Additional metadata (may contain 'is_marketing' flag)
      * @return bool True if marketing template, false if transactional
      */
     private function isMarketingTemplate(string $templateKey, array $metadata): bool

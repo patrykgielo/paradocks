@@ -2,26 +2,26 @@
 
 namespace App\Filament\Resources;
 
-use BackedEnum;
-use UnitEnum;
 use App\Filament\Resources\RoleResource\Pages;
+use BackedEnum;
+use Filament\Actions;
 use Filament\Forms;
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Section;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Actions;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use UnitEnum;
 
 class RoleResource extends Resource
 {
     protected static ?string $model = Role::class;
 
-    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-shield-check';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-shield-check';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Zarządzanie Użytkownikami';
+    protected static string|UnitEnum|null $navigationGroup = 'Zarządzanie Użytkownikami';
 
     protected static ?string $modelLabel = 'Rola';
 
@@ -32,34 +32,34 @@ class RoleResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-                Section::make('Informacje o roli')
-                    ->schema([
-                        Forms\Components\TextInput::make('name')
-                            ->label('Nazwa roli')
-                            ->required()
-                            ->unique(ignoreRecord: true)
-                            ->maxLength(255)
-                            ->helperText('Np. admin, staff, customer'),
-                        Forms\Components\TextInput::make('guard_name')
-                            ->label('Guard')
-                            ->default('web')
-                            ->required()
-                            ->maxLength(255)
-                            ->helperText('Zazwyczaj "web" dla standardowych użytkowników'),
-                    ])->columns(2),
+            Section::make('Informacje o roli')
+                ->schema([
+                    Forms\Components\TextInput::make('name')
+                        ->label('Nazwa roli')
+                        ->required()
+                        ->unique(ignoreRecord: true)
+                        ->maxLength(255)
+                        ->helperText('Np. admin, staff, customer'),
+                    Forms\Components\TextInput::make('guard_name')
+                        ->label('Guard')
+                        ->default('web')
+                        ->required()
+                        ->maxLength(255)
+                        ->helperText('Zazwyczaj "web" dla standardowych użytkowników'),
+                ])->columns(2),
 
-                Section::make('Uprawnienia')
-                    ->schema([
-                        Forms\Components\CheckboxList::make('permissions')
-                            ->label('Przypisz uprawnienia')
-                            ->relationship('permissions', 'name')
-                            ->options(Permission::all()->pluck('name', 'id'))
-                            ->columns(3)
-                            ->searchable()
-                            ->bulkToggleable()
-                            ->helperText('Wybierz uprawnienia dla tej roli'),
-                    ]),
-            ]);
+            Section::make('Uprawnienia')
+                ->schema([
+                    Forms\Components\CheckboxList::make('permissions')
+                        ->label('Przypisz uprawnienia')
+                        ->relationship('permissions', 'name')
+                        ->options(Permission::all()->pluck('name', 'id'))
+                        ->columns(3)
+                        ->searchable()
+                        ->bulkToggleable()
+                        ->helperText('Wybierz uprawnienia dla tej roli'),
+                ]),
+        ]);
     }
 
     public static function table(Table $table): Table

@@ -74,8 +74,6 @@ class SmsSend extends Model
 
     /**
      * Get the SMS template associated with this send.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function smsTemplate(): BelongsTo
     {
@@ -84,8 +82,6 @@ class SmsSend extends Model
 
     /**
      * Get all events for this SMS send.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function smsEvents(): HasMany
     {
@@ -95,8 +91,7 @@ class SmsSend extends Model
     /**
      * Scope a query to filter by status.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $status
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeStatus($query, string $status)
@@ -107,8 +102,7 @@ class SmsSend extends Model
     /**
      * Scope a query to filter by recipient phone number.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $phone
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeRecipient($query, string $phone)
@@ -119,7 +113,7 @@ class SmsSend extends Model
     /**
      * Scope a query to only include SMS sent in the last 7 days.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeRecent($query)
@@ -130,8 +124,7 @@ class SmsSend extends Model
     /**
      * Mark the SMS as successfully sent.
      *
-     * @param string|null $smsId SMSAPI message ID
-     * @return void
+     * @param  string|null  $smsId  SMSAPI message ID
      */
     public function markAsSent(?string $smsId = null): void
     {
@@ -144,9 +137,6 @@ class SmsSend extends Model
 
     /**
      * Mark the SMS as failed with error message.
-     *
-     * @param string $error
-     * @return void
      */
     public function markAsFailed(string $error): void
     {
@@ -158,8 +148,6 @@ class SmsSend extends Model
 
     /**
      * Mark the SMS as invalid number.
-     *
-     * @return void
      */
     public function markAsInvalidNumber(): void
     {
@@ -170,8 +158,6 @@ class SmsSend extends Model
 
     /**
      * Check if the SMS was sent successfully.
-     *
-     * @return bool
      */
     public function isSent(): bool
     {
@@ -180,8 +166,6 @@ class SmsSend extends Model
 
     /**
      * Check if the SMS failed.
-     *
-     * @return bool
      */
     public function isFailed(): bool
     {
@@ -190,8 +174,6 @@ class SmsSend extends Model
 
     /**
      * Check if the SMS is pending.
-     *
-     * @return bool
      */
     public function isPending(): bool
     {
@@ -200,8 +182,6 @@ class SmsSend extends Model
 
     /**
      * Check if the phone number is invalid.
-     *
-     * @return bool
      */
     public function isInvalidNumber(): bool
     {

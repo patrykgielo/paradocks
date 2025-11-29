@@ -19,7 +19,7 @@ class UpdateVehicleRequest extends FormRequest
             'car_model_id' => ['nullable', 'exists:car_models,id'],
             'custom_brand' => ['nullable', 'string', 'max:100'],
             'custom_model' => ['nullable', 'string', 'max:100'],
-            'year' => ['nullable', 'integer', 'min:1900', 'max:' . (date('Y') + 1)],
+            'year' => ['nullable', 'integer', 'min:1900', 'max:'.(date('Y') + 1)],
             'nickname' => ['nullable', 'string', 'max:50'],
             'is_default' => ['sometimes', 'boolean'],
         ];

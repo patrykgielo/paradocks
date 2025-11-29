@@ -61,8 +61,6 @@ class SmsTemplate extends Model
 
     /**
      * Get all SMS sends using this template.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function smsSends(): HasMany
     {
@@ -72,7 +70,7 @@ class SmsTemplate extends Model
     /**
      * Scope a query to only include active templates.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeActive($query)
@@ -83,8 +81,7 @@ class SmsTemplate extends Model
     /**
      * Scope a query to filter by template key.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $key
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeForKey($query, string $key)
@@ -95,8 +92,7 @@ class SmsTemplate extends Model
     /**
      * Scope a query to filter by language.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $language
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeForLanguage($query, string $language)
@@ -106,8 +102,6 @@ class SmsTemplate extends Model
 
     /**
      * Get the list of available variables for this template.
-     *
-     * @return array
      */
     public function getAvailableVariables(): array
     {
@@ -119,7 +113,7 @@ class SmsTemplate extends Model
      *
      * Uses Blade's compileString to render template with variables.
      *
-     * @param array $data Key-value pairs to replace in template
+     * @param  array  $data  Key-value pairs to replace in template
      * @return string Rendered message content
      */
     public function render(array $data): string
@@ -141,16 +135,13 @@ class SmsTemplate extends Model
 
     /**
      * Simple string replacement for rendering (fallback).
-     *
-     * @param array $data
-     * @return string
      */
     protected function simpleRender(array $data): string
     {
         $content = $this->message_body;
 
         foreach ($data as $key => $value) {
-            $content = str_replace('{{' . $key . '}}', (string) $value, $content);
+            $content = str_replace('{{'.$key.'}}', (string) $value, $content);
         }
 
         return $content;
@@ -159,7 +150,7 @@ class SmsTemplate extends Model
     /**
      * Check if the message exceeds maximum length.
      *
-     * @param string $message Rendered message
+     * @param  string  $message  Rendered message
      * @return bool True if message exceeds max_length
      */
     public function exceedsMaxLength(string $message): bool
@@ -170,18 +161,18 @@ class SmsTemplate extends Model
     /**
      * Truncate message to maximum length if needed.
      *
-     * @param string $message Message to truncate
-     * @param string $suffix Suffix to add if truncated (e.g., '...')
+     * @param  string  $message  Message to truncate
+     * @param  string  $suffix  Suffix to add if truncated (e.g., '...')
      * @return string Truncated message
      */
     public function truncateMessage(string $message, string $suffix = '...'): string
     {
-        if (!$this->exceedsMaxLength($message)) {
+        if (! $this->exceedsMaxLength($message)) {
             return $message;
         }
 
         $maxLen = $this->max_length - mb_strlen($suffix);
 
-        return mb_substr($message, 0, $maxLen) . $suffix;
+        return mb_substr($message, 0, $maxLen).$suffix;
     }
 }
