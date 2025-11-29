@@ -31,6 +31,17 @@ jobs:
       version: ${{ steps.meta.outputs.version }}
       tags: ${{ steps.meta.outputs.tags }}
 
+    services:
+      redis:
+        image: redis:7.0
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -127,9 +138,14 @@ jobs:
           DB_DATABASE: paradocks_test
           DB_USERNAME: root
           DB_PASSWORD: secret
-          # Queue & Cache (sync/array for fast testing without Redis)
-          QUEUE_CONNECTION: sync
-          CACHE_STORE: array
+          # Redis (real service in CI - production parity)
+          REDIS_HOST: 127.0.0.1
+          REDIS_PORT: 6379
+          # Queue uses Redis (same as production)
+          QUEUE_CONNECTION: redis
+          # Cache uses Redis (same as production)
+          CACHE_DRIVER: redis
+          CACHE_STORE: redis
           # Session (array for stateless testing)
           SESSION_DRIVER: array
           # Mail (array to capture emails without sending)
