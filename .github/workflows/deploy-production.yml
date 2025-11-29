@@ -249,6 +249,24 @@ jobs:
         run: |
           ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST "echo '✅ SSH connection successful'"
 
+      - name: Fix storage permissions
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
+        run: |
+          echo "🔧 Fixing storage permissions..."
+          ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << 'ENDSSH'
+            cd /var/www/paradocks
+            # Fix ownership - deploy user needs to own files
+            sudo chown -R deploy:deploy storage bootstrap/cache
+            # Set proper permissions (rwxrwxr-x)
+            sudo chmod -R 775 storage bootstrap/cache
+            # Set SGID bit so new files inherit group ownership
+            sudo chmod g+s storage storage/framework storage/framework/cache storage/framework/sessions storage/framework/views storage/logs
+            echo "✅ Storage permissions fixed"
+          ENDSSH
+
       - name: Enable MaintenanceService
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
