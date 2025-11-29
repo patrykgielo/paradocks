@@ -335,6 +335,52 @@ docker compose -f docker-compose.prod.yml exec app php artisan optimize
 
 ## Troubleshooting
 
+### Permission Denied: storage/framework/views
+
+**Symptoms**:
+```
+ERROR  Failed to enter maintenance mode: file_put_contents(storage/framework/views/xxx.php): Permission denied
+```
+
+**Root Cause**: Docker container UID doesn't match host file ownership. This typically happens when:
+- Files were created by a different user (uid mismatch)
+- Docker build cache reused old layers with different UID
+- Container runs as uid=1000 but files owned by uid=1002
+
+**Automated Fix** (via GitHub Actions):
+The deployment workflow automatically detects VPS file ownership and builds Docker image with matching UID. The process includes:
+
+1. **UID Detection** - Detects file ownership from `/var/www/paradocks`
+2. **Docker Build** - Builds with `--no-cache --build-arg USER_ID=X`
+3. **Verification** - Confirms built image has correct UID
+
+**Manual Fix** (if needed):
+```bash
+# On VPS: Check current file ownership
+cd /var/www/paradocks
+stat -c '%u:%g' storage
+
+# Example output: 1002:1002
+
+# Rebuild Docker image with correct UID
+docker compose -f docker-compose.prod.yml build \
+  --no-cache \
+  --build-arg USER_ID=1002 \
+  --build-arg GROUP_ID=1002 \
+  app
+
+# Verify container UID matches
+docker compose -f docker-compose.prod.yml run --rm app id -u laravel
+# Should output: 1002
+
+# Restart containers
+docker compose -f docker-compose.prod.yml up -d
+```
+
+**Why `--no-cache` is required**: Docker layer cache can reuse old `RUN useradd` commands even when build-args change. Without `--no-cache`, the container may still have uid=1000 despite passing `USER_ID=1002`.
+
+**Related**: See `app/docs/deployment/ADR-010-docker-uid-permission-solution.md` for architectural decision details.
+
 ### Application Returns 502 Bad Gateway
 **Cause**: PHP-FPM container not running or crashed
 

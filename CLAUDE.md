@@ -561,6 +561,40 @@ docker compose exec app php artisan queue:retry all
 https://paradocks.local:8444/horizon/failed
 ```
 
+### Permission Denied: storage/framework/views
+
+**Problem:** Permission errors when writing to storage (especially during deployment).
+
+**Symptoms:**
+```
+ERROR  Failed to enter maintenance mode: file_put_contents(storage/framework/views/xxx.php): Permission denied
+```
+
+**Cause:** Docker container UID doesn't match VPS file ownership. This happens when:
+- Docker build cache reuses old layers with different UID
+- Container built with uid=1000 but VPS files owned by uid=1002
+- Previous deployments used different user
+
+**Solution (Production VPS):**
+GitHub Actions workflow automatically handles this via:
+1. Detects VPS file ownership (`stat -c '%u' /var/www/paradocks`)
+2. Builds with matching UID: `--no-cache --build-arg USER_ID=1002`
+3. Verifies container has correct UID before deployment
+
+**Solution (Local Development):**
+```bash
+# Check what UID owns your files
+stat -c '%u:%g' storage
+
+# If files owned by different UID, rebuild:
+docker compose build --no-cache app
+docker compose restart app
+```
+
+**Important:** `--no-cache` is required because Docker layer cache can reuse old `RUN useradd` commands even when build-args change.
+
+**See:** [DEPLOYMENT.md Troubleshooting](DEPLOYMENT.md#permission-denied-storageframeworkviews) for detailed VPS fix.
+
 ### OPcache / Code Changes Not Applying
 
 **Problem:** Code changes don't take effect, old code still executes (especially Filament Resources).
