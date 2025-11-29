@@ -18,11 +18,8 @@ class AppointmentStaffValidationTest extends TestCase
     {
         parent::setUp();
 
-        // Create roles
-        Role::create(['name' => 'staff']);
-        Role::create(['name' => 'customer']);
-        Role::create(['name' => 'admin']);
-        Role::create(['name' => 'super-admin']);
+        // Roles are seeded by RolePermissionSeeder in TestCase
+        // No need to create manually
     }
 
     /** @test */
