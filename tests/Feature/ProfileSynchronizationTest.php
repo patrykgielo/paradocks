@@ -18,6 +18,8 @@ class ProfileSynchronizationTest extends TestCase
 
     protected Service $service;
 
+    protected int $vehicleTypeId;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -43,6 +45,9 @@ class ProfileSynchronizationTest extends TestCase
             'price' => 100,
         ]);
 
+        // Get first vehicle type from seeder
+        $this->vehicleTypeId = \App\Models\VehicleType::first()->id;
+
         // Create staff member with availability
         $this->staff = User::factory()->create([
             'email' => 'staff@example.com',
@@ -50,14 +55,58 @@ class ProfileSynchronizationTest extends TestCase
         ]);
         $this->staff->assignRole('staff');
 
-        // Create service availability for tomorrow (to meet 24h advance booking)
-        $tomorrow = Carbon::tomorrow();
-        $this->staff->serviceAvailabilities()->create([
+        // Create staff schedules for all weekdays (Mon-Fri) to cover test appointments
+        for ($day = 1; $day <= 5; $day++) {
+            $this->staff->staffSchedules()->create([
+                'day_of_week' => $day,
+                'start_time' => '09:00:00',
+                'end_time' => '17:00:00',
+                'effective_from' => now()->subWeek(),
+                'effective_until' => now()->addYear(),
+            ]);
+        }
+
+        // Assign service to staff
+        $this->staff->services()->attach($this->service->id);
+    }
+
+    /**
+     * Helper method to generate complete booking data with all required fields
+     */
+    protected function getBookingData(array $overrides = []): array
+    {
+        // Use 2 days from now to meet 24-hour advance booking requirement
+        $appointmentDate = Carbon::now()->addDays(2)->format('Y-m-d');
+
+        return array_merge([
             'service_id' => $this->service->id,
-            'day_of_week' => $tomorrow->dayOfWeek,
-            'start_time' => '09:00:00',
-            'end_time' => '17:00:00',
-        ]);
+            'staff_id' => $this->staff->id,
+            'appointment_date' => $appointmentDate,
+            'start_time' => '10:00',
+            'end_time' => '11:00',
+            // Profile fields
+            'first_name' => 'Jan',
+            'last_name' => 'Kowalski',
+            'phone_e164' => '+48501234567',
+            'street_name' => 'Marszałkowska',
+            'street_number' => '12/34',
+            'city' => 'Warszawa',
+            'postal_code' => '00-000',
+            'access_notes' => 'Kod do bramy: 1234',
+            'notes' => 'Test appointment',
+            // Google Maps location fields (REQUIRED)
+            'location_address' => 'Marszałkowska 12/34, 00-000 Warszawa, Polska',
+            'location_latitude' => 52.2297,
+            'location_longitude' => 21.0122,
+            'location_place_id' => 'ChIJAZ-GmmbMHkcRJz90Y5b8Jf8',
+            'location_components' => json_encode([
+                ['long_name' => 'Warszawa', 'short_name' => 'Warszawa', 'types' => ['locality']],
+                ['long_name' => 'Polska', 'short_name' => 'PL', 'types' => ['country']],
+            ]),
+            // Vehicle fields (REQUIRED)
+            'vehicle_type_id' => $this->vehicleTypeId,
+            'vehicle_year' => 2020,
+        ], $overrides);
     }
 
     /** @test */
@@ -77,25 +126,13 @@ class ProfileSynchronizationTest extends TestCase
     /** @test */
     public function first_booking_saves_profile_data()
     {
-        $tomorrow = Carbon::tomorrow()->format('Y-m-d');
-        $bookingData = [
-            'service_id' => $this->service->id,
-            'appointment_date' => $tomorrow,
-            'start_time' => '10:00',
-            'end_time' => '11:00',
-            'first_name' => 'Jan',
-            'last_name' => 'Kowalski',
-            'phone_e164' => '+48501234567',
-            'street_name' => 'Marszałkowska',
-            'street_number' => '12/34',
-            'city' => 'Warszawa',
-            'postal_code' => '00-000',
-            'access_notes' => 'Kod do bramy: 1234',
-            'notes' => 'Test appointment',
-        ];
+        $bookingData = $this->getBookingData();
 
-        $this->actingAs($this->user)
+        $response = $this->actingAs($this->user)
             ->post(route('appointments.store'), $bookingData);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect(route('appointments.index'));
 
         // Verify profile was updated
         $this->user->refresh();
@@ -145,13 +182,8 @@ class ProfileSynchronizationTest extends TestCase
             'access_notes' => 'Kod do bramy: 1234',
         ]);
 
-        $tomorrow = Carbon::tomorrow()->format('Y-m-d');
-        $bookingData = [
-            'service_id' => $this->service->id,
-            'appointment_date' => $tomorrow,
-            'start_time' => '10:00',
-            'end_time' => '11:00',
-            // Different data in booking form
+        // Different data in booking form (should NOT overwrite existing profile)
+        $bookingData = $this->getBookingData([
             'first_name' => 'Adam',
             'last_name' => 'Nowak',
             'phone_e164' => '+48600999888',
@@ -161,7 +193,7 @@ class ProfileSynchronizationTest extends TestCase
             'postal_code' => '30-000',
             'access_notes' => 'Nowy kod: 9999',
             'notes' => 'Second appointment',
-        ];
+        ]);
 
         $this->actingAs($this->user)
             ->post(route('appointments.store'), $bookingData);
@@ -189,12 +221,7 @@ class ProfileSynchronizationTest extends TestCase
             // Address fields empty
         ]);
 
-        $tomorrow = Carbon::tomorrow()->format('Y-m-d');
-        $bookingData = [
-            'service_id' => $this->service->id,
-            'appointment_date' => $tomorrow,
-            'start_time' => '10:00',
-            'end_time' => '11:00',
+        $bookingData = $this->getBookingData([
             'first_name' => 'Adam', // Won't overwrite
             'last_name' => 'Nowak', // Won't overwrite
             'phone_e164' => '+48600999888', // Won't overwrite
@@ -203,7 +230,7 @@ class ProfileSynchronizationTest extends TestCase
             'city' => 'Warszawa', // Will save
             'postal_code' => '00-000', // Will save
             'access_notes' => 'Kod: 1234', // Will save
-        ];
+        ]);
 
         $this->actingAs($this->user)
             ->post(route('appointments.store'), $bookingData);
@@ -223,18 +250,18 @@ class ProfileSynchronizationTest extends TestCase
     /** @test */
     public function optional_address_fields_only_save_when_provided()
     {
-        $tomorrow = Carbon::tomorrow()->format('Y-m-d');
-        $bookingData = [
-            'service_id' => $this->service->id,
-            'appointment_date' => $tomorrow,
-            'start_time' => '10:00',
-            'end_time' => '11:00',
+        $bookingData = $this->getBookingData([
             'first_name' => 'Jan',
             'last_name' => 'Kowalski',
             'phone_e164' => '+48501234567',
-            // Optional address fields omitted
+            // Optional address fields omitted (set to null)
+            'street_name' => null,
+            'street_number' => null,
+            'city' => null,
+            'postal_code' => null,
+            'access_notes' => null,
             'notes' => 'Test appointment',
-        ];
+        ]);
 
         $this->actingAs($this->user)
             ->post(route('appointments.store'), $bookingData);
