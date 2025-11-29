@@ -4,32 +4,35 @@
 # deploy-update.sh - Zero-downtime deployment update script
 #
 # This script handles updates to an existing production deployment with
-# minimal downtime. Use this for regular code updates after initial setup.
+# minimal downtime using MaintenanceService and Docker images from GHCR.
 #
-# Usage: ./scripts/deploy-update.sh [OPTIONS]
+# Usage: ./scripts/deploy-update.sh [VERSION] [OPTIONS]
+#
+# Arguments:
+#   VERSION            Docker image version to deploy (e.g., v1.0.0, latest)
 #
 # Options:
 #   --skip-backup      Skip database backup before update
 #   --skip-migrations  Skip database migrations
-#   --skip-build       Skip Docker image rebuild
 #   --force            Skip all confirmations
 #
 # Prerequisites:
 #   - Application already deployed via deploy-init.sh
 #   - Docker containers running
-#   - Git repository configured
+#   - GHCR authentication configured
 #
 # What this script does:
-#   1. Creates database backup
-#   2. Pulls latest code from Git
-#   3. Rebuilds Docker images (if needed)
-#   4. Runs database migrations
-#   5. Clears and rebuilds caches
-#   6. Gracefully restarts services
-#   7. Verifies deployment
+#   1. Enable MaintenanceService (Deployment type)
+#   2. Create database backup
+#   3. Pull new Docker image from GHCR
+#   4. Restart containers with new image
+#   5. Run database migrations
+#   6. Clear and rebuild caches
+#   7. Disable MaintenanceService
+#   8. Verify deployment
 #
 # Author: Paradocks Development Team
-# Version: 1.0.0
+# Version: 2.0.0 (MaintenanceService + GHCR integration)
 ################################################################################
 
 set -e  # Exit on error
@@ -50,10 +53,12 @@ readonly APP_DIR="$PROJECT_ROOT"
 readonly DOCKER_COMPOSE_FILE="${PROJECT_ROOT}/docker-compose.prod.yml"
 readonly BACKUP_SCRIPT="${SCRIPT_DIR}/backup-database.sh"
 
+# Version to deploy (first argument or latest)
+VERSION="${1:-latest}"
+
 # Command-line options
 SKIP_BACKUP=false
 SKIP_MIGRATIONS=false
-SKIP_BUILD=false
 FORCE=false
 
 ################################################################################
@@ -85,6 +90,9 @@ prompt() {
 ################################################################################
 
 parse_arguments() {
+    # Skip first argument (VERSION already parsed)
+    shift || true
+
     while [[ $# -gt 0 ]]; do
         case $1 in
             --skip-backup)
@@ -93,10 +101,6 @@ parse_arguments() {
                 ;;
             --skip-migrations)
                 SKIP_MIGRATIONS=true
-                shift
-                ;;
-            --skip-build)
-                SKIP_BUILD=true
                 shift
                 ;;
             --force)
@@ -118,21 +122,26 @@ parse_arguments() {
 
 show_usage() {
     cat << EOF
-Usage: $0 [OPTIONS]
+Usage: $0 [VERSION] [OPTIONS]
 
 Zero-downtime deployment update script for production environment.
+Uses MaintenanceService and Docker images from GHCR.
+
+ARGUMENTS:
+    VERSION             Docker image version (default: latest)
+                        Examples: v1.0.0, v1.2.3, latest
 
 OPTIONS:
     --skip-backup       Skip database backup before update
     --skip-migrations   Skip database migrations
-    --skip-build        Skip Docker image rebuild
     --force             Skip all confirmations
     -h, --help          Show this help message
 
 EXAMPLES:
-    $0                              # Full update with all steps
-    $0 --skip-build                 # Update code without rebuilding images
-    $0 --skip-backup --force        # Fast update without backup or prompts
+    $0 v1.2.3                       # Deploy version v1.2.3
+    $0 latest                       # Deploy latest version
+    $0 v1.0.0 --skip-backup         # Deploy without backup
+    $0 v1.1.0 --force               # Deploy without prompts
 
 EOF
 }
@@ -212,88 +221,45 @@ backup_database() {
 # Update Functions
 ################################################################################
 
-pull_latest_code() {
-    log "Pulling latest code from Git..."
+pull_docker_image() {
+    log "Pulling Docker image from GHCR..."
+    log "Version: $VERSION"
 
     cd "$PROJECT_ROOT"
 
-    if [[ ! -d ".git" ]]; then
-        warn "Not a Git repository. Skipping code pull."
-        return 0
-    fi
+    # Export VERSION for docker compose
+    export VERSION
 
-    # Get current branch
-    local current_branch
-    current_branch=$(git rev-parse --abbrev-ref HEAD)
-    log "Current branch: $current_branch"
-
-    # Show current commit
-    local current_commit
-    current_commit=$(git rev-parse --short HEAD)
-    log "Current commit: $current_commit"
-
-    # Fetch latest changes
-    git fetch origin
-
-    # Check if there are changes
-    if git diff --quiet "HEAD" "origin/$current_branch"; then
-        log "No new changes to pull"
-        return 0
-    fi
-
-    # Pull changes
-    git pull origin "$current_branch"
-
-    # Show new commit
-    local new_commit
-    new_commit=$(git rev-parse --short HEAD)
-    success "Updated to commit: $new_commit"
-
-    # Show changelog
-    log "Changes since last deployment:"
-    git log --oneline "$current_commit..$new_commit"
-}
-
-rebuild_docker_images() {
-    if [[ "$SKIP_BUILD" == true ]]; then
-        warn "Skipping Docker image rebuild (--skip-build flag)"
-        return 0
-    fi
-
-    log "Rebuilding Docker images..."
-
-    cd "$PROJECT_ROOT"
-
-    # Check if Dockerfile or docker-compose changed
-    if ! git diff --quiet HEAD~1 HEAD -- Dockerfile docker-compose.prod.yml docker/; then
-        log "Docker configuration changed, rebuilding..."
-        docker compose -f "$DOCKER_COMPOSE_FILE" build --no-cache
+    # Pull new image
+    if docker compose -f "$DOCKER_COMPOSE_FILE" pull app; then
+        success "Docker image pulled: ghcr.io/patrykgielo/paradocks:$VERSION"
     else
-        log "Docker configuration unchanged, using cached build..."
-        docker compose -f "$DOCKER_COMPOSE_FILE" build
+        error "Failed to pull Docker image"
+        error "Make sure:"
+        error "  1. You're logged into GHCR: docker login ghcr.io"
+        error "  2. The version exists: $VERSION"
+        error "  3. You have access to the repository"
+        exit 1
     fi
-
-    success "Docker images rebuilt"
 }
 
-install_dependencies() {
-    log "Installing/updating dependencies..."
+enable_maintenance_mode() {
+    log "Enabling MaintenanceService (Deployment type)..."
 
-    # Composer install
-    log "Installing PHP dependencies..."
-    docker compose -f "$DOCKER_COMPOSE_FILE" exec -T app composer install --no-dev --optimize-autoloader --no-interaction
+    docker compose -f "$DOCKER_COMPOSE_FILE" exec -T app php artisan maintenance:enable \
+        --type=deployment \
+        --message="Deploying version $VERSION" \
+        --estimated-duration="2 minutes"
 
-    # NPM install (if needed)
-    if [[ -f "${APP_DIR}/package.json" ]]; then
-        log "Installing Node.js dependencies..."
-        docker compose -f "$DOCKER_COMPOSE_FILE" exec -T app npm ci --production=false
+    success "Maintenance mode enabled"
+}
 
-        # Build frontend assets
-        log "Building frontend assets..."
-        docker compose -f "$DOCKER_COMPOSE_FILE" exec -T app npm run build
-    fi
+disable_maintenance_mode() {
+    log "Disabling MaintenanceService..."
 
-    success "Dependencies installed"
+    docker compose -f "$DOCKER_COMPOSE_FILE" exec -T app php artisan maintenance:disable
+
+    success "Maintenance mode disabled - site is now live"
 }
 
 run_migrations() {
@@ -304,23 +270,15 @@ run_migrations() {
 
     log "Running database migrations..."
 
-    # Put application in maintenance mode
-    docker compose -f "$DOCKER_COMPOSE_FILE" exec -T app php artisan down --retry=60
-
-    # Run migrations
+    # Run migrations (MaintenanceService already enabled)
     if docker compose -f "$DOCKER_COMPOSE_FILE" exec -T app php artisan migrate --force; then
         success "Migrations completed successfully"
     else
         error "Migrations failed!"
-        # Bring application back up
-        docker compose -f "$DOCKER_COMPOSE_FILE" exec -T app php artisan up
+        # Disable maintenance mode before exiting
+        disable_maintenance_mode
         exit 1
     fi
-
-    # Bring application back up
-    docker compose -f "$DOCKER_COMPOSE_FILE" exec -T app php artisan up
-
-    success "Application is back online"
 }
 
 clear_and_rebuild_caches() {
@@ -340,28 +298,31 @@ clear_and_rebuild_caches() {
 }
 
 restart_services() {
-    log "Restarting services..."
+    log "Restarting services with new Docker image..."
 
     cd "$PROJECT_ROOT"
 
-    # Restart Horizon (queue worker)
+    # Export VERSION for docker compose
+    export VERSION
+
+    # Restart all app containers with new image
+    log "Restarting app container..."
+    docker compose -f "$DOCKER_COMPOSE_FILE" up -d app
+
+    # Restart Horizon with new image
     log "Restarting Horizon..."
-    docker compose -f "$DOCKER_COMPOSE_FILE" exec -T app php artisan horizon:terminate
-    docker compose -f "$DOCKER_COMPOSE_FILE" restart horizon
+    docker compose -f "$DOCKER_COMPOSE_FILE" exec -T app php artisan horizon:terminate || true
+    docker compose -f "$DOCKER_COMPOSE_FILE" up -d horizon
 
-    # Restart scheduler (if needed)
+    # Restart scheduler with new image
     log "Restarting scheduler..."
-    docker compose -f "$DOCKER_COMPOSE_FILE" restart scheduler
-
-    # Restart Nginx (to pick up any config changes)
-    log "Restarting Nginx..."
-    docker compose -f "$DOCKER_COMPOSE_FILE" restart nginx
+    docker compose -f "$DOCKER_COMPOSE_FILE" up -d scheduler
 
     # Wait for services to be healthy
     log "Waiting for services to be healthy..."
-    sleep 10
+    sleep 15
 
-    success "Services restarted"
+    success "Services restarted with version: $VERSION"
 }
 
 ################################################################################
@@ -409,16 +370,12 @@ verify_deployment() {
 rollback() {
     error "Deployment failed! Rolling back..."
 
-    # Bring application back up if in maintenance mode
-    docker compose -f "$DOCKER_COMPOSE_FILE" exec -T app php artisan up 2>/dev/null || true
-
-    # Rollback Git
-    if [[ -d "${PROJECT_ROOT}/.git" ]]; then
-        log "Rolling back to previous commit..."
-        git reset --hard HEAD~1
-    fi
+    # Disable maintenance mode if enabled
+    disable_maintenance_mode 2>/dev/null || true
 
     error "Rollback completed. Please check logs and try again."
+    error "To rollback Docker image, deploy the previous working version:"
+    error "  ./scripts/deploy-update.sh v[previous-version]"
     exit 1
 }
 
@@ -444,17 +401,17 @@ main() {
     # Step 2: Confirm update
     confirm_update
 
-    # Step 3: Backup database
+    # Step 3: Enable maintenance mode
+    enable_maintenance_mode
+
+    # Step 4: Backup database
     backup_database
 
-    # Step 4: Pull latest code
-    pull_latest_code
+    # Step 5: Pull Docker image from GHCR
+    pull_docker_image
 
-    # Step 5: Rebuild Docker images
-    rebuild_docker_images
-
-    # Step 6: Install/update dependencies
-    install_dependencies
+    # Step 6: Restart services with new image
+    restart_services
 
     # Step 7: Run migrations
     run_migrations
@@ -462,11 +419,11 @@ main() {
     # Step 8: Clear and rebuild caches
     clear_and_rebuild_caches
 
-    # Step 9: Restart services
-    restart_services
-
-    # Step 10: Verify deployment
+    # Step 9: Verify deployment
     verify_deployment
+
+    # Step 10: Disable maintenance mode
+    disable_maintenance_mode
 
     echo ""
     log "==================================================================="
@@ -474,10 +431,10 @@ main() {
     log "==================================================================="
     echo ""
     log "Deployment summary:"
+    log "  - Version deployed: $VERSION"
+    log "  - Docker image: ghcr.io/patrykgielo/paradocks:$VERSION"
     log "  - Database backup: $([ "$SKIP_BACKUP" == true ] && echo "Skipped" || echo "Created")"
-    log "  - Code update: $(git rev-parse --short HEAD 2>/dev/null || echo "N/A")"
     log "  - Migrations: $([ "$SKIP_MIGRATIONS" == true ] && echo "Skipped" || echo "Run")"
-    log "  - Docker rebuild: $([ "$SKIP_BUILD" == true ] && echo "Skipped" || echo "Completed")"
     echo ""
     log "Application is running at: $(grep "^APP_URL=" "${APP_DIR}/.env" | cut -d'=' -f2)"
     echo ""
