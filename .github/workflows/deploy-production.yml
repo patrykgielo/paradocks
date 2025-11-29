@@ -258,8 +258,8 @@ jobs:
         run: |
           echo "📋 Enabling maintenance mode..."
           ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << 'ENDSSH'
-            cd /var/www/projects/paradocks/app
-            docker compose exec -T app php artisan maintenance:enable \
+            cd /var/www/paradocks
+            docker compose -f docker-compose.prod.yml exec -T app php artisan maintenance:enable \
               --type=deployment \
               --message="Deploying version $VERSION - please wait 2-3 minutes" \
               --estimated-duration="2 minutes"
@@ -274,10 +274,10 @@ jobs:
         run: |
           echo "💾 Backing up database..."
           ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << ENDSSH
-            cd /var/www/projects/paradocks/app
+            cd /var/www/paradocks
             mkdir -p backups
             TIMESTAMP=\$(date +%Y%m%d-%H%M%S)
-            docker compose exec -T mysql mysqldump -u root -p\${MYSQL_ROOT_PASSWORD:-secret} paradocks > "backups/db-${VERSION}-\${TIMESTAMP}.sql"
+            docker compose -f docker-compose.prod.yml exec -T mysql mysqldump -u root -p\${MYSQL_ROOT_PASSWORD:-secret} paradocks > "backups/db-${VERSION}-\${TIMESTAMP}.sql"
             echo "✅ Database backup created: backups/db-${VERSION}-\${TIMESTAMP}.sql"
           ENDSSH
 
@@ -302,9 +302,9 @@ jobs:
         run: |
           echo "⬇️ Pulling Docker image: ghcr.io/${{ github.repository }}:${VERSION}"
           ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << ENDSSH
-            cd /var/www/projects/paradocks/app
+            cd /var/www/paradocks
             export VERSION=${VERSION}
-            docker compose pull app
+            docker compose -f docker-compose.prod.yml pull app
           ENDSSH
 
       - name: Restart containers with new image
@@ -316,9 +316,9 @@ jobs:
         run: |
           echo "🔄 Restarting containers..."
           ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << ENDSSH
-            cd /var/www/projects/paradocks/app
+            cd /var/www/paradocks
             export VERSION=${VERSION}
-            docker compose up -d app horizon queue scheduler
+            docker compose -f docker-compose.prod.yml up -d app horizon queue scheduler
             echo "✅ Containers restarted"
           ENDSSH
 
@@ -333,8 +333,8 @@ jobs:
 
           echo "🔍 Checking container health..."
           ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << 'ENDSSH'
-            cd /var/www/projects/paradocks/app
-            docker compose ps
+            cd /var/www/paradocks
+            docker compose -f docker-compose.prod.yml ps
           ENDSSH
 
       - name: Run database migrations
@@ -345,8 +345,8 @@ jobs:
         run: |
           echo "📊 Running database migrations..."
           ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << 'ENDSSH'
-            cd /var/www/projects/paradocks/app
-            docker compose exec -T app php artisan migrate --force
+            cd /var/www/paradocks
+            docker compose -f docker-compose.prod.yml exec -T app php artisan migrate --force
           ENDSSH
 
       - name: Clear application caches
@@ -357,9 +357,9 @@ jobs:
         run: |
           echo "🧹 Clearing caches..."
           ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << 'ENDSSH'
-            cd /var/www/projects/paradocks/app
-            docker compose exec -T app php artisan optimize:clear
-            docker compose exec -T app php artisan filament:optimize-clear
+            cd /var/www/paradocks
+            docker compose -f docker-compose.prod.yml exec -T app php artisan optimize:clear
+            docker compose -f docker-compose.prod.yml exec -T app php artisan filament:optimize-clear
           ENDSSH
 
       - name: Check application health
@@ -393,8 +393,8 @@ jobs:
         run: |
           echo "✅ Disabling maintenance mode..."
           ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << 'ENDSSH'
-            cd /var/www/projects/paradocks/app
-            docker compose exec -T app php artisan maintenance:disable
+            cd /var/www/paradocks
+            docker compose -f docker-compose.prod.yml exec -T app php artisan maintenance:disable
           ENDSSH
 
       - name: Rollback on failure
@@ -406,9 +406,9 @@ jobs:
         run: |
           echo "🔙 Deployment failed - rolling back..."
           ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << 'ENDSSH'
-            cd /var/www/projects/paradocks/app
+            cd /var/www/paradocks
             # Disable maintenance mode first
-            docker compose exec -T app php artisan maintenance:disable || true
+            docker compose -f docker-compose.prod.yml exec -T app php artisan maintenance:disable || true
             # Note: Manual rollback to previous version may be needed
             echo "❌ Deployment failed - please check logs and consider manual rollback"
           ENDSSH
