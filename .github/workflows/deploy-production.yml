@@ -257,10 +257,22 @@ jobs:
           VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
         run: |
           echo "🔍 Detecting VPS file ownership..."
+          # Fallback chain: project dir → /var/www → safe default
           VPS_UID=$(ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST \
-            "stat -c '%u' /var/www/paradocks/storage 2>/dev/null || echo '1000'")
+            "stat -c '%u' /var/www/paradocks 2>/dev/null || stat -c '%u' /var/www 2>/dev/null || echo '1000'")
           VPS_GID=$(ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST \
-            "stat -c '%g' /var/www/paradocks/storage 2>/dev/null || echo '1000'")
+            "stat -c '%g' /var/www/paradocks 2>/dev/null || stat -c '%g' /var/www 2>/dev/null || echo '1000'")
+
+          # Validate: reject root UID/GID (never correct for application)
+          if [ "$VPS_UID" = "0" ]; then
+            echo "⚠️ WARNING: Detected UID is 0 (root), using fallback 1000"
+            VPS_UID="1000"
+          fi
+          if [ "$VPS_GID" = "0" ]; then
+            echo "⚠️ WARNING: Detected GID is 0 (root), using fallback 1000"
+            VPS_GID="1000"
+          fi
+
           echo "Detected UID: $VPS_UID, GID: $VPS_GID"
           echo "uid=$VPS_UID" >> $GITHUB_OUTPUT
           echo "gid=$VPS_GID" >> $GITHUB_OUTPUT
@@ -327,9 +339,33 @@ jobs:
             cd /var/www/paradocks
             export VERSION=${VERSION}
             # Build image with dynamic UID/GID matching VPS file ownership
-            docker compose -f docker-compose.prod.yml build --build-arg USER_ID=${{ steps.detect-uid.outputs.uid }} --build-arg GROUP_ID=${{ steps.detect-uid.outputs.gid }} app
+            # --no-cache forces rebuild to apply new UID (bypasses Docker layer cache)
+            docker compose -f docker-compose.prod.yml build --no-cache --build-arg USER_ID=${{ steps.detect-uid.outputs.uid }} --build-arg GROUP_ID=${{ steps.detect-uid.outputs.gid }} app
             echo "✅ Image built with UID/GID matching VPS files"
           ENDSSH
+
+      - name: Verify Docker image has correct UID/GID
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
+        run: |
+          echo "🔍 Verifying built image UID/GID..."
+          BUILT_UID=$(ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << 'ENDSSH'
+            cd /var/www/paradocks
+            docker compose -f docker-compose.prod.yml run --rm --no-deps app id -u laravel
+          ENDSSH
+          )
+
+          if [ "$BUILT_UID" = "${{ steps.detect-uid.outputs.uid }}" ]; then
+            echo "✅ Verification PASSED: Container UID=$BUILT_UID matches detected UID"
+          else
+            echo "❌ Verification FAILED!"
+            echo "Expected UID: ${{ steps.detect-uid.outputs.uid }}"
+            echo "Built image UID: $BUILT_UID"
+            echo "Build cache may have interfered - try rebuilding with --no-cache"
+            exit 1
+          fi
 
       - name: Restart containers with new image
         env:
