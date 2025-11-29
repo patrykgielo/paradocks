@@ -25,6 +25,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      security-events: write
 
     outputs:
       version: ${{ steps.meta.outputs.version }}
@@ -63,7 +64,7 @@ jobs:
             ${{ runner.os }}-composer-
 
       - name: Install Composer dependencies
-        run: composer install --no-dev --optimize-autoloader --prefer-dist --no-interaction
+        run: composer install --prefer-dist --no-progress --no-interaction
 
       - name: Run Laravel Pint (Code Style)
         run: ./vendor/bin/pint --test
@@ -73,7 +74,7 @@ jobs:
         run: |
           cp .env.example .env
           php artisan key:generate
-          ./vendor/bin/phpunit --testsuite Unit
+          php artisan test --testsuite=Unit
         env:
           DB_CONNECTION: sqlite
           DB_DATABASE: ':memory:'
@@ -109,10 +110,11 @@ jobs:
           exit-code: 0  # Don't fail build, just report
 
       - name: Upload Trivy results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v2
-        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        if: always() && hashFiles('trivy-results.sarif') != ''
         with:
           sarif_file: 'trivy-results.sarif'
+        continue-on-error: true  # Don't fail if Security tab not enabled
 
       - name: Push Docker image to GHCR
         run: |
