@@ -76,6 +76,20 @@ jobs:
           mysql database: 'paradocks_test'
           mysql root password: 'secret'
 
+      - name: Wait for MySQL to be ready
+        run: |
+          echo "Waiting for MySQL to accept connections..."
+          for i in {1..30}; do
+            if mysqladmin ping -h127.0.0.1 -uroot -psecret --silent 2>/dev/null; then
+              echo "✓ MySQL is ready!"
+              exit 0
+            fi
+            echo "Attempt $i/30: MySQL not ready, retrying in 1s..."
+            sleep 1
+          done
+          echo "ERROR: MySQL failed to become ready after 30 attempts (30 seconds)"
+          exit 1
+
       - name: Prepare test environment
         run: |
           cp .env.example .env
