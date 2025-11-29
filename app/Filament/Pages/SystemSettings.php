@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages;
 
-use BackedEnum;
-use UnitEnum;
 use App\Services\Sms\SmsService;
 use App\Support\Settings\SettingsManager;
+use BackedEnum;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -17,11 +16,12 @@ use Filament\Forms\Components\Toggle;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
+use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Schema;
-use Filament\Pages\Page;
 use Illuminate\Support\Facades\Mail;
+use UnitEnum;
 
 /**
  * System Settings Page
@@ -36,12 +36,12 @@ class SystemSettings extends Page implements HasForms
     /**
      * Page view.
      */
-    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-cog-8-tooth';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-cog-8-tooth';
 
     /**
      * Navigation group.
      */
-    protected static string | UnitEnum | null $navigationGroup = 'Settings';
+    protected static string|UnitEnum|null $navigationGroup = 'Settings';
 
     /**
      * Navigation label.
@@ -570,11 +570,12 @@ class SystemSettings extends Page implements HasForms
         try {
             $user = auth()->user();
 
-            if (!$user || !$user->email) {
+            if (! $user || ! $user->email) {
                 Notification::make()
                     ->title('No user email found')
                     ->danger()
                     ->send();
+
                 return;
             }
 
@@ -606,12 +607,13 @@ class SystemSettings extends Page implements HasForms
         try {
             $user = auth()->user();
 
-            if (!$user || !$user->phone_e164) {
+            if (! $user || ! $user->phone_e164) {
                 Notification::make()
                     ->title('No phone number found')
                     ->body('Your user account does not have a phone number (phone_e164). Please add one to test SMS.')
                     ->danger()
                     ->send();
+
                 return;
             }
 

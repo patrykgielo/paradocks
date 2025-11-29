@@ -9,6 +9,7 @@ use Illuminate\Console\Command;
 class FixInvalidStaffAssignments extends Command
 {
     protected $signature = 'appointments:fix-staff {--dry-run : Preview changes without applying them}';
+
     protected $description = 'Fix appointments with invalid staff assignments by reassigning to available staff';
 
     public function __construct(private AppointmentService $appointmentService)
@@ -26,15 +27,16 @@ class FixInvalidStaffAssignments extends Command
         $invalidAppointments = Appointment::with(['staff', 'staff.roles', 'service'])
             ->get()
             ->filter(function ($appointment) {
-                return $appointment->staff && !$appointment->staff->hasRole('staff');
+                return $appointment->staff && ! $appointment->staff->hasRole('staff');
             });
 
         if ($invalidAppointments->isEmpty()) {
             $this->info('✓ No invalid staff assignments to fix!');
+
             return Command::SUCCESS;
         }
 
-        $this->warn('Found ' . $invalidAppointments->count() . ' appointment(s) to fix:');
+        $this->warn('Found '.$invalidAppointments->count().' appointment(s) to fix:');
         $this->newLine();
 
         $fixed = 0;
@@ -55,7 +57,7 @@ class FixInvalidStaffAssignments extends Command
 
                 $this->line("Appointment #{$appointment->id}: {$oldStaffName} → {$newStaffName}");
 
-                if (!$dryRun) {
+                if (! $dryRun) {
                     $appointment->staff_id = $availableStaff;
                     $appointment->saveQuietly(); // Skip observer validation during fix
                 }

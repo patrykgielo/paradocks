@@ -1,10 +1,10 @@
 <?php
+
 /**
  * Automated migration script for Filament v3 → v4 RelationManagers
  */
-
-$relationManagersDir = __DIR__ . '/app/Filament/Resources/EmployeeResource/RelationManagers';
-$managers = glob($relationManagersDir . '/*RelationManager.php');
+$relationManagersDir = __DIR__.'/app/Filament/Resources/EmployeeResource/RelationManagers';
+$managers = glob($relationManagersDir.'/*RelationManager.php');
 
 $stats = [
     'processed' => 0,
@@ -12,7 +12,7 @@ $stats = [
 ];
 
 foreach ($managers as $file) {
-    echo "Processing: " . basename($file) . "...\n";
+    echo 'Processing: '.basename($file)."...\n";
 
     $content = file_get_contents($file);
     $original = $content;
@@ -48,7 +48,7 @@ foreach ($managers as $file) {
     $content = str_replace('->bulkActions([', '->toolbarActions([', $content);
 
     // Change ->headerActions([]) → ->toolbarActions([]) if not already done
-    if (!str_contains($content, '->toolbarActions([') && str_contains($content, '->headerActions([')) {
+    if (! str_contains($content, '->toolbarActions([') && str_contains($content, '->headerActions([')) {
         $content = str_replace('->headerActions([', '->toolbarActions([', $content);
     }
 

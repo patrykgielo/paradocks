@@ -21,8 +21,7 @@ class ProfileController extends Controller
     public function __construct(
         protected ProfileService $profileService,
         protected SettingsManager $settings
-    ) {
-    }
+    ) {}
 
     /**
      * Display personal info page.
@@ -119,7 +118,7 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('login')
                 ->with('error', __('Musisz być zalogowany, aby zmienić email.'));
         }
@@ -183,7 +182,7 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('login')
                 ->with('error', __('Musisz być zalogowany, aby usunąć konto.'));
         }

@@ -47,6 +47,7 @@ class MaintenanceEnableCommand extends Command
         } catch (\ValueError $e) {
             $this->error("Invalid maintenance type: {$typeInput}");
             $this->line('Valid types: deployment, scheduled, emergency, prelaunch');
+
             return self::FAILURE;
         }
 
@@ -79,8 +80,9 @@ class MaintenanceEnableCommand extends Command
             $this->info('   Admins can bypass via role or secret token.');
         }
 
-        if (!$this->confirm('Do you want to continue?', true)) {
+        if (! $this->confirm('Do you want to continue?', true)) {
             $this->line('Operation cancelled.');
+
             return self::SUCCESS;
         }
 
@@ -103,7 +105,7 @@ class MaintenanceEnableCommand extends Command
                 [
                     ['Type', $type->label()],
                     ['Can Bypass', $type->canBypass() ? 'Yes (admins + token)' : 'No'],
-                    ['Retry After', $type->retryAfter() . ' seconds'],
+                    ['Retry After', $type->retryAfter().' seconds'],
                 ]
             );
 
@@ -123,7 +125,7 @@ class MaintenanceEnableCommand extends Command
             }
 
             // Show config if provided
-            if (!empty($config)) {
+            if (! empty($config)) {
                 $this->newLine();
                 $this->line('<fg=blue>Configuration:</>');
                 foreach ($config as $key => $value) {
@@ -134,6 +136,7 @@ class MaintenanceEnableCommand extends Command
             return self::SUCCESS;
         } catch (\Exception $e) {
             $this->error("Failed to enable maintenance mode: {$e->getMessage()}");
+
             return self::FAILURE;
         }
     }

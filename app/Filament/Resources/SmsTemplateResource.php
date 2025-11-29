@@ -4,30 +4,30 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
-use BackedEnum;
-use UnitEnum;
 use App\Filament\Resources\SmsTemplateResource\Pages;
 use App\Models\SmsTemplate;
 use App\Services\Sms\SmsService;
+use BackedEnum;
+use Filament\Actions;
 use Filament\Forms;
-use Filament\Schemas\Schema;
+use Filament\Notifications\Notification;
+use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
-use Filament\Notifications\Notification;
-use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Actions;
 use Illuminate\Support\HtmlString;
+use UnitEnum;
 
 class SmsTemplateResource extends Resource
 {
     protected static ?string $model = SmsTemplate::class;
 
-    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-chat-bubble-bottom-center-text';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-chat-bubble-bottom-center-text';
 
-    protected static string | UnitEnum | null $navigationGroup = 'SMS';
+    protected static string|UnitEnum|null $navigationGroup = 'SMS';
 
     protected static ?int $navigationSort = 1;
 
@@ -46,88 +46,88 @@ class SmsTemplateResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-                Section::make('Template Details')
-                    ->schema([
-                        Forms\Components\Select::make('key')
-                            ->label('Template Key')
-                            ->required()
-                            ->options([
-                                'appointment-created' => 'Appointment Created',
-                                'appointment-confirmed' => 'Appointment Confirmed by Admin',
-                                'appointment-rescheduled' => 'Appointment Rescheduled',
-                                'appointment-cancelled' => 'Appointment Cancelled',
-                                'appointment-reminder-24h' => 'Appointment Reminder (24h)',
-                                'appointment-reminder-2h' => 'Appointment Reminder (2h)',
-                                'appointment-followup' => 'Appointment Follow-up',
-                            ])
-                            ->searchable()
-                            ->helperText('Unique identifier for this template'),
+            Section::make('Template Details')
+                ->schema([
+                    Forms\Components\Select::make('key')
+                        ->label('Template Key')
+                        ->required()
+                        ->options([
+                            'appointment-created' => 'Appointment Created',
+                            'appointment-confirmed' => 'Appointment Confirmed by Admin',
+                            'appointment-rescheduled' => 'Appointment Rescheduled',
+                            'appointment-cancelled' => 'Appointment Cancelled',
+                            'appointment-reminder-24h' => 'Appointment Reminder (24h)',
+                            'appointment-reminder-2h' => 'Appointment Reminder (2h)',
+                            'appointment-followup' => 'Appointment Follow-up',
+                        ])
+                        ->searchable()
+                        ->helperText('Unique identifier for this template'),
 
-                        Forms\Components\Select::make('language')
-                            ->label('Language')
-                            ->required()
-                            ->options([
-                                'pl' => 'Polski (PL)',
-                                'en' => 'English (EN)',
-                            ])
-                            ->default('pl')
-                            ->helperText('Template language'),
+                    Forms\Components\Select::make('language')
+                        ->label('Language')
+                        ->required()
+                        ->options([
+                            'pl' => 'Polski (PL)',
+                            'en' => 'English (EN)',
+                        ])
+                        ->default('pl')
+                        ->helperText('Template language'),
 
-                        Forms\Components\TextInput::make('max_length')
-                            ->label('Max Length')
-                            ->numeric()
-                            ->default(160)
-                            ->required()
-                            ->minValue(70)
-                            ->maxValue(500)
-                            ->helperText('160 for GSM, 70 for Unicode'),
+                    Forms\Components\TextInput::make('max_length')
+                        ->label('Max Length')
+                        ->numeric()
+                        ->default(160)
+                        ->required()
+                        ->minValue(70)
+                        ->maxValue(500)
+                        ->helperText('160 for GSM, 70 for Unicode'),
 
-                        Forms\Components\Toggle::make('active')
-                            ->label('Active')
-                            ->default(true)
-                            ->helperText('Enable/disable this template'),
-                    ])
-                    ->columns(4),
+                    Forms\Components\Toggle::make('active')
+                        ->label('Active')
+                        ->default(true)
+                        ->helperText('Enable/disable this template'),
+                ])
+                ->columns(4),
 
-                Section::make('SMS Content')
-                    ->schema([
-                        Forms\Components\Textarea::make('message_body')
-                            ->label('Message Body')
-                            ->required()
-                            ->rows(6)
-                            ->maxLength(500)
-                            ->placeholder('Witaj {{customer_name}}! Przypominamy o wizycie {{appointment_date}} o {{appointment_time}}.')
-                            ->helperText('Use {{variable}} syntax for placeholders. Keep it short!')
-                            ->live()
-                            ->afterStateUpdated(function ($state, Set $set) {
-                                $length = mb_strlen($state ?? '');
-                                $set('character_count', $length);
-                            }),
+            Section::make('SMS Content')
+                ->schema([
+                    Forms\Components\Textarea::make('message_body')
+                        ->label('Message Body')
+                        ->required()
+                        ->rows(6)
+                        ->maxLength(500)
+                        ->placeholder('Witaj {{customer_name}}! Przypominamy o wizycie {{appointment_date}} o {{appointment_time}}.')
+                        ->helperText('Use {{variable}} syntax for placeholders. Keep it short!')
+                        ->live()
+                        ->afterStateUpdated(function ($state, Set $set) {
+                            $length = mb_strlen($state ?? '');
+                            $set('character_count', $length);
+                        }),
 
-                        Forms\Components\Placeholder::make('character_count')
-                            ->label('Character Count')
-                            ->content(fn (Get $get): string => mb_strlen($get('message_body') ?? '') . ' characters'),
-                    ]),
+                    Forms\Components\Placeholder::make('character_count')
+                        ->label('Character Count')
+                        ->content(fn (Get $get): string => mb_strlen($get('message_body') ?? '').' characters'),
+                ]),
 
-                Section::make('Available Variables')
-                    ->schema([
-                        Forms\Components\Placeholder::make('variable_legend')
-                            ->label('')
-                            ->content(fn (Get $get): HtmlString => self::getVariableLegendForKey($get('key')))
-                            ->helperText('Copy these variable names into your message using {{variable_name}} syntax'),
-                    ])
-                    ->description('Variables you can use in the message body')
-                    ->collapsible(),
+            Section::make('Available Variables')
+                ->schema([
+                    Forms\Components\Placeholder::make('variable_legend')
+                        ->label('')
+                        ->content(fn (Get $get): HtmlString => self::getVariableLegendForKey($get('key')))
+                        ->helperText('Copy these variable names into your message using {{variable_name}} syntax'),
+                ])
+                ->description('Variables you can use in the message body')
+                ->collapsible(),
 
-                Section::make('Advanced Settings')
-                    ->schema([
-                        Forms\Components\TagsInput::make('variables')
-                            ->label('Available Variables')
-                            ->placeholder('customer_name, appointment_date, etc.')
-                            ->helperText('List of variables available for this template (for reference only)'),
-                    ])
-                    ->collapsed(),
-            ]);
+            Section::make('Advanced Settings')
+                ->schema([
+                    Forms\Components\TagsInput::make('variables')
+                        ->label('Available Variables')
+                        ->placeholder('customer_name, appointment_date, etc.')
+                        ->helperText('List of variables available for this template (for reference only)'),
+                ])
+                ->collapsed(),
+        ]);
     }
 
     public static function table(Table $table): Table
@@ -315,7 +315,7 @@ class SmsTemplateResource extends Resource
      */
     protected static function getVariableLegendForKey(?string $key): HtmlString
     {
-        if (!$key) {
+        if (! $key) {
             return new HtmlString('<p class="text-sm text-gray-500">Select a template key to see available variables</p>');
         }
 
@@ -345,8 +345,8 @@ class SmsTemplateResource extends Resource
         $html = '<div class="space-y-2">';
         foreach ($variables as $var => $description) {
             $html .= '<div class="flex items-start gap-2">';
-            $html .= '<code class="text-xs bg-gray-100 px-2 py-1 rounded">{{' . $var . '}}</code>';
-            $html .= '<span class="text-sm text-gray-600">' . $description . '</span>';
+            $html .= '<code class="text-xs bg-gray-100 px-2 py-1 rounded">{{'.$var.'}}</code>';
+            $html .= '<span class="text-sm text-gray-600">'.$description.'</span>';
             $html .= '</div>';
         }
         $html .= '</div>';

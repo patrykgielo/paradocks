@@ -8,7 +8,6 @@ use App\Enums\MaintenanceType;
 use App\Services\MaintenanceService;
 use BackedEnum;
 use Filament\Actions\Action;
-use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -34,9 +33,9 @@ class MaintenanceSettings extends Page implements HasForms
 
     protected string $view = 'filament.pages.maintenance-settings';
 
-    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-wrench-screwdriver';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-wrench-screwdriver';
 
-    protected static string | UnitEnum | null $navigationGroup = 'System';
+    protected static string|UnitEnum|null $navigationGroup = 'System';
 
     protected static ?string $navigationLabel = 'Maintenance Mode';
 
@@ -115,10 +114,10 @@ class MaintenanceSettings extends Page implements HasForms
                         Select::make('type')
                             ->label('Maintenance Type')
                             ->options([
-                                MaintenanceType::DEPLOYMENT->value => MaintenanceType::DEPLOYMENT->label() . ' - Admins can bypass',
-                                MaintenanceType::SCHEDULED->value => MaintenanceType::SCHEDULED->label() . ' - Admins can bypass',
-                                MaintenanceType::EMERGENCY->value => MaintenanceType::EMERGENCY->label() . ' - Admins can bypass',
-                                MaintenanceType::PRELAUNCH->value => MaintenanceType::PRELAUNCH->label() . ' - NO bypass allowed',
+                                MaintenanceType::DEPLOYMENT->value => MaintenanceType::DEPLOYMENT->label().' - Admins can bypass',
+                                MaintenanceType::SCHEDULED->value => MaintenanceType::SCHEDULED->label().' - Admins can bypass',
+                                MaintenanceType::EMERGENCY->value => MaintenanceType::EMERGENCY->label().' - Admins can bypass',
+                                MaintenanceType::PRELAUNCH->value => MaintenanceType::PRELAUNCH->label().' - NO bypass allowed',
                             ])
                             ->required()
                             ->reactive()
@@ -226,14 +225,14 @@ class MaintenanceSettings extends Page implements HasForms
 
             // Add type-specific config
             if ($type === MaintenanceType::PRELAUNCH) {
-                if (!empty($data['launch_date'])) {
+                if (! empty($data['launch_date'])) {
                     $config['launch_date'] = $data['launch_date'];
                 }
-                if (!empty($data['image_url'])) {
+                if (! empty($data['image_url'])) {
                     $config['image_url'] = $data['image_url'];
                 }
             } else {
-                if (!empty($data['estimated_duration'])) {
+                if (! empty($data['estimated_duration'])) {
                     $config['estimated_duration'] = $data['estimated_duration'];
                 }
             }

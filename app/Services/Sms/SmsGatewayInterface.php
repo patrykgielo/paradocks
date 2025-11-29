@@ -15,10 +15,11 @@ interface SmsGatewayInterface
     /**
      * Send an SMS via the gateway.
      *
-     * @param string $to Recipient phone number in international format (+48...)
-     * @param string $message SMS message content (plain text)
-     * @param array $metadata Additional data (sender name, test mode, etc.)
+     * @param  string  $to  Recipient phone number in international format (+48...)
+     * @param  string  $message  SMS message content (plain text)
+     * @param  array  $metadata  Additional data (sender name, test mode, etc.)
      * @return array{sms_id: string, message_length: int, message_parts: int} SMS ID and metadata
+     *
      * @throws \Exception If sending fails
      */
     public function send(
@@ -30,7 +31,7 @@ interface SmsGatewayInterface
     /**
      * Validate phone number format.
      *
-     * @param string $phoneNumber Phone number to validate
+     * @param  string  $phoneNumber  Phone number to validate
      * @return bool True if valid international format
      */
     public function validatePhoneNumber(string $phoneNumber): bool;
@@ -38,7 +39,7 @@ interface SmsGatewayInterface
     /**
      * Calculate SMS length and number of parts.
      *
-     * @param string $message SMS message content
+     * @param  string  $message  SMS message content
      * @return array{length: int, parts: int, encoding: string} Length info
      */
     public function calculateMessageLength(string $message): array;

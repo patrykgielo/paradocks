@@ -2,28 +2,27 @@
 
 namespace App\Filament\Resources;
 
-use BackedEnum;
-use UnitEnum;
 use App\Filament\Resources\StaffDateExceptionResource\Pages;
-use App\Filament\Resources\StaffDateExceptionResource\RelationManagers;
 use App\Models\StaffDateException;
 use App\Models\User;
+use BackedEnum;
+use Filament\Actions;
 use Filament\Forms;
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Section;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Actions;
 use Illuminate\Database\Eloquent\Builder;
+use UnitEnum;
 
 class StaffDateExceptionResource extends Resource
 {
     protected static ?string $model = StaffDateException::class;
 
-    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-calendar-days';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-calendar-days';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Harmonogramy';
+    protected static string|UnitEnum|null $navigationGroup = 'Harmonogramy';
 
     protected static ?string $modelLabel = 'Wyjątek';
 
@@ -38,67 +37,67 @@ class StaffDateExceptionResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-                Section::make('Podstawowe informacje')
-                    ->schema([
-                        Forms\Components\Select::make('user_id')
-                            ->label('Pracownik')
-                            ->relationship('user', 'first_name', function (Builder $query) {
-                                $query->role('staff');
-                            })
-                            ->getOptionLabelFromRecordUsing(fn (User $record) => $record->name)
-                            ->searchable()
-                            ->preload()
-                            ->required(),
+            Section::make('Podstawowe informacje')
+                ->schema([
+                    Forms\Components\Select::make('user_id')
+                        ->label('Pracownik')
+                        ->relationship('user', 'first_name', function (Builder $query) {
+                            $query->role('staff');
+                        })
+                        ->getOptionLabelFromRecordUsing(fn (User $record) => $record->name)
+                        ->searchable()
+                        ->preload()
+                        ->required(),
 
-                        Forms\Components\DatePicker::make('exception_date')
-                            ->label('Data wyjątku')
-                            ->native(false)
-                            ->displayFormat('Y-m-d')
-                            ->required()
-                            ->helperText('Dzień, na który chcesz zastosować wyjątek'),
-                    ])->columns(2),
+                    Forms\Components\DatePicker::make('exception_date')
+                        ->label('Data wyjątku')
+                        ->native(false)
+                        ->displayFormat('Y-m-d')
+                        ->required()
+                        ->helperText('Dzień, na który chcesz zastosować wyjątek'),
+                ])->columns(2),
 
-                Section::make('Typ wyjątku')
-                    ->schema([
-                        Forms\Components\Radio::make('exception_type')
-                            ->label('Co się dzieje w tym dniu?')
-                            ->options([
-                                StaffDateException::TYPE_UNAVAILABLE => 'Niedostępny (dzień wolny, wizyta lekarska, choroba)',
-                                StaffDateException::TYPE_AVAILABLE => 'Dostępny (pracuje w normalnie wolny dzień)',
-                            ])
-                            ->descriptions([
-                                StaffDateException::TYPE_UNAVAILABLE => 'Pracownik nie będzie dostępny w tym dniu',
-                                StaffDateException::TYPE_AVAILABLE => 'Pracownik będzie dostępny mimo że normalnie nie pracuje',
-                            ])
-                            ->required()
-                            ->live()
-                            ->default(StaffDateException::TYPE_UNAVAILABLE),
-                    ]),
+            Section::make('Typ wyjątku')
+                ->schema([
+                    Forms\Components\Radio::make('exception_type')
+                        ->label('Co się dzieje w tym dniu?')
+                        ->options([
+                            StaffDateException::TYPE_UNAVAILABLE => 'Niedostępny (dzień wolny, wizyta lekarska, choroba)',
+                            StaffDateException::TYPE_AVAILABLE => 'Dostępny (pracuje w normalnie wolny dzień)',
+                        ])
+                        ->descriptions([
+                            StaffDateException::TYPE_UNAVAILABLE => 'Pracownik nie będzie dostępny w tym dniu',
+                            StaffDateException::TYPE_AVAILABLE => 'Pracownik będzie dostępny mimo że normalnie nie pracuje',
+                        ])
+                        ->required()
+                        ->live()
+                        ->default(StaffDateException::TYPE_UNAVAILABLE),
+                ]),
 
-                Section::make('Zakres czasowy')
-                    ->description('Opcjonalne: jeśli nie wypełnisz, wyjątek dotyczy całego dnia')
-                    ->schema([
-                        Forms\Components\TimePicker::make('start_time')
-                            ->label('Od godziny')
-                            ->seconds(false)
-                            ->helperText('Zostaw puste jeśli dotyczy całego dnia'),
+            Section::make('Zakres czasowy')
+                ->description('Opcjonalne: jeśli nie wypełnisz, wyjątek dotyczy całego dnia')
+                ->schema([
+                    Forms\Components\TimePicker::make('start_time')
+                        ->label('Od godziny')
+                        ->seconds(false)
+                        ->helperText('Zostaw puste jeśli dotyczy całego dnia'),
 
-                        Forms\Components\TimePicker::make('end_time')
-                            ->label('Do godziny')
-                            ->seconds(false)
-                            ->after('start_time')
-                            ->helperText('Zostaw puste jeśli dotyczy całego dnia'),
-                    ])->columns(2),
+                    Forms\Components\TimePicker::make('end_time')
+                        ->label('Do godziny')
+                        ->seconds(false)
+                        ->after('start_time')
+                        ->helperText('Zostaw puste jeśli dotyczy całego dnia'),
+                ])->columns(2),
 
-                Section::make('Dodatkowe informacje')
-                    ->schema([
-                        Forms\Components\Textarea::make('reason')
-                            ->label('Powód (opcjonalnie)')
-                            ->rows(3)
-                            ->placeholder('np. "Wizyta u lekarza", "Dzień wolny", "Święto"')
-                            ->columnSpanFull(),
-                    ]),
-            ]);
+            Section::make('Dodatkowe informacje')
+                ->schema([
+                    Forms\Components\Textarea::make('reason')
+                        ->label('Powód (opcjonalnie)')
+                        ->rows(3)
+                        ->placeholder('np. "Wizyta u lekarza", "Dzień wolny", "Święto"')
+                        ->columnSpanFull(),
+                ]),
+        ]);
     }
 
     public static function table(Table $table): Table
@@ -115,19 +114,18 @@ class StaffDateExceptionResource extends Resource
                     ->date('Y-m-d')
                     ->sortable()
                     ->badge()
-                    ->color(fn (StaffDateException $record) =>
-                        $record->exception_date->isPast() ? 'gray' : 'info'
+                    ->color(fn (StaffDateException $record) => $record->exception_date->isPast() ? 'gray' : 'info'
                     ),
 
                 Tables\Columns\TextColumn::make('exception_type')
                     ->label('Typ')
                     ->badge()
-                    ->formatStateUsing(fn (string $state) => match($state) {
+                    ->formatStateUsing(fn (string $state) => match ($state) {
                         StaffDateException::TYPE_UNAVAILABLE => 'Niedostępny',
                         StaffDateException::TYPE_AVAILABLE => 'Dostępny',
                         default => $state,
                     })
-                    ->color(fn (string $state) => match($state) {
+                    ->color(fn (string $state) => match ($state) {
                         StaffDateException::TYPE_UNAVAILABLE => 'danger',
                         StaffDateException::TYPE_AVAILABLE => 'success',
                         default => 'gray',

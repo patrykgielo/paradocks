@@ -31,7 +31,7 @@ use Illuminate\Support\Facades\Log;
  * Scheduled: Daily at 2:00 AM via Laravel Scheduler
  * Queue: default
  */
-class CleanupOldEmailLogsJob implements ShouldQueue, ShouldBeUnique
+class CleanupOldEmailLogsJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -63,7 +63,7 @@ class CleanupOldEmailLogsJob implements ShouldQueue, ShouldBeUnique
      */
     public function uniqueId(): string
     {
-        return 'cleanup-old-email-logs:' . now()->format('Y-m-d');
+        return 'cleanup-old-email-logs:'.now()->format('Y-m-d');
     }
 
     /**

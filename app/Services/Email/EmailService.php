@@ -24,21 +24,19 @@ class EmailService
 {
     /**
      * Create a new Email Service instance.
-     *
-     * @param \App\Services\Email\EmailGatewayInterface $gateway
-     * @param \App\Support\Settings\SettingsManager $settings
      */
     public function __construct(
         private readonly EmailGatewayInterface $gateway,
         private readonly SettingsManager $settings
-    ) {
-    }
+    ) {}
 
     /**
      * Email types for consent checking.
      */
     public const TYPE_TRANSACTIONAL = 'transactional';
+
     public const TYPE_MARKETING = 'marketing';
+
     public const TYPE_NEWSLETTER = 'newsletter';
 
     /**
@@ -46,13 +44,14 @@ class EmailService
      *
      * This is the main entry point for sending emails in the application.
      *
-     * @param string $templateKey Template identifier (e.g., 'user-registered')
-     * @param string $language Language code ('pl', 'en')
-     * @param string $recipient Recipient email address
-     * @param array $data Variables to render in template
-     * @param array $metadata Additional data for tracking (user_id, appointment_id, etc.)
-     * @param string $type Email type (transactional, marketing, newsletter) - affects consent check
+     * @param  string  $templateKey  Template identifier (e.g., 'user-registered')
+     * @param  string  $language  Language code ('pl', 'en')
+     * @param  string  $recipient  Recipient email address
+     * @param  array  $data  Variables to render in template
+     * @param  array  $metadata  Additional data for tracking (user_id, appointment_id, etc.)
+     * @param  string  $type  Email type (transactional, marketing, newsletter) - affects consent check
      * @return \App\Models\EmailSend The email send record
+     *
      * @throws \Exception If email is suppressed or template not found
      */
     public function sendFromTemplate(
@@ -84,7 +83,7 @@ class EmailService
                     default => true,
                 };
 
-                if (!$hasConsent) {
+                if (! $hasConsent) {
                     Log::warning('Email blocked: user has not given consent or has opted out', [
                         'recipient' => $recipient,
                         'user_id' => $metadata['user_id'],
@@ -104,7 +103,7 @@ class EmailService
             ->first();
 
         // Step 3: Try fallback Blade view if template not found
-        if (!$template) {
+        if (! $template) {
             $bladeViewName = "emails.{$templateKey}-{$language}";
 
             if (view()->exists($bladeViewName)) {
@@ -215,8 +214,7 @@ class EmailService
     /**
      * Render email template with Blade engine.
      *
-     * @param \App\Models\EmailTemplate $template
-     * @param array $data Variables to render
+     * @param  array  $data  Variables to render
      * @return array{subject: string, html: string, text: string|null}
      */
     public function renderTemplate(EmailTemplate $template, array $data): array
@@ -249,13 +247,13 @@ class EmailService
      *
      * Used when template doesn't exist in database but Blade file exists.
      *
-     * @param string $bladeViewName Blade view name (e.g., 'emails.user-registered-pl')
-     * @param string $templateKey Template identifier
-     * @param string $language Language code
-     * @param string $recipient Recipient email address
-     * @param array $data Variables to render
-     * @param array $metadata Additional tracking data
-     * @return \App\Models\EmailSend
+     * @param  string  $bladeViewName  Blade view name (e.g., 'emails.user-registered-pl')
+     * @param  string  $templateKey  Template identifier
+     * @param  string  $language  Language code
+     * @param  string  $recipient  Recipient email address
+     * @param  array  $data  Variables to render
+     * @param  array  $metadata  Additional tracking data
+     *
      * @throws \Exception
      */
     private function sendFromBladeView(
@@ -270,7 +268,7 @@ class EmailService
         $html = view($bladeViewName, $data)->render();
 
         // Extract subject from data or use default
-        $subject = $data['subject'] ?? "Email from " . config('app.name');
+        $subject = $data['subject'] ?? 'Email from '.config('app.name');
 
         // Generate message key
         $messageKey = $this->generateMessageKey($templateKey, $recipient, $metadata);
@@ -330,11 +328,6 @@ class EmailService
      * Generate unique message key for idempotency.
      *
      * Format: md5("{template_key}:{recipient}:{metadata_json}")
-     *
-     * @param string $templateKey
-     * @param string $recipient
-     * @param array $metadata
-     * @return string
      */
     private function generateMessageKey(string $templateKey, string $recipient, array $metadata): string
     {

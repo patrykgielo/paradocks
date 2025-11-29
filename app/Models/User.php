@@ -17,7 +17,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements FilamentUser, HasName
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasRoles;
+    use HasFactory, HasRoles, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -99,8 +99,6 @@ class User extends Authenticatable implements FilamentUser, HasName
 
     /**
      * Check if user has given SMS consent and has not opted out.
-     *
-     * @return bool
      */
     public function hasSmsConsent(): bool
     {
@@ -110,9 +108,8 @@ class User extends Authenticatable implements FilamentUser, HasName
     /**
      * Grant SMS consent with tracking.
      *
-     * @param string|null $ip IP address of consent
-     * @param string|null $userAgent User agent string
-     * @return void
+     * @param  string|null  $ip  IP address of consent
+     * @param  string|null  $userAgent  User agent string
      */
     public function grantSmsConsent(?string $ip = null, ?string $userAgent = null): void
     {
@@ -128,8 +125,7 @@ class User extends Authenticatable implements FilamentUser, HasName
     /**
      * Revoke SMS consent (opt-out).
      *
-     * @param string $method Opt-out method: 'manual', 'STOP_reply', 'admin'
-     * @return void
+     * @param  string  $method  Opt-out method: 'manual', 'STOP_reply', 'admin'
      */
     public function revokeSmsConsent(string $method = 'manual'): void
     {
@@ -142,12 +138,10 @@ class User extends Authenticatable implements FilamentUser, HasName
     /**
      * Get the user's full name.
      * Returns concatenation of first_name and last_name.
-     *
-     * @return string
      */
     public function getFullNameAttribute(): string
     {
-        return trim(($this->first_name ?? '') . ' ' . ($this->last_name ?? ''));
+        return trim(($this->first_name ?? '').' '.($this->last_name ?? ''));
     }
 
     /**
@@ -171,7 +165,6 @@ class User extends Authenticatable implements FilamentUser, HasName
      *
      * @see getFullNameAttribute() - Canonical implementation of name concatenation
      * @see getFilamentName() - Used by Filament admin panel (also calls getFullNameAttribute)
-     *
      * @since November 2025 - Added to support email notifications and templates
      */
     public function getNameAttribute(): string
@@ -182,8 +175,6 @@ class User extends Authenticatable implements FilamentUser, HasName
     /**
      * Get the name to display in Filament (avatar, menu, etc.)
      * Required by Filament\Models\Contracts\HasName interface.
-     *
-     * @return string
      */
     public function getFilamentName(): string
     {
@@ -192,8 +183,6 @@ class User extends Authenticatable implements FilamentUser, HasName
 
     /**
      * Get user's preferred language with fallback.
-     *
-     * @return string
      */
     public function getPreferredLanguageAttribute(?string $value): string
     {
@@ -267,7 +256,7 @@ class User extends Authenticatable implements FilamentUser, HasName
     public function services()
     {
         return $this->belongsToMany(Service::class, 'service_staff', 'user_id', 'service_id')
-                    ->withTimestamps();
+            ->withTimestamps();
     }
 
     // =========================================================================
@@ -450,7 +439,7 @@ class User extends Authenticatable implements FilamentUser, HasName
     /**
      * Request email change (generates token, stores pending email).
      *
-     * @param string $newEmail The new email to change to
+     * @param  string  $newEmail  The new email to change to
      * @return string The verification token
      */
     public function requestEmailChange(string $newEmail): string
@@ -469,7 +458,7 @@ class User extends Authenticatable implements FilamentUser, HasName
     /**
      * Confirm email change with token.
      *
-     * @param string $token The verification token
+     * @param  string  $token  The verification token
      * @return bool True if successful, false if invalid/expired
      */
     public function confirmEmailChange(string $token): bool
@@ -541,7 +530,7 @@ class User extends Authenticatable implements FilamentUser, HasName
      * Confirm account deletion with token.
      * Anonymizes user data instead of hard delete (preserves appointment history).
      *
-     * @param string $token The confirmation token
+     * @param  string  $token  The confirmation token
      * @return bool True if successful
      */
     public function confirmAccountDeletion(string $token): bool

@@ -8,10 +8,10 @@ use App\Enums\MaintenanceType;
 use App\Filament\Resources\MaintenanceEventResource\Pages;
 use App\Models\MaintenanceEvent;
 use BackedEnum;
+use Filament\Actions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Filament\Actions;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -21,9 +21,9 @@ class MaintenanceEventResource extends Resource
 {
     protected static ?string $model = MaintenanceEvent::class;
 
-    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-clipboard-document-list';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-list';
 
-    protected static string | UnitEnum | null $navigationGroup = 'System';
+    protected static string|UnitEnum|null $navigationGroup = 'System';
 
     protected static ?int $navigationSort = 11;
 

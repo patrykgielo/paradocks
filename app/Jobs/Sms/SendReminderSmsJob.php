@@ -34,7 +34,7 @@ use Illuminate\Support\Facades\Log;
  * Scheduled: Hourly via Laravel Scheduler
  * Queue: reminders
  */
-class SendReminderSmsJob implements ShouldQueue, ShouldBeUnique
+class SendReminderSmsJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -61,7 +61,7 @@ class SendReminderSmsJob implements ShouldQueue, ShouldBeUnique
      */
     public function uniqueId(): string
     {
-        return 'send-reminder-sms:' . now()->format('Y-m-d-H');
+        return 'send-reminder-sms:'.now()->format('Y-m-d-H');
     }
 
     /**
@@ -73,8 +73,9 @@ class SendReminderSmsJob implements ShouldQueue, ShouldBeUnique
 
         // Check if SMS is enabled globally
         $smsSettings = $settings->group('sms');
-        if (!($smsSettings['enabled'] ?? true)) {
+        if (! ($smsSettings['enabled'] ?? true)) {
             Log::info('[SendReminderSmsJob] SMS globally disabled, skipping');
+
             return;
         }
 
@@ -129,6 +130,7 @@ class SendReminderSmsJob implements ShouldQueue, ShouldBeUnique
                         'phone' => $appointment->customer_phone,
                     ]);
                     $stats['24h_skipped']++;
+
                     continue;
                 }
 
@@ -210,6 +212,7 @@ class SendReminderSmsJob implements ShouldQueue, ShouldBeUnique
                         'phone' => $appointment->customer_phone,
                     ]);
                     $stats['2h_skipped']++;
+
                     continue;
                 }
 

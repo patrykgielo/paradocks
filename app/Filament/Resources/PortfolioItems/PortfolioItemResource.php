@@ -10,24 +10,24 @@ use App\Filament\Resources\PortfolioItems\Pages\ListPortfolioItems;
 use App\Models\Category;
 use App\Models\PortfolioItem;
 use BackedEnum;
-use UnitEnum;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Resources\Resource;
-use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
+use UnitEnum;
 
 class PortfolioItemResource extends Resource
 {
     protected static ?string $model = PortfolioItem::class;
 
-    protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedSquares2x2;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedSquares2x2;
 
-    protected static string | UnitEnum | null $navigationGroup = 'Content';
+    protected static string|UnitEnum|null $navigationGroup = 'Content';
 
     protected static ?int $navigationSort = 4;
 
@@ -76,6 +76,7 @@ class PortfolioItemResource extends Resource
                             ->createOptionUsing(function (array $data) {
                                 $data['type'] = 'portfolio';
                                 $data['slug'] = Str::slug($data['name']);
+
                                 return Category::create($data)->getKey();
                             }),
 
@@ -212,8 +213,7 @@ class PortfolioItemResource extends Resource
                     ->badge()
                     ->dateTime('Y-m-d H:i')
                     ->color(fn ($state) => $state && $state->isPast() ? 'success' : 'warning')
-                    ->formatStateUsing(fn ($state) =>
-                        $state
+                    ->formatStateUsing(fn ($state) => $state
                             ? ($state->isPast() ? 'Opublikowano' : 'Zaplanowano')
                             : 'Wersja robocza'
                     )

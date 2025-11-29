@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Automated migration script for Filament v3 → v4 Resources
  *
@@ -13,9 +14,8 @@
  * 8. Change ->actions([]) → ->recordActions([])
  * 9. Change ->bulkActions([]) → ->toolbarActions([])
  */
-
-$resourcesDir = __DIR__ . '/app/Filament/Resources';
-$resources = glob($resourcesDir . '/*Resource.php');
+$resourcesDir = __DIR__.'/app/Filament/Resources';
+$resources = glob($resourcesDir.'/*Resource.php');
 
 $stats = [
     'processed' => 0,
@@ -24,13 +24,13 @@ $stats = [
 ];
 
 foreach ($resources as $file) {
-    echo "Processing: " . basename($file) . "...\n";
+    echo 'Processing: '.basename($file)."...\n";
 
     $content = file_get_contents($file);
     $original = $content;
 
     // 1. Add BackedEnum, UnitEnum imports if not present
-    if (!str_contains($content, 'use BackedEnum;')) {
+    if (! str_contains($content, 'use BackedEnum;')) {
         $content = preg_replace(
             '/(namespace [^;]+;\n\n)/s',
             "$1use BackedEnum;\nuse UnitEnum;\n",

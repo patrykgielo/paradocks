@@ -38,7 +38,7 @@ use Illuminate\Support\Facades\Log;
  * Scheduled: Daily at 8:00 AM via Laravel Scheduler
  * Queue: emails
  */
-class SendAdminDigestJob implements ShouldQueue, ShouldBeUnique
+class SendAdminDigestJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -65,7 +65,7 @@ class SendAdminDigestJob implements ShouldQueue, ShouldBeUnique
      */
     public function uniqueId(): string
     {
-        return 'send-admin-digest:' . now()->format('Y-m-d');
+        return 'send-admin-digest:'.now()->format('Y-m-d');
     }
 
     /**
@@ -115,7 +115,7 @@ class SendAdminDigestJob implements ShouldQueue, ShouldBeUnique
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get()
-            ->map(fn($apt) => [
+            ->map(fn ($apt) => [
                 'id' => $apt->id,
                 'customer_name' => $apt->customer_name,
                 'customer_email' => $apt->customer_email,
@@ -133,7 +133,7 @@ class SendAdminDigestJob implements ShouldQueue, ShouldBeUnique
             ->whereDate('appointment_date', $today)
             ->orderBy('start_time')
             ->get()
-            ->map(fn($apt) => [
+            ->map(fn ($apt) => [
                 'id' => $apt->id,
                 'customer_name' => $apt->customer_name,
                 'service_name' => $apt->service?->name ?? 'N/A',
@@ -161,6 +161,7 @@ class SendAdminDigestJob implements ShouldQueue, ShouldBeUnique
                         'email' => $admin->email,
                     ]);
                     $skippedCount++;
+
                     continue;
                 }
 
@@ -182,7 +183,7 @@ class SendAdminDigestJob implements ShouldQueue, ShouldBeUnique
                     'recent_appointments' => $recentAppointments,
                     'today_appointments_list' => $todayAppointments,
                     'app_name' => config('app.name'),
-                    'admin_panel_url' => config('app.url') . '/admin',
+                    'admin_panel_url' => config('app.url').'/admin',
                 ];
 
                 // Send email

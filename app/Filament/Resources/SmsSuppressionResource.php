@@ -4,25 +4,25 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
-use BackedEnum;
-use UnitEnum;
 use App\Filament\Resources\SmsSuppressionResource\Pages;
 use App\Models\SmsSuppression;
+use BackedEnum;
+use Filament\Actions;
 use Filament\Forms;
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Section;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Actions;
+use UnitEnum;
 
 class SmsSuppressionResource extends Resource
 {
     protected static ?string $model = SmsSuppression::class;
 
-    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-no-symbol';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-no-symbol';
 
-    protected static string | UnitEnum | null $navigationGroup = 'SMS';
+    protected static string|UnitEnum|null $navigationGroup = 'SMS';
 
     protected static ?int $navigationSort = 4;
 
@@ -31,34 +31,34 @@ class SmsSuppressionResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-                Section::make('Suppression Details')
-                    ->schema([
-                        Forms\Components\TextInput::make('phone')
-                            ->label('Phone Number')
-                            ->tel()
-                            ->required()
-                            ->placeholder('+48501234567')
-                            ->helperText('International format (+48...)'),
+            Section::make('Suppression Details')
+                ->schema([
+                    Forms\Components\TextInput::make('phone')
+                        ->label('Phone Number')
+                        ->tel()
+                        ->required()
+                        ->placeholder('+48501234567')
+                        ->helperText('International format (+48...)'),
 
-                        Forms\Components\Select::make('reason')
-                            ->label('Suppression Reason')
-                            ->required()
-                            ->options([
-                                'invalid_number' => 'Invalid Number',
-                                'opted_out' => 'Opted Out',
-                                'failed_repeatedly' => 'Failed Repeatedly',
-                                'manual' => 'Manual Suppression',
-                            ])
-                            ->helperText('Reason for adding to suppression list'),
+                    Forms\Components\Select::make('reason')
+                        ->label('Suppression Reason')
+                        ->required()
+                        ->options([
+                            'invalid_number' => 'Invalid Number',
+                            'opted_out' => 'Opted Out',
+                            'failed_repeatedly' => 'Failed Repeatedly',
+                            'manual' => 'Manual Suppression',
+                        ])
+                        ->helperText('Reason for adding to suppression list'),
 
-                        Forms\Components\DateTimePicker::make('suppressed_at')
-                            ->label('Suppressed At')
-                            ->default(now())
-                            ->required()
-                            ->helperText('When this number was suppressed'),
-                    ])
-                    ->columns(3),
-            ]);
+                    Forms\Components\DateTimePicker::make('suppressed_at')
+                        ->label('Suppressed At')
+                        ->default(now())
+                        ->required()
+                        ->helperText('When this number was suppressed'),
+                ])
+                ->columns(3),
+        ]);
     }
 
     public static function table(Table $table): Table

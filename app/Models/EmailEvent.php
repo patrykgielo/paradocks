@@ -48,8 +48,6 @@ class EmailEvent extends Model
 
     /**
      * Get the email send associated with this event.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function emailSend(): BelongsTo
     {
@@ -59,8 +57,7 @@ class EmailEvent extends Model
     /**
      * Scope a query to filter by event type.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $type
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeType($query, string $type)
@@ -71,7 +68,7 @@ class EmailEvent extends Model
     /**
      * Scope a query to only include events from the last 30 days.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeRecent($query)
@@ -81,8 +78,6 @@ class EmailEvent extends Model
 
     /**
      * Check if this is a sent event.
-     *
-     * @return bool
      */
     public function isSent(): bool
     {
@@ -91,8 +86,6 @@ class EmailEvent extends Model
 
     /**
      * Check if this is a delivered event.
-     *
-     * @return bool
      */
     public function isDelivered(): bool
     {
@@ -101,8 +94,6 @@ class EmailEvent extends Model
 
     /**
      * Check if this is a bounced event.
-     *
-     * @return bool
      */
     public function isBounced(): bool
     {
@@ -111,8 +102,6 @@ class EmailEvent extends Model
 
     /**
      * Check if this is a complained event.
-     *
-     * @return bool
      */
     public function isComplained(): bool
     {
@@ -121,8 +110,6 @@ class EmailEvent extends Model
 
     /**
      * Check if this is an opened event.
-     *
-     * @return bool
      */
     public function isOpened(): bool
     {
@@ -131,8 +118,6 @@ class EmailEvent extends Model
 
     /**
      * Check if this is a clicked event.
-     *
-     * @return bool
      */
     public function isClicked(): bool
     {

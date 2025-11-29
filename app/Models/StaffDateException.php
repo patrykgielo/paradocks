@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Builder;
-use Carbon\Carbon;
 
 class StaffDateException extends Model
 {
@@ -13,6 +13,7 @@ class StaffDateException extends Model
      * Exception types.
      */
     public const TYPE_UNAVAILABLE = 'unavailable';
+
     public const TYPE_AVAILABLE = 'available';
 
     /**
@@ -107,7 +108,7 @@ class StaffDateException extends Model
      */
     public function getTypeLabel(): string
     {
-        return match($this->exception_type) {
+        return match ($this->exception_type) {
             self::TYPE_UNAVAILABLE => 'Niedostępny',
             self::TYPE_AVAILABLE => 'Dostępny',
             default => 'Nieznany',
