@@ -277,19 +277,6 @@ jobs:
           echo "uid=$VPS_UID" >> $GITHUB_OUTPUT
           echo "gid=$VPS_GID" >> $GITHUB_OUTPUT
 
-      - name: Enable MaintenanceService
-        env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USER: ${{ secrets.VPS_USER }}
-          VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
-          VERSION: ${{ needs.build.outputs.version }}
-        run: |
-          echo "📋 Enabling maintenance mode..."
-          ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << 'ENDSSH'
-            cd /var/www/paradocks
-            docker compose -f docker-compose.prod.yml exec -T app php artisan down --render="errors::503" --retry=60
-          ENDSSH
-
       - name: Backup database
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
@@ -306,107 +293,37 @@ jobs:
             echo "✅ Database backup created: backups/db-${VERSION}-\${TIMESTAMP}.sql"
           ENDSSH
 
-      - name: Login to GHCR on VPS
-        env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USER: ${{ secrets.VPS_USER }}
-          VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
-          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "🔐 Logging into GitHub Container Registry..."
-          ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << ENDSSH
-            echo "${GHCR_TOKEN}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          ENDSSH
-
-      - name: Upload Dockerfile to VPS
+      - name: Upload deployment script to VPS
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
         run: |
-          echo "📤 Uploading updated Dockerfile to VPS..."
-          scp -i ~/.ssh/deploy_key -P $VPS_PORT ./Dockerfile $VPS_USER@$VPS_HOST:/var/www/paradocks/Dockerfile
+          echo "📤 Uploading healthcheck deployment script..."
+          scp -i ~/.ssh/deploy_key -P $VPS_PORT ./scripts/deploy-with-healthcheck.sh $VPS_USER@$VPS_HOST:/tmp/
 
-      - name: Build Docker image on VPS with matching UID/GID
+      - name: Deploy with zero-downtime healthcheck strategy
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
           VERSION: ${{ needs.build.outputs.version }}
         run: |
-          echo "🔨 Building Docker image with UID=${{ steps.detect-uid.outputs.uid }} GID=${{ steps.detect-uid.outputs.gid }}"
+          echo "🚀 Starting zero-downtime deployment with healthcheck strategy..."
+          echo "📋 This deployment will:"
+          echo "  1. Build new container with UID=${{ steps.detect-uid.outputs.uid }}"
+          echo "  2. Wait for new container to be healthy"
+          echo "  3. Run migrations (~15s controlled downtime)"
+          echo "  4. Switch traffic to new container"
+          echo "  5. Clean up old containers"
+
           ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << ENDSSH
             cd /var/www/paradocks
             export VERSION=${VERSION}
-            # Build image with dynamic UID/GID matching VPS file ownership
-            # --no-cache forces rebuild to apply new UID (bypasses Docker layer cache)
-            docker compose -f docker-compose.prod.yml build --no-cache --build-arg USER_ID=${{ steps.detect-uid.outputs.uid }} --build-arg GROUP_ID=${{ steps.detect-uid.outputs.gid }} app
-            echo "✅ Image built with UID/GID matching VPS files"
-          ENDSSH
-
-      - name: Verify Docker image has correct UID/GID
-        env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USER: ${{ secrets.VPS_USER }}
-          VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
-        run: |
-          echo "🔍 Verifying built image UID/GID..."
-          BUILT_UID=$(ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << 'ENDSSH'
-            cd /var/www/paradocks
-            docker compose -f docker-compose.prod.yml run --rm --no-deps app id -u laravel
-          ENDSSH
-          )
-
-          if [ "$BUILT_UID" = "${{ steps.detect-uid.outputs.uid }}" ]; then
-            echo "✅ Verification PASSED: Container UID=$BUILT_UID matches detected UID"
-          else
-            echo "❌ Verification FAILED!"
-            echo "Expected UID: ${{ steps.detect-uid.outputs.uid }}"
-            echo "Built image UID: $BUILT_UID"
-            echo "Build cache may have interfered - try rebuilding with --no-cache"
-            exit 1
-          fi
-
-      - name: Restart containers with new image
-        env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USER: ${{ secrets.VPS_USER }}
-          VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
-          VERSION: ${{ needs.build.outputs.version }}
-        run: |
-          echo "🔄 Restarting containers..."
-          ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << ENDSSH
-            cd /var/www/paradocks
-            export VERSION=${VERSION}
-            docker compose -f docker-compose.prod.yml up -d app horizon queue scheduler
-            echo "✅ Containers restarted"
-          ENDSSH
-
-      - name: Wait for containers to be healthy
-        env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USER: ${{ secrets.VPS_USER }}
-          VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
-        run: |
-          echo "⏳ Waiting for containers to start..."
-          sleep 15
-
-          echo "🔍 Checking container health..."
-          ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << 'ENDSSH'
-            cd /var/www/paradocks
-            docker compose -f docker-compose.prod.yml ps
-          ENDSSH
-
-      - name: Run database migrations
-        env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USER: ${{ secrets.VPS_USER }}
-          VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
-        run: |
-          echo "📊 Running database migrations..."
-          ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << 'ENDSSH'
-            cd /var/www/paradocks
-            docker compose -f docker-compose.prod.yml exec -T app php artisan migrate --force
+            export DOCKER_USER_ID=${{ steps.detect-uid.outputs.uid }}
+            export DOCKER_GROUP_ID=${{ steps.detect-uid.outputs.gid }}
+            chmod +x /tmp/deploy-with-healthcheck.sh
+            /tmp/deploy-with-healthcheck.sh
           ENDSSH
 
       - name: Clear application caches
@@ -444,19 +361,6 @@ jobs:
             echo "health_status=passed" >> $GITHUB_OUTPUT
           fi
 
-      - name: Disable MaintenanceService
-        if: success()
-        env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USER: ${{ secrets.VPS_USER }}
-          VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
-        run: |
-          echo "✅ Disabling maintenance mode..."
-          ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << 'ENDSSH'
-            cd /var/www/paradocks
-            docker compose -f docker-compose.prod.yml exec -T app php artisan up
-          ENDSSH
-
       - name: Rollback on failure
         if: failure()
         env:
@@ -464,14 +368,9 @@ jobs:
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
         run: |
-          echo "🔙 Deployment failed - rolling back..."
-          ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << 'ENDSSH'
-            cd /var/www/paradocks
-            # Disable maintenance mode first
-            docker compose -f docker-compose.prod.yml exec -T app php artisan up || true
-            # Note: Manual rollback to previous version may be needed
-            echo "❌ Deployment failed - please check logs and consider manual rollback"
-          ENDSSH
+          echo "🔙 Deployment failed - healthcheck script should have rolled back automatically"
+          echo "⚠️ If manual intervention is needed, SSH to VPS and check container status"
+          echo "📋 Rollback command: docker compose -f docker-compose.prod.yml up -d --scale app=1"
 
       - name: Cleanup old Docker images
         if: success()
@@ -499,9 +398,10 @@ jobs:
           echo "**Version:** ${VERSION}" >> $GITHUB_STEP_SUMMARY
           echo "**Environment:** Production" >> $GITHUB_STEP_SUMMARY
           echo "**URL:** http://72.60.17.138:8081" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployment Strategy:** ✅ Zero-downtime healthcheck" >> $GITHUB_STEP_SUMMARY
           echo "**Health Check:** ✅ Passed" >> $GITHUB_STEP_SUMMARY
           echo "**Database:** ✅ Migrated" >> $GITHUB_STEP_SUMMARY
-          echo "**Maintenance Mode:** ✅ Disabled" >> $GITHUB_STEP_SUMMARY
+          echo "**Downtime:** ~15s (migrations only)" >> $GITHUB_STEP_SUMMARY
 
   #############################################################################
   # Job 3: Verify & Notify
