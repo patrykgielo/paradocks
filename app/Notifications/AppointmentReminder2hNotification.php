@@ -19,14 +19,12 @@ use Illuminate\Support\Facades\Log;
  * Sent 2 hours before an appointment as a final reminder.
  * Dispatched by scheduler job.
  */
-class AppointmentReminder2hNotification extends Notification implements ShouldQueue, ShouldBeUnique
+class AppointmentReminder2hNotification extends Notification implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;
 
     /**
      * Create a new notification instance.
-     *
-     * @param \App\Models\Appointment $appointment
      */
     public function __construct(
         public Appointment $appointment
@@ -36,18 +34,14 @@ class AppointmentReminder2hNotification extends Notification implements ShouldQu
 
     /**
      * Get the unique ID for the notification.
-     *
-     * @return string
      */
     public function uniqueId(): string
     {
-        return 'appointment-reminder-2h:' . $this->appointment->id;
+        return 'appointment-reminder-2h:'.$this->appointment->id;
     }
 
     /**
      * Get the number of seconds the unique lock should be maintained.
-     *
-     * @return int
      */
     public function uniqueFor(): int
     {
@@ -57,7 +51,7 @@ class AppointmentReminder2hNotification extends Notification implements ShouldQu
     /**
      * Get the notification's delivery channels.
      *
-     * @param mixed $notifiable
+     * @param  mixed  $notifiable
      * @return array<int, string>
      */
     public function via(object $notifiable): array
@@ -68,8 +62,7 @@ class AppointmentReminder2hNotification extends Notification implements ShouldQu
     /**
      * Get the mail representation of the notification.
      *
-     * @param mixed $notifiable
-     * @return \Illuminate\Notifications\Messages\MailMessage
+     * @param  mixed  $notifiable
      */
     public function toMail(object $notifiable): MailMessage
     {

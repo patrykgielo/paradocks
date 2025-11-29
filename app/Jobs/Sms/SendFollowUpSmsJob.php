@@ -34,7 +34,7 @@ use Illuminate\Support\Facades\Log;
  * Scheduled: Hourly via Laravel Scheduler
  * Queue: sms
  */
-class SendFollowUpSmsJob implements ShouldQueue, ShouldBeUnique
+class SendFollowUpSmsJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -61,7 +61,7 @@ class SendFollowUpSmsJob implements ShouldQueue, ShouldBeUnique
      */
     public function uniqueId(): string
     {
-        return 'send-followup-sms:' . now()->format('Y-m-d-H');
+        return 'send-followup-sms:'.now()->format('Y-m-d-H');
     }
 
     /**
@@ -73,14 +73,16 @@ class SendFollowUpSmsJob implements ShouldQueue, ShouldBeUnique
 
         // Check if SMS is enabled globally
         $smsSettings = $settings->group('sms');
-        if (!($smsSettings['enabled'] ?? true)) {
+        if (! ($smsSettings['enabled'] ?? true)) {
             Log::info('[SendFollowUpSmsJob] SMS globally disabled, skipping');
+
             return;
         }
 
         // Check if follow-up SMS is enabled
-        if (!($smsSettings['send_follow_up'] ?? true)) {
+        if (! ($smsSettings['send_follow_up'] ?? true)) {
             Log::info('[SendFollowUpSmsJob] Follow-up SMS disabled, skipping');
+
             return;
         }
 
@@ -115,6 +117,7 @@ class SendFollowUpSmsJob implements ShouldQueue, ShouldBeUnique
                         'phone' => $appointment->customer_phone,
                     ]);
                     $stats['skipped']++;
+
                     continue;
                 }
 

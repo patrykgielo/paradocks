@@ -4,8 +4,8 @@ namespace App\Filament\Forms\Components;
 
 use App\Support\Settings\SettingsManager;
 use Filament\Forms\Components\Component;
-use Filament\Schemas\Components\Grid;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Grid;
 
 class DurationInput extends Component
 {
@@ -33,7 +33,7 @@ class DurationInput extends Component
         return [
             Grid::make(3)
                 ->schema([
-                    TextInput::make($this->getName() . '_days')
+                    TextInput::make($this->getName().'_days')
                         ->label('Dni')
                         ->numeric()
                         ->minValue(0)
@@ -44,7 +44,7 @@ class DurationInput extends Component
                         ->afterStateUpdated(fn () => $this->updateTotalMinutes())
                         ->helperText('Usługi wielodniowe nie są obsługiwane'),
 
-                    TextInput::make($this->getName() . '_hours')
+                    TextInput::make($this->getName().'_hours')
                         ->label('Godziny')
                         ->numeric()
                         ->minValue(0)
@@ -55,7 +55,7 @@ class DurationInput extends Component
                         ->afterStateUpdated(fn () => $this->updateTotalMinutes())
                         ->required(),
 
-                    TextInput::make($this->getName() . '_minutes')
+                    TextInput::make($this->getName().'_minutes')
                         ->label('Minuty')
                         ->numeric()
                         ->minValue(0)
@@ -76,9 +76,9 @@ class DurationInput extends Component
         $livewire = $this->getLivewire();
         $data = $livewire->data;
 
-        $days = (int) ($data[$this->getName() . '_days'] ?? 0);
-        $hours = (int) ($data[$this->getName() . '_hours'] ?? 0);
-        $minutes = (int) ($data[$this->getName() . '_minutes'] ?? 0);
+        $days = (int) ($data[$this->getName().'_days'] ?? 0);
+        $hours = (int) ($data[$this->getName().'_hours'] ?? 0);
+        $minutes = (int) ($data[$this->getName().'_minutes'] ?? 0);
 
         // Calculate total minutes
         $totalMinutes = ($days * 1440) + ($hours * 60) + $minutes;
@@ -96,13 +96,13 @@ class DurationInput extends Component
 
     public function dehydrateStateUsing(\Closure $callback): static
     {
-        $this->dehydrateStateUsing = function ($state) use ($callback) {
+        $this->dehydrateStateUsing = function ($state) {
             $livewire = $this->getLivewire();
             $data = $livewire->data;
 
-            $days = (int) ($data[$this->getName() . '_days'] ?? 0);
-            $hours = (int) ($data[$this->getName() . '_hours'] ?? 0);
-            $minutes = (int) ($data[$this->getName() . '_minutes'] ?? 0);
+            $days = (int) ($data[$this->getName().'_days'] ?? 0);
+            $hours = (int) ($data[$this->getName().'_hours'] ?? 0);
+            $minutes = (int) ($data[$this->getName().'_minutes'] ?? 0);
 
             return ($days * 1440) + ($hours * 60) + $minutes;
         };

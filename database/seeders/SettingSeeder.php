@@ -100,7 +100,7 @@ class SettingSeeder extends Seeder
                     ['title' => 'Profesjonalny Sprzęt', 'description' => 'Używamy najnowocześniejszego sprzętu do prania tapicerki'],
                     ['title' => 'Doświadczony Zespół', 'description' => 'Nasz zespół ma wieloletnie doświadczenie'],
                     ['title' => 'Gwarancja Jakości', 'description' => 'Gwarantujemy 100% satysfakcji'],
-                ]
+                ],
             ],
             'cta_heading' => ['Umów się już dziś'],
             'cta_subheading' => ['Skontaktuj się z nami i poznaj naszą ofertę'],
@@ -110,7 +110,7 @@ class SettingSeeder extends Seeder
                     'Rezerwacja wymaga wpłaty zaliczki',
                     'Możliwość anulacji do 24h przed wizytą',
                     'Usługi realizowane na terenie klienta',
-                ]
+                ],
             ],
         ];
 
@@ -170,8 +170,8 @@ class SettingSeeder extends Seeder
     /**
      * Helper method to seed a group of settings.
      *
-     * @param string $group Group name
-     * @param array<string, array> $settings Key-value pairs (values already wrapped in arrays)
+     * @param  string  $group  Group name
+     * @param  array<string, array>  $settings  Key-value pairs (values already wrapped in arrays)
      */
     private function seedGroup(string $group, array $settings): void
     {

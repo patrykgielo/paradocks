@@ -22,12 +22,11 @@ class AppointmentCancelled
     /**
      * Create a new event instance.
      *
-     * @param \App\Models\Appointment $appointment The cancelled appointment
-     * @param string|null $reason Reason for cancellation
+     * @param  \App\Models\Appointment  $appointment  The cancelled appointment
+     * @param  string|null  $reason  Reason for cancellation
      */
     public function __construct(
         public Appointment $appointment,
         public ?string $reason = null
-    ) {
-    }
+    ) {}
 }

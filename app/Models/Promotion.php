@@ -61,15 +61,16 @@ class Promotion extends Model
     public function scopeValid($query)
     {
         $now = now();
+
         return $query->where(function ($q) use ($now) {
             $q->where(function ($q) use ($now) {
                 $q->whereNull('valid_from')
                     ->orWhere('valid_from', '<=', $now);
             })
-            ->where(function ($q) use ($now) {
-                $q->whereNull('valid_until')
-                    ->orWhere('valid_until', '>=', $now);
-            });
+                ->where(function ($q) use ($now) {
+                    $q->whereNull('valid_until')
+                        ->orWhere('valid_until', '>=', $now);
+                });
         });
     }
 

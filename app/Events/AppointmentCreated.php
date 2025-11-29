@@ -22,10 +22,9 @@ class AppointmentCreated
     /**
      * Create a new event instance.
      *
-     * @param \App\Models\Appointment $appointment The newly created appointment
+     * @param  \App\Models\Appointment  $appointment  The newly created appointment
      */
     public function __construct(
         public Appointment $appointment
-    ) {
-    }
+    ) {}
 }

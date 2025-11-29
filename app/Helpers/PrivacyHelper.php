@@ -22,7 +22,7 @@ class PrivacyHelper
      * - +48501234567 → +48***67
      * - +1234567890 → +12***90
      *
-     * @param string|null $phone Phone number to mask
+     * @param  string|null  $phone  Phone number to mask
      * @return string Masked phone number or original if too short
      */
     public static function maskPhone(?string $phone): string
@@ -36,13 +36,13 @@ class PrivacyHelper
 
         if ($length <= 5) {
             // Too short to mask meaningfully
-            return substr($phone, 0, 2) . '***';
+            return substr($phone, 0, 2).'***';
         }
 
         $prefix = substr($phone, 0, 3);  // +48
         $suffix = substr($phone, -2);     // 03
 
-        return $prefix . '***' . $suffix;
+        return $prefix.'***'.$suffix;
     }
 
     /**
@@ -54,7 +54,7 @@ class PrivacyHelper
      * - john.doe@example.com → j****e@example.com
      * - admin@example.com → a****n@example.com
      *
-     * @param string|null $email Email address to mask
+     * @param  string|null  $email  Email address to mask
      * @return string Masked email address
      */
     public static function maskEmail(?string $email): string
@@ -63,7 +63,7 @@ class PrivacyHelper
             return '[empty]';
         }
 
-        if (!str_contains($email, '@')) {
+        if (! str_contains($email, '@')) {
             // Invalid email, mask everything except first and last char
             return self::maskString($email);
         }
@@ -71,12 +71,12 @@ class PrivacyHelper
         [$username, $domain] = explode('@', $email, 2);
 
         if (strlen($username) <= 2) {
-            return $username[0] . '***@' . $domain;
+            return $username[0].'***@'.$domain;
         }
 
-        $maskedUsername = $username[0] . '****' . substr($username, -1);
+        $maskedUsername = $username[0].'****'.substr($username, -1);
 
-        return $maskedUsername . '@' . $domain;
+        return $maskedUsername.'@'.$domain;
     }
 
     /**
@@ -86,7 +86,7 @@ class PrivacyHelper
      * - sensitive_data → s***a
      * - token123 → t***3
      *
-     * @param string|null $string String to mask
+     * @param  string|null  $string  String to mask
      * @return string Masked string
      */
     public static function maskString(?string $string): string
@@ -98,10 +98,10 @@ class PrivacyHelper
         $length = mb_strlen($string);
 
         if ($length <= 2) {
-            return $string[0] . '***';
+            return $string[0].'***';
         }
 
-        return $string[0] . '***' . substr($string, -1);
+        return $string[0].'***'.substr($string, -1);
     }
 
     /**
@@ -111,7 +111,7 @@ class PrivacyHelper
      * - 4111111111111111 → **** **** **** 1111
      * - 5500000000000004 → **** **** **** 0004
      *
-     * @param string|null $cardNumber Card number to mask
+     * @param  string|null  $cardNumber  Card number to mask
      * @return string Masked card number
      */
     public static function maskCardNumber(?string $cardNumber): string
@@ -129,6 +129,6 @@ class PrivacyHelper
 
         $lastFour = substr($cleaned, -4);
 
-        return '**** **** **** ' . $lastFour;
+        return '**** **** **** '.$lastFour;
     }
 }

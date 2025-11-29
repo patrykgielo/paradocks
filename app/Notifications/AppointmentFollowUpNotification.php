@@ -19,14 +19,12 @@ use Illuminate\Support\Facades\Log;
  * Sent 24 hours after a completed appointment.
  * Includes review request and feedback link.
  */
-class AppointmentFollowUpNotification extends Notification implements ShouldQueue, ShouldBeUnique
+class AppointmentFollowUpNotification extends Notification implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;
 
     /**
      * Create a new notification instance.
-     *
-     * @param \App\Models\Appointment $appointment
      */
     public function __construct(
         public Appointment $appointment
@@ -36,18 +34,14 @@ class AppointmentFollowUpNotification extends Notification implements ShouldQueu
 
     /**
      * Get the unique ID for the notification.
-     *
-     * @return string
      */
     public function uniqueId(): string
     {
-        return 'appointment-followup:' . $this->appointment->id;
+        return 'appointment-followup:'.$this->appointment->id;
     }
 
     /**
      * Get the number of seconds the unique lock should be maintained.
-     *
-     * @return int
      */
     public function uniqueFor(): int
     {
@@ -57,7 +51,7 @@ class AppointmentFollowUpNotification extends Notification implements ShouldQueu
     /**
      * Get the notification's delivery channels.
      *
-     * @param mixed $notifiable
+     * @param  mixed  $notifiable
      * @return array<int, string>
      */
     public function via(object $notifiable): array
@@ -68,8 +62,7 @@ class AppointmentFollowUpNotification extends Notification implements ShouldQueu
     /**
      * Get the mail representation of the notification.
      *
-     * @param mixed $notifiable
-     * @return \Illuminate\Notifications\Messages\MailMessage
+     * @param  mixed  $notifiable
      */
     public function toMail(object $notifiable): MailMessage
     {
@@ -80,7 +73,7 @@ class AppointmentFollowUpNotification extends Notification implements ShouldQueu
         $appointment = $this->appointment->load(['service', 'customer']);
 
         // Build review URL (placeholder - adjust based on actual review system)
-        $reviewUrl = url('/reviews/create?appointment_id=' . $appointment->id);
+        $reviewUrl = url('/reviews/create?appointment_id='.$appointment->id);
 
         try {
             $emailSend = $emailService->sendFromTemplate(

@@ -41,7 +41,7 @@ return new class extends Migration
             Cache::store('redis')->forget('maintenance:config');
             Cache::store('redis')->forget('maintenance:enabled_at');
         } catch (\Exception $e) {
-            Log::warning('Redis cleanup failed during migration rollback: ' . $e->getMessage());
+            Log::warning('Redis cleanup failed during migration rollback: '.$e->getMessage());
         }
     }
 };

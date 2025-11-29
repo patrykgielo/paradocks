@@ -22,10 +22,9 @@ class AppointmentReminder2h
     /**
      * Create a new event instance.
      *
-     * @param \App\Models\Appointment $appointment The upcoming appointment
+     * @param  \App\Models\Appointment  $appointment  The upcoming appointment
      */
     public function __construct(
         public Appointment $appointment
-    ) {
-    }
+    ) {}
 }

@@ -7,7 +7,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Blade;
-use Illuminate\Support\Str;
 
 /**
  * Email Template Model
@@ -58,8 +57,6 @@ class EmailTemplate extends Model
 
     /**
      * Get all email sends using this template.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function emailSends(): HasMany
     {
@@ -69,7 +66,7 @@ class EmailTemplate extends Model
     /**
      * Scope a query to only include active templates.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeActive($query)
@@ -80,8 +77,7 @@ class EmailTemplate extends Model
     /**
      * Scope a query to filter by template key.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $key
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeForKey($query, string $key)
@@ -92,8 +88,7 @@ class EmailTemplate extends Model
     /**
      * Scope a query to filter by language.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $language
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeForLanguage($query, string $language)
@@ -103,8 +98,6 @@ class EmailTemplate extends Model
 
     /**
      * Get the list of available variables for this template.
-     *
-     * @return array
      */
     public function getAvailableVariables(): array
     {
@@ -116,7 +109,7 @@ class EmailTemplate extends Model
      *
      * Uses Blade's compileString to render template with variables.
      *
-     * @param array $data Key-value pairs to replace in template
+     * @param  array  $data  Key-value pairs to replace in template
      * @return string Rendered HTML content
      */
     public function render(array $data): string
@@ -138,16 +131,13 @@ class EmailTemplate extends Model
 
     /**
      * Simple string replacement for rendering (fallback).
-     *
-     * @param array $data
-     * @return string
      */
     protected function simpleRender(array $data): string
     {
         $content = $this->html_body;
 
         foreach ($data as $key => $value) {
-            $content = str_replace('{{' . $key . '}}', (string) $value, $content);
+            $content = str_replace('{{'.$key.'}}', (string) $value, $content);
         }
 
         return $content;
@@ -155,16 +145,13 @@ class EmailTemplate extends Model
 
     /**
      * Render the subject line with the provided data.
-     *
-     * @param array $data
-     * @return string
      */
     public function renderSubject(array $data): string
     {
         $subject = $this->subject;
 
         foreach ($data as $key => $value) {
-            $subject = str_replace('{{' . $key . '}}', (string) $value, $subject);
+            $subject = str_replace('{{'.$key.'}}', (string) $value, $subject);
         }
 
         return $subject;
@@ -172,20 +159,17 @@ class EmailTemplate extends Model
 
     /**
      * Render the plain text body with the provided data.
-     *
-     * @param array $data
-     * @return string|null
      */
     public function renderText(array $data): ?string
     {
-        if (!$this->text_body) {
+        if (! $this->text_body) {
             return null;
         }
 
         $text = $this->text_body;
 
         foreach ($data as $key => $value) {
-            $text = str_replace('{{' . $key . '}}', (string) $value, $text);
+            $text = str_replace('{{'.$key.'}}', (string) $value, $text);
         }
 
         return $text;

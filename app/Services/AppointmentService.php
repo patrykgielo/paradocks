@@ -13,8 +13,7 @@ class AppointmentService
     public function __construct(
         protected SettingsManager $settings,
         protected StaffScheduleService $staffScheduleService
-    ) {
-    }
+    ) {}
 
     /**
      * Check if staff member is available for given time slot
@@ -35,19 +34,19 @@ class AppointmentService
     ): bool {
         $staff = User::find($staffId);
 
-        if (!$staff) {
+        if (! $staff) {
             return false;
         }
 
         // Step 1: Check if staff can perform this service
-        if (!$this->staffScheduleService->canPerformService($staff, $serviceId)) {
+        if (! $this->staffScheduleService->canPerformService($staff, $serviceId)) {
             return false;
         }
 
         // Step 2: Check staff availability using new calendar-based system
-        $startDateTime = Carbon::parse($date->format('Y-m-d') . ' ' . $startTime->format('H:i:s'));
+        $startDateTime = Carbon::parse($date->format('Y-m-d').' '.$startTime->format('H:i:s'));
 
-        if (!$this->staffScheduleService->isStaffAvailable($staff, $startDateTime)) {
+        if (! $this->staffScheduleService->isStaffAvailable($staff, $startDateTime)) {
             return false;
         }
 
@@ -56,25 +55,25 @@ class AppointmentService
             ->where('staff_id', $staffId)
             ->where('appointment_date', $date->format('Y-m-d'))
             ->whereIn('status', ['pending', 'confirmed'])
-            ->when($excludeAppointmentId, fn($q) => $q->where('id', '!=', $excludeAppointmentId))
+            ->when($excludeAppointmentId, fn ($q) => $q->where('id', '!=', $excludeAppointmentId))
             ->where(function ($query) use ($startTime, $endTime) {
-                $query->where(function ($q) use ($startTime, $endTime) {
+                $query->where(function ($q) use ($startTime) {
                     // New appointment starts during existing appointment
                     $q->whereTime('start_time', '<=', $startTime->format('H:i:s'))
-                      ->whereTime('end_time', '>', $startTime->format('H:i:s'));
-                })->orWhere(function ($q) use ($startTime, $endTime) {
+                        ->whereTime('end_time', '>', $startTime->format('H:i:s'));
+                })->orWhere(function ($q) use ($endTime) {
                     // New appointment ends during existing appointment
                     $q->whereTime('start_time', '<', $endTime->format('H:i:s'))
-                      ->whereTime('end_time', '>=', $endTime->format('H:i:s'));
+                        ->whereTime('end_time', '>=', $endTime->format('H:i:s'));
                 })->orWhere(function ($q) use ($startTime, $endTime) {
                     // New appointment completely contains existing appointment
                     $q->whereTime('start_time', '>=', $startTime->format('H:i:s'))
-                      ->whereTime('end_time', '<=', $endTime->format('H:i:s'));
+                        ->whereTime('end_time', '<=', $endTime->format('H:i:s'));
                 });
             })
             ->exists();
 
-        return !$hasConflict;
+        return ! $hasConflict;
     }
 
     /**
@@ -121,8 +120,8 @@ class AppointmentService
                     $timeSlots[] = [
                         'start' => $currentSlot->format('H:i'),
                         'end' => $slotEnd->format('H:i'),
-                        'datetime_start' => $date->format('Y-m-d') . ' ' . $currentSlot->format('H:i'),
-                        'datetime_end' => $date->format('Y-m-d') . ' ' . $slotEnd->format('H:i'),
+                        'datetime_start' => $date->format('Y-m-d').' '.$currentSlot->format('H:i'),
+                        'datetime_end' => $date->format('Y-m-d').' '.$slotEnd->format('H:i'),
                     ];
                 }
 
@@ -232,8 +231,8 @@ class AppointmentService
         $allSlots = [];
         $slotInterval = $this->settings->slotIntervalMinutes();
         $businessHours = $this->settings->bookingBusinessHours();
-        $businessStart = Carbon::parse($date->format('Y-m-d') . ' ' . $businessHours['start']);
-        $businessEnd = Carbon::parse($date->format('Y-m-d') . ' ' . $businessHours['end']);
+        $businessStart = Carbon::parse($date->format('Y-m-d').' '.$businessHours['start']);
+        $businessEnd = Carbon::parse($date->format('Y-m-d').' '.$businessHours['end']);
 
         // Generate all possible slots within business hours
         $currentSlot = $businessStart->copy();
@@ -242,8 +241,9 @@ class AppointmentService
             $slotEnd = $currentSlot->copy()->addMinutes($serviceDurationMinutes);
 
             // Check if this slot is within business hours completely
-            if (!$this->isWithinBusinessHours($currentSlot, $slotEnd)) {
+            if (! $this->isWithinBusinessHours($currentSlot, $slotEnd)) {
                 $currentSlot->addMinutes($slotInterval);
+
                 continue;
             }
 
@@ -252,12 +252,12 @@ class AppointmentService
                 $slotKey = $currentSlot->format('H:i');
 
                 // Avoid duplicate slots
-                if (!isset($allSlots[$slotKey])) {
+                if (! isset($allSlots[$slotKey])) {
                     $allSlots[$slotKey] = [
                         'start' => $currentSlot->format('H:i'),
                         'end' => $slotEnd->format('H:i'),
-                        'datetime_start' => $date->format('Y-m-d') . ' ' . $currentSlot->format('H:i'),
-                        'datetime_end' => $date->format('Y-m-d') . ' ' . $slotEnd->format('H:i'),
+                        'datetime_start' => $date->format('Y-m-d').' '.$currentSlot->format('H:i'),
+                        'datetime_end' => $date->format('Y-m-d').' '.$slotEnd->format('H:i'),
                     ];
                 }
             }
@@ -274,8 +274,8 @@ class AppointmentService
     public function isWithinBusinessHours(Carbon $startTime, Carbon $endTime): bool
     {
         $businessHours = $this->settings->bookingBusinessHours();
-        $businessStart = Carbon::parse($startTime->format('Y-m-d') . ' ' . $businessHours['start']);
-        $businessEnd = Carbon::parse($startTime->format('Y-m-d') . ' ' . $businessHours['end']);
+        $businessStart = Carbon::parse($startTime->format('Y-m-d').' '.$businessHours['start']);
+        $businessEnd = Carbon::parse($startTime->format('Y-m-d').' '.$businessHours['end']);
 
         return $startTime->gte($businessStart) && $endTime->lte($businessEnd);
     }
@@ -305,17 +305,17 @@ class AppointmentService
         $errors = [];
 
         $date = Carbon::parse($appointmentDate);
-        $start = Carbon::parse($appointmentDate . ' ' . $startTime);
-        $end = Carbon::parse($appointmentDate . ' ' . $endTime);
+        $start = Carbon::parse($appointmentDate.' '.$startTime);
+        $end = Carbon::parse($appointmentDate.' '.$endTime);
 
         // Check if date is in the past
-        if ($date->isPast() && !$date->isToday()) {
+        if ($date->isPast() && ! $date->isToday()) {
             $errors[] = 'Nie można zarezerwować wizyty w przeszłości.';
         }
 
         // Check 24-hour advance booking requirement
         $advanceHours = $this->settings->advanceBookingHours();
-        if (!$this->meetsAdvanceBookingRequirement($start)) {
+        if (! $this->meetsAdvanceBookingRequirement($start)) {
             $errors[] = sprintf(
                 'Rezerwacja musi być dokonana co najmniej %d godzin przed terminem wizyty.',
                 $advanceHours
@@ -323,7 +323,7 @@ class AppointmentService
         }
 
         // Check if within business hours
-        if (!$this->isWithinBusinessHours($start, $end)) {
+        if (! $this->isWithinBusinessHours($start, $end)) {
             $businessHours = $this->settings->bookingBusinessHours();
             $errors[] = sprintf(
                 'Wizyta musi się odbywać w godzinach pracy: %s - %s.',
@@ -338,7 +338,7 @@ class AppointmentService
         }
 
         // Check staff availability
-        if (!$this->checkStaffAvailability($staffId, $serviceId, $date, $start, $end, $excludeAppointmentId)) {
+        if (! $this->checkStaffAvailability($staffId, $serviceId, $date, $start, $end, $excludeAppointmentId)) {
             $errors[] = 'Wybrany termin nie jest dostępny. Personel jest zajęty lub nie pracuje w tym czasie.';
         }
 

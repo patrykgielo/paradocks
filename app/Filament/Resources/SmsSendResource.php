@@ -4,23 +4,23 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
-use BackedEnum;
-use UnitEnum;
 use App\Filament\Resources\SmsSendResource\Pages;
 use App\Models\SmsSend;
-use Filament\Schemas\Schema;
+use BackedEnum;
+use Filament\Actions;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Actions;
+use UnitEnum;
 
 class SmsSendResource extends Resource
 {
     protected static ?string $model = SmsSend::class;
 
-    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-envelope';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-envelope';
 
-    protected static string | UnitEnum | null $navigationGroup = 'SMS';
+    protected static string|UnitEnum|null $navigationGroup = 'SMS';
 
     protected static ?int $navigationSort = 2;
 

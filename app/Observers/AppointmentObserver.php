@@ -31,7 +31,7 @@ class AppointmentObserver
      */
     private function validateStaffRole(Appointment $appointment): void
     {
-        if (!$appointment->staff_id) {
+        if (! $appointment->staff_id) {
             throw ValidationException::withMessages([
                 'staff_id' => 'Pole pracownika jest wymagane.',
             ]);
@@ -39,13 +39,13 @@ class AppointmentObserver
 
         $staff = User::find($appointment->staff_id);
 
-        if (!$staff) {
+        if (! $staff) {
             throw ValidationException::withMessages([
                 'staff_id' => 'Wybrany pracownik nie istnieje.',
             ]);
         }
 
-        if (!$staff->hasRole('staff')) {
+        if (! $staff->hasRole('staff')) {
             throw ValidationException::withMessages([
                 'staff_id' => 'Tylko użytkownicy z rolą "staff" mogą być przypisani do wizyt.',
             ]);

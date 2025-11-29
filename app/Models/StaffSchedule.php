@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Builder;
-use Carbon\Carbon;
 
 class StaffSchedule extends Model
 {
@@ -77,11 +77,11 @@ class StaffSchedule extends Model
             $q->where(function ($q2) use ($date) {
                 // effective_from is null OR date >= effective_from
                 $q2->whereNull('effective_from')
-                   ->orWhere('effective_from', '<=', $date->format('Y-m-d'));
+                    ->orWhere('effective_from', '<=', $date->format('Y-m-d'));
             })->where(function ($q2) use ($date) {
                 // effective_until is null OR date <= effective_until
                 $q2->whereNull('effective_until')
-                   ->orWhere('effective_until', '>=', $date->format('Y-m-d'));
+                    ->orWhere('effective_until', '>=', $date->format('Y-m-d'));
             });
         });
     }

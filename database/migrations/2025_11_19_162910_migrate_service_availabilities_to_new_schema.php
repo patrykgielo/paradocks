@@ -16,7 +16,7 @@ return new class extends Migration
     public function up(): void
     {
         // Check if service_availabilities table exists and has data
-        if (!DB::getSchemaBuilder()->hasTable('service_availabilities')) {
+        if (! DB::getSchemaBuilder()->hasTable('service_availabilities')) {
             return;
         }
 
@@ -28,7 +28,7 @@ return new class extends Migration
 
         // Step 1: Migrate to staff_schedules (deduplicate by user, day, time)
         $scheduleGroups = $oldRecords->groupBy(function ($item) {
-            return $item->user_id . '|' . $item->day_of_week . '|' . $item->start_time . '|' . $item->end_time;
+            return $item->user_id.'|'.$item->day_of_week.'|'.$item->start_time.'|'.$item->end_time;
         });
 
         foreach ($scheduleGroups as $key => $group) {
@@ -42,7 +42,7 @@ return new class extends Migration
                 ->where('end_time', $firstRecord->end_time)
                 ->exists();
 
-            if (!$exists) {
+            if (! $exists) {
                 DB::table('staff_schedules')->insert([
                     'user_id' => $firstRecord->user_id,
                     'day_of_week' => $firstRecord->day_of_week,
@@ -59,7 +59,7 @@ return new class extends Migration
 
         // Step 2: Migrate to service_staff pivot (unique service-user pairs)
         $serviceStaffPairs = $oldRecords->groupBy(function ($item) {
-            return $item->service_id . '|' . $item->user_id;
+            return $item->service_id.'|'.$item->user_id;
         });
 
         foreach ($serviceStaffPairs as $key => $group) {
@@ -71,7 +71,7 @@ return new class extends Migration
                 ->where('user_id', $firstRecord->user_id)
                 ->exists();
 
-            if (!$exists) {
+            if (! $exists) {
                 DB::table('service_staff')->insert([
                     'service_id' => $firstRecord->service_id,
                     'user_id' => $firstRecord->user_id,

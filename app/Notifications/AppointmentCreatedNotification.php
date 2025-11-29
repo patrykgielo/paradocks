@@ -19,15 +19,14 @@ use Illuminate\Support\Facades\Log;
  * Sent when a new appointment is created.
  * Different templates for customer and admin recipients.
  */
-class AppointmentCreatedNotification extends Notification implements ShouldQueue, ShouldBeUnique
+class AppointmentCreatedNotification extends Notification implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;
 
     /**
      * Create a new notification instance.
      *
-     * @param \App\Models\Appointment $appointment
-     * @param string $recipientType 'customer' or 'admin'
+     * @param  string  $recipientType  'customer' or 'admin'
      */
     public function __construct(
         public Appointment $appointment,
@@ -38,18 +37,14 @@ class AppointmentCreatedNotification extends Notification implements ShouldQueue
 
     /**
      * Get the unique ID for the notification.
-     *
-     * @return string
      */
     public function uniqueId(): string
     {
-        return 'appointment-created:' . $this->appointment->id . ':' . $this->recipientType;
+        return 'appointment-created:'.$this->appointment->id.':'.$this->recipientType;
     }
 
     /**
      * Get the number of seconds the unique lock should be maintained.
-     *
-     * @return int
      */
     public function uniqueFor(): int
     {
@@ -59,7 +54,7 @@ class AppointmentCreatedNotification extends Notification implements ShouldQueue
     /**
      * Get the notification's delivery channels.
      *
-     * @param mixed $notifiable
+     * @param  mixed  $notifiable
      * @return array<int, string>
      */
     public function via(object $notifiable): array
@@ -70,8 +65,7 @@ class AppointmentCreatedNotification extends Notification implements ShouldQueue
     /**
      * Get the mail representation of the notification.
      *
-     * @param mixed $notifiable
-     * @return \Illuminate\Notifications\Messages\MailMessage
+     * @param  mixed  $notifiable
      */
     public function toMail(object $notifiable): MailMessage
     {

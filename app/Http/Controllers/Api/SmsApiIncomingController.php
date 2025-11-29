@@ -31,9 +31,6 @@ class SmsApiIncomingController extends Controller
      *   "date_received": "2025-11-13 14:30:00",
      *   "id": "incoming_sms_id"
      * }
-     *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\JsonResponse
      */
     public function handleIncoming(Request $request): JsonResponse
     {
@@ -104,7 +101,7 @@ class SmsApiIncomingController extends Controller
      *
      * Recognizes various opt-out keywords in multiple languages.
      *
-     * @param string $message Uppercase message content
+     * @param  string  $message  Uppercase message content
      * @return bool True if opt-out message
      */
     private function isOptOutMessage(string $message): bool
@@ -136,8 +133,7 @@ class SmsApiIncomingController extends Controller
      * 1. Add to suppression list
      * 2. Find associated user and revoke SMS consent
      *
-     * @param string $phoneNumber Phone number to opt out
-     * @return void
+     * @param  string  $phoneNumber  Phone number to opt out
      */
     private function processOptOut(string $phoneNumber): void
     {

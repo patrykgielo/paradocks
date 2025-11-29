@@ -4,28 +4,28 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
-use BackedEnum;
-use UnitEnum;
 use App\Filament\Resources\EmailSendResource\Pages;
 use App\Models\EmailSend;
 use App\Services\Email\EmailService;
+use BackedEnum;
+use Filament\Actions;
 use Filament\Forms;
-use Filament\Schemas\Schema;
 use Filament\Infolists;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Actions;
 use Illuminate\Database\Eloquent\Builder;
+use UnitEnum;
 
 class EmailSendResource extends Resource
 {
     protected static ?string $model = EmailSend::class;
 
-    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-paper-airplane';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-paper-airplane';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Email';
+    protected static string|UnitEnum|null $navigationGroup = 'Email';
 
     protected static ?int $navigationSort = 2;
 
@@ -35,8 +35,8 @@ class EmailSendResource extends Resource
     {
         // Read-only resource - no create/edit forms
         return $schema->components([
-                //
-            ]);
+            //
+        ]);
     }
 
     public static function table(Table $table): Table
@@ -150,8 +150,7 @@ class EmailSendResource extends Resource
                     ->color('warning')
                     ->requiresConfirmation()
                     ->modalHeading('Resend Email')
-                    ->modalDescription(fn (EmailSend $record): string =>
-                        "This will create a new email send record and queue the email to {$record->recipient_email}."
+                    ->modalDescription(fn (EmailSend $record): string => "This will create a new email send record and queue the email to {$record->recipient_email}."
                     )
                     ->modalSubmitActionLabel('Resend Email')
                     ->action(function (EmailSend $record): void {
@@ -166,7 +165,7 @@ class EmailSendResource extends Resource
                                 'body_text' => $record->body_text,
                                 'status' => 'pending',
                                 'metadata' => array_merge($record->metadata ?? [], ['resent_from' => $record->id]),
-                                'message_key' => 'resend-' . uniqid(),
+                                'message_key' => 'resend-'.uniqid(),
                             ]);
 
                             // Dispatch to queue via EmailService
@@ -211,7 +210,7 @@ class EmailSendResource extends Resource
                         ->icon('heroicon-o-arrow-down-tray')
                         ->action(function ($records) {
                             // Export to CSV
-                            $filename = 'email-logs-' . now()->format('Y-m-d-His') . '.csv';
+                            $filename = 'email-logs-'.now()->format('Y-m-d-His').'.csv';
                             $headers = [
                                 'Content-Type' => 'text/csv',
                                 'Content-Disposition' => "attachment; filename=\"$filename\"",
@@ -305,7 +304,7 @@ class EmailSendResource extends Resource
                             ->label('Plain Text Body')
                             ->placeholder('No plain text version')
                             ->columnSpanFull()
-                            ->visible(fn (EmailSend $record): bool => !empty($record->body_text)),
+                            ->visible(fn (EmailSend $record): bool => ! empty($record->body_text)),
                     ]),
 
                 Infolists\Components\Section::make('Metadata')
@@ -322,7 +321,7 @@ class EmailSendResource extends Resource
                             ->placeholder('No errors')
                             ->color('danger')
                             ->columnSpanFull()
-                            ->visible(fn (EmailSend $record): bool => !empty($record->error_message)),
+                            ->visible(fn (EmailSend $record): bool => ! empty($record->error_message)),
                     ])
                     ->collapsed(),
 

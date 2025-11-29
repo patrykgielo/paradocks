@@ -31,10 +31,10 @@ class AppointmentsCalendar extends CalendarWidget
                 return CalendarEvent::make()
                     ->key($appointment->id)
                     ->title(
-                        $appointment->customer->name . ' - ' . $appointment->service->name
+                        $appointment->customer->name.' - '.$appointment->service->name
                     )
-                    ->start($appointment->appointment_date->format('Y-m-d') . ' ' . $appointment->start_time->format('H:i'))
-                    ->end($appointment->appointment_date->format('Y-m-d') . ' ' . $appointment->end_time->format('H:i'))
+                    ->start($appointment->appointment_date->format('Y-m-d').' '.$appointment->start_time->format('H:i'))
+                    ->end($appointment->appointment_date->format('Y-m-d').' '.$appointment->end_time->format('H:i'))
                     ->backgroundColor($this->getEventColor($appointment->status))
                     ->textColor('#ffffff')
                     ->url(AppointmentResource::getUrl('edit', ['record' => $appointment->id]));

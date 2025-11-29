@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('phone', 20)->unique()->comment('Suppressed phone number in international format');
             $table->enum('reason', ['invalid_number', 'opted_out', 'failed_repeatedly', 'manual'])
-                  ->comment('Reason for suppression');
+                ->comment('Reason for suppression');
             $table->timestamp('suppressed_at')->comment('When phone number was suppressed');
             $table->timestamps();
 

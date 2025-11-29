@@ -11,8 +11,7 @@ class ProfileService
 {
     public function __construct(
         protected EmailService $emailService
-    ) {
-    }
+    ) {}
 
     /**
      * Update user's personal information (name, phone).
@@ -31,9 +30,8 @@ class ProfileService
     /**
      * Request email change - sends verification to NEW email.
      *
-     * @param User $user
-     * @param string $newEmail
      * @return string Token for verification
+     *
      * @throws ValidationException If email is already in use
      */
     public function requestEmailChange(User $user, string $newEmail): string
@@ -75,7 +73,7 @@ class ProfileService
             variables: [
                 'customer_name' => $user->name,
                 'new_email' => $this->maskEmail($newEmail),
-                'cancel_url' => route('profile.index') . '#security',
+                'cancel_url' => route('profile.index').'#security',
             ],
             metadata: [
                 'user_id' => $user->id,
@@ -124,7 +122,7 @@ class ProfileService
      */
     public function changePassword(User $user, string $currentPassword, string $newPassword): bool
     {
-        if (!Hash::check($currentPassword, $user->password)) {
+        if (! Hash::check($currentPassword, $user->password)) {
             throw ValidationException::withMessages([
                 'current_password' => [__('Obecne hasło jest nieprawidłowe.')],
             ]);
@@ -252,8 +250,8 @@ class ProfileService
         $local = $parts[0];
         $domain = $parts[1];
 
-        $maskedLocal = substr($local, 0, 2) . str_repeat('*', max(3, strlen($local) - 2));
+        $maskedLocal = substr($local, 0, 2).str_repeat('*', max(3, strlen($local) - 2));
 
-        return $maskedLocal . '@' . $domain;
+        return $maskedLocal.'@'.$domain;
     }
 }

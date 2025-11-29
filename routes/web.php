@@ -124,7 +124,6 @@ Route::middleware(['auth'])->group(function () {
     });
 });
 
-
 Route::prefix('api')->name('api.')->middleware(['auth'])->group(function () {
     Route::get('/vehicle-types', [VehicleDataController::class, 'vehicleTypes'])->name('vehicle-types');
     Route::get('/car-brands', [VehicleDataController::class, 'brands'])->name('car-brands');

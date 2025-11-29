@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('email', 255)->unique()->comment('Suppressed email address');
             $table->enum('reason', ['bounced', 'complained', 'unsubscribed', 'manual'])
-                  ->comment('Reason for suppression');
+                ->comment('Reason for suppression');
             $table->timestamp('suppressed_at')->comment('When email was suppressed');
             $table->timestamps();
 

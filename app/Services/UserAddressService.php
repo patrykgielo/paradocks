@@ -16,7 +16,7 @@ class UserAddressService
      */
     public function create(User $user, array $data): UserAddress
     {
-        if (!$user->canAddAddress()) {
+        if (! $user->canAddAddress()) {
             throw ValidationException::withMessages([
                 'address' => [__('Osiągnięto limit adresów. Skontaktuj się z administratorem, aby zwiększyć limit.')],
             ]);
@@ -101,7 +101,7 @@ class UserAddressService
             ->where('id', $addressId)
             ->first();
 
-        if (!$address) {
+        if (! $address) {
             throw new ModelNotFoundException('Address not found.');
         }
 

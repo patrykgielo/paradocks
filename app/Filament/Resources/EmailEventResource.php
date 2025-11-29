@@ -4,27 +4,27 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
-use BackedEnum;
-use UnitEnum;
 use App\Filament\Resources\EmailEventResource\Pages;
 use App\Models\EmailEvent;
 use App\Models\EmailSuppression;
+use BackedEnum;
+use Filament\Actions;
 use Filament\Forms;
-use Filament\Schemas\Schema;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Actions;
 use Illuminate\Database\Eloquent\Builder;
+use UnitEnum;
 
 class EmailEventResource extends Resource
 {
     protected static ?string $model = EmailEvent::class;
 
-    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-chart-bar';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-chart-bar';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Email';
+    protected static string|UnitEnum|null $navigationGroup = 'Email';
 
     protected static ?int $navigationSort = 3;
 
@@ -34,8 +34,8 @@ class EmailEventResource extends Resource
     {
         // Read-only resource - no create/edit forms
         return $schema->components([
-                //
-            ]);
+            //
+        ]);
     }
 
     public static function table(Table $table): Table
@@ -84,6 +84,7 @@ class EmailEventResource extends Resource
                         if (empty($record->event_data)) {
                             return null;
                         }
+
                         return json_encode($record->event_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
                     })
                     ->formatStateUsing(function ($state): string {
@@ -91,6 +92,7 @@ class EmailEventResource extends Resource
                             return '-';
                         }
                         $json = is_array($state) ? json_encode($state) : $state;
+
                         return \Str::limit($json, 50);
                     })
                     ->toggleable(),
@@ -138,8 +140,7 @@ class EmailEventResource extends Resource
                     ->label('View Email')
                     ->icon('heroicon-o-envelope-open')
                     ->color('info')
-                    ->url(fn (EmailEvent $record): string =>
-                        route('filament.admin.resources.email-sends.view', ['record' => $record->email_send_id])
+                    ->url(fn (EmailEvent $record): string => route('filament.admin.resources.email-sends.view', ['record' => $record->email_send_id])
                     )
                     ->openUrlInNewTab(false),
 
@@ -147,14 +148,12 @@ class EmailEventResource extends Resource
                     ->label('Suppress')
                     ->icon('heroicon-o-no-symbol')
                     ->color('danger')
-                    ->visible(fn (EmailEvent $record): bool =>
-                        in_array($record->event_type, ['bounced', 'complained'])
+                    ->visible(fn (EmailEvent $record): bool => in_array($record->event_type, ['bounced', 'complained'])
                     )
                     ->requiresConfirmation()
                     ->modalHeading('Add Email to Suppression List')
-                    ->modalDescription(fn (EmailEvent $record): string =>
-                        "This will prevent future emails from being sent to {$record->emailSend->recipient_email}. " .
-                        "This action can be reversed from the Email Suppressions page."
+                    ->modalDescription(fn (EmailEvent $record): string => "This will prevent future emails from being sent to {$record->emailSend->recipient_email}. ".
+                        'This action can be reversed from the Email Suppressions page.'
                     )
                     ->modalSubmitActionLabel('Add to Suppression List')
                     ->action(function (EmailEvent $record): void {
@@ -169,6 +168,7 @@ class EmailEventResource extends Resource
                                     ->title('Email already suppressed')
                                     ->body("The email {$email} is already in the suppression list.")
                                     ->send();
+
                                 return;
                             }
 
@@ -195,7 +195,7 @@ class EmailEventResource extends Resource
                         ->label('Export Selected')
                         ->icon('heroicon-o-arrow-down-tray')
                         ->action(function ($records) {
-                            $filename = 'email-events-' . now()->format('Y-m-d-His') . '.csv';
+                            $filename = 'email-events-'.now()->format('Y-m-d-His').'.csv';
                             $headers = [
                                 'Content-Type' => 'text/csv',
                                 'Content-Disposition' => "attachment; filename=\"$filename\"",

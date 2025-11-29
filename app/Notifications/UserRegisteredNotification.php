@@ -19,14 +19,12 @@ use Illuminate\Support\Facades\Log;
  * Sent when a new user registers on the platform.
  * Queued with uniqueness to prevent duplicate welcome emails.
  */
-class UserRegisteredNotification extends Notification implements ShouldQueue, ShouldBeUnique
+class UserRegisteredNotification extends Notification implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;
 
     /**
      * Create a new notification instance.
-     *
-     * @param \App\Models\User $user
      */
     public function __construct(
         public User $user
@@ -36,18 +34,14 @@ class UserRegisteredNotification extends Notification implements ShouldQueue, Sh
 
     /**
      * Get the unique ID for the notification.
-     *
-     * @return string
      */
     public function uniqueId(): string
     {
-        return 'user-registered:' . $this->user->id;
+        return 'user-registered:'.$this->user->id;
     }
 
     /**
      * Get the number of seconds the unique lock should be maintained.
-     *
-     * @return int
      */
     public function uniqueFor(): int
     {
@@ -57,7 +51,7 @@ class UserRegisteredNotification extends Notification implements ShouldQueue, Sh
     /**
      * Get the notification's delivery channels.
      *
-     * @param mixed $notifiable
+     * @param  mixed  $notifiable
      * @return array<int, string>
      */
     public function via(object $notifiable): array
@@ -68,8 +62,7 @@ class UserRegisteredNotification extends Notification implements ShouldQueue, Sh
     /**
      * Get the mail representation of the notification.
      *
-     * @param mixed $notifiable
-     * @return \Illuminate\Notifications\Messages\MailMessage
+     * @param  mixed  $notifiable
      */
     public function toMail(object $notifiable): MailMessage
     {

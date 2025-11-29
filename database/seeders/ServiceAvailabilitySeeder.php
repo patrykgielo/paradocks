@@ -21,6 +21,7 @@ class ServiceAvailabilitySeeder extends Seeder
 
         if ($staffUsers->isEmpty()) {
             $this->command->warn('No staff users found. Please create staff users first.');
+
             return;
         }
 
@@ -29,6 +30,7 @@ class ServiceAvailabilitySeeder extends Seeder
 
         if ($services->isEmpty()) {
             $this->command->warn('No services found. Please create services first.');
+
             return;
         }
 

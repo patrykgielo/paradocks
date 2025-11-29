@@ -10,24 +10,24 @@ use App\Filament\Resources\Posts\Pages\ListPosts;
 use App\Models\Category;
 use App\Models\Post;
 use BackedEnum;
-use UnitEnum;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Resources\Resource;
-use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
+use UnitEnum;
 
 class PostResource extends Resource
 {
     protected static ?string $model = Post::class;
 
-    protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedNewspaper;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedNewspaper;
 
-    protected static string | UnitEnum | null $navigationGroup = 'Content';
+    protected static string|UnitEnum|null $navigationGroup = 'Content';
 
     protected static ?int $navigationSort = 2;
 
@@ -76,6 +76,7 @@ class PostResource extends Resource
                             ->createOptionUsing(function (array $data) {
                                 $data['type'] = 'post';
                                 $data['slug'] = Str::slug($data['name']);
+
                                 return Category::create($data)->getKey();
                             }),
 
@@ -226,7 +227,7 @@ class PostResource extends Resource
                                             ->required()
                                             ->toolbarButtons([
                                                 'bold', 'italic', 'link', 'bulletList',
-                                                'orderedList', 'h3', 'blockquote'
+                                                'orderedList', 'h3', 'blockquote',
                                             ]),
 
                                         Forms\Components\RichEditor::make('right_column')
@@ -234,7 +235,7 @@ class PostResource extends Resource
                                             ->required()
                                             ->toolbarButtons([
                                                 'bold', 'italic', 'link', 'bulletList',
-                                                'orderedList', 'h3', 'blockquote'
+                                                'orderedList', 'h3', 'blockquote',
                                             ]),
                                     ]),
 
@@ -312,8 +313,7 @@ class PostResource extends Resource
                     ->badge()
                     ->dateTime('Y-m-d H:i')
                     ->color(fn ($state) => $state && $state->isPast() ? 'success' : 'warning')
-                    ->formatStateUsing(fn ($state) =>
-                        $state
+                    ->formatStateUsing(fn ($state) => $state
                             ? ($state->isPast() ? 'Opublikowano' : 'Zaplanowano')
                             : 'Wersja robocza'
                     )

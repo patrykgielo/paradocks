@@ -18,8 +18,8 @@ return new class extends Migration
             $table->string('phone_to', 20)->comment('Recipient phone number in international format (+48...)');
             $table->text('message_body')->comment('Rendered SMS message content');
             $table->enum('status', ['pending', 'sent', 'failed', 'invalid_number'])
-                  ->default('pending')
-                  ->comment('SMS delivery status');
+                ->default('pending')
+                ->comment('SMS delivery status');
             $table->timestamp('sent_at')->nullable()->comment('When SMS was sent');
             $table->json('metadata')->nullable()->comment('User ID, appointment ID, etc.');
             $table->string('message_key', 255)->unique()->comment('Idempotency key');

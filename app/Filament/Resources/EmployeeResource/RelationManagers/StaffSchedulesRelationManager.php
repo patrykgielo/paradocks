@@ -3,12 +3,12 @@
 namespace App\Filament\Resources\EmployeeResource\RelationManagers;
 
 use App\Models\StaffSchedule;
+use Filament\Actions;
 use Filament\Forms;
-use Filament\Schemas\Schema;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Actions;
 
 class StaffSchedulesRelationManager extends RelationManager
 {
@@ -21,43 +21,43 @@ class StaffSchedulesRelationManager extends RelationManager
     public function form(Schema $schema): Schema
     {
         return $schema->components([
-                Forms\Components\Select::make('day_of_week')
-                    ->label('Dzień tygodnia')
-                    ->options([
-                        0 => 'Niedziela',
-                        1 => 'Poniedziałek',
-                        2 => 'Wtorek',
-                        3 => 'Środa',
-                        4 => 'Czwartek',
-                        5 => 'Piątek',
-                        6 => 'Sobota',
-                    ])
-                    ->required(),
+            Forms\Components\Select::make('day_of_week')
+                ->label('Dzień tygodnia')
+                ->options([
+                    0 => 'Niedziela',
+                    1 => 'Poniedziałek',
+                    2 => 'Wtorek',
+                    3 => 'Środa',
+                    4 => 'Czwartek',
+                    5 => 'Piątek',
+                    6 => 'Sobota',
+                ])
+                ->required(),
 
-                Forms\Components\TimePicker::make('start_time')
-                    ->label('Od godziny')
-                    ->required()
-                    ->seconds(false),
+            Forms\Components\TimePicker::make('start_time')
+                ->label('Od godziny')
+                ->required()
+                ->seconds(false),
 
-                Forms\Components\TimePicker::make('end_time')
-                    ->label('Do godziny')
-                    ->required()
-                    ->seconds(false)
-                    ->after('start_time'),
+            Forms\Components\TimePicker::make('end_time')
+                ->label('Do godziny')
+                ->required()
+                ->seconds(false)
+                ->after('start_time'),
 
-                Forms\Components\DatePicker::make('effective_from')
-                    ->label('Obowiązuje od')
-                    ->native(false),
+            Forms\Components\DatePicker::make('effective_from')
+                ->label('Obowiązuje od')
+                ->native(false),
 
-                Forms\Components\DatePicker::make('effective_until')
-                    ->label('Obowiązuje do')
-                    ->native(false)
-                    ->after('effective_from'),
+            Forms\Components\DatePicker::make('effective_until')
+                ->label('Obowiązuje do')
+                ->native(false)
+                ->after('effective_from'),
 
-                Forms\Components\Toggle::make('is_active')
-                    ->label('Aktywny')
-                    ->default(true),
-            ]);
+            Forms\Components\Toggle::make('is_active')
+                ->label('Aktywny')
+                ->default(true),
+        ]);
     }
 
     public function table(Table $table): Table
@@ -67,7 +67,7 @@ class StaffSchedulesRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('day_name')
                     ->label('Dzień')
                     ->badge()
-                    ->color(fn (StaffSchedule $record) => match($record->day_of_week) {
+                    ->color(fn (StaffSchedule $record) => match ($record->day_of_week) {
                         0, 6 => 'warning',
                         default => 'primary',
                     }),

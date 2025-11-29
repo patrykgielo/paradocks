@@ -2,28 +2,27 @@
 
 namespace App\Filament\Resources;
 
-use BackedEnum;
-use UnitEnum;
 use App\Filament\Resources\StaffVacationPeriodResource\Pages;
-use App\Filament\Resources\StaffVacationPeriodResource\RelationManagers;
 use App\Models\StaffVacationPeriod;
 use App\Models\User;
+use BackedEnum;
+use Filament\Actions;
 use Filament\Forms;
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Section;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Actions;
 use Illuminate\Database\Eloquent\Builder;
+use UnitEnum;
 
 class StaffVacationPeriodResource extends Resource
 {
     protected static ?string $model = StaffVacationPeriod::class;
 
-    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-sun';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-sun';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Harmonogramy';
+    protected static string|UnitEnum|null $navigationGroup = 'Harmonogramy';
 
     protected static ?string $modelLabel = 'Urlop';
 
@@ -34,84 +33,85 @@ class StaffVacationPeriodResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-                Section::make('Podstawowe informacje')
-                    ->schema([
-                        Forms\Components\Select::make('user_id')
-                            ->label('Pracownik')
-                            ->relationship('user', 'first_name', function (Builder $query) {
-                                $query->role('staff');
-                            })
-                            ->getOptionLabelFromRecordUsing(fn (User $record) => $record->name)
-                            ->searchable()
-                            ->preload()
-                            ->required(),
-                    ]),
+            Section::make('Podstawowe informacje')
+                ->schema([
+                    Forms\Components\Select::make('user_id')
+                        ->label('Pracownik')
+                        ->relationship('user', 'first_name', function (Builder $query) {
+                            $query->role('staff');
+                        })
+                        ->getOptionLabelFromRecordUsing(fn (User $record) => $record->name)
+                        ->searchable()
+                        ->preload()
+                        ->required(),
+                ]),
 
-                Section::make('Okres urlopu')
-                    ->schema([
-                        Forms\Components\DatePicker::make('start_date')
-                            ->label('Data rozpoczęcia')
-                            ->native(false)
-                            ->displayFormat('Y-m-d')
-                            ->required()
-                            ->live()
-                            ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                if (!$state) {
-                                    return;
-                                }
+            Section::make('Okres urlopu')
+                ->schema([
+                    Forms\Components\DatePicker::make('start_date')
+                        ->label('Data rozpoczęcia')
+                        ->native(false)
+                        ->displayFormat('Y-m-d')
+                        ->required()
+                        ->live()
+                        ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                            if (! $state) {
+                                return;
+                            }
 
-                                $endDate = $get('end_date');
-                                if (!$endDate) {
-                                    return;
-                                }
+                            $endDate = $get('end_date');
+                            if (! $endDate) {
+                                return;
+                            }
 
-                                // Handle both string and Carbon instances for comparison
-                                $stateDate = $state instanceof \Carbon\Carbon ? $state : \Carbon\Carbon::parse($state);
-                                $endDateObj = $endDate instanceof \Carbon\Carbon ? $endDate : \Carbon\Carbon::parse($endDate);
+                            // Handle both string and Carbon instances for comparison
+                            $stateDate = $state instanceof \Carbon\Carbon ? $state : \Carbon\Carbon::parse($state);
+                            $endDateObj = $endDate instanceof \Carbon\Carbon ? $endDate : \Carbon\Carbon::parse($endDate);
 
-                                if ($stateDate->gt($endDateObj)) {
-                                    $set('end_date', $state);
-                                }
-                            }),
+                            if ($stateDate->gt($endDateObj)) {
+                                $set('end_date', $state);
+                            }
+                        }),
 
-                        Forms\Components\DatePicker::make('end_date')
-                            ->label('Data zakończenia')
-                            ->native(false)
-                            ->displayFormat('Y-m-d')
-                            ->required()
-                            ->after('start_date')
-                            ->live()
-                            ->helperText(function (callable $get) {
-                                $start = $get('start_date');
-                                $end = $get('end_date');
+                    Forms\Components\DatePicker::make('end_date')
+                        ->label('Data zakończenia')
+                        ->native(false)
+                        ->displayFormat('Y-m-d')
+                        ->required()
+                        ->after('start_date')
+                        ->live()
+                        ->helperText(function (callable $get) {
+                            $start = $get('start_date');
+                            $end = $get('end_date');
 
-                                if ($start && $end) {
-                                    // Handle both string and Carbon instances
-                                    $startDate = $start instanceof \Carbon\Carbon ? $start : \Carbon\Carbon::parse($start);
-                                    $endDate = $end instanceof \Carbon\Carbon ? $end : \Carbon\Carbon::parse($end);
-                                    $days = $startDate->diffInDays($endDate) + 1;
-                                    return "Długość urlopu: {$days} " . ($days === 1 ? 'dzień' : 'dni');
-                                }
+                            if ($start && $end) {
+                                // Handle both string and Carbon instances
+                                $startDate = $start instanceof \Carbon\Carbon ? $start : \Carbon\Carbon::parse($start);
+                                $endDate = $end instanceof \Carbon\Carbon ? $end : \Carbon\Carbon::parse($end);
+                                $days = $startDate->diffInDays($endDate) + 1;
 
-                                return '';
-                            }),
-                    ])->columns(2),
+                                return "Długość urlopu: {$days} ".($days === 1 ? 'dzień' : 'dni');
+                            }
 
-                Section::make('Szczegóły')
-                    ->schema([
-                        Forms\Components\Textarea::make('reason')
-                            ->label('Powód/Typ urlopu')
-                            ->rows(3)
-                            ->placeholder('np. "Urlop wypoczynkowy", "Urlop na żądanie", "Zwolnienie lekarskie"')
-                            ->columnSpanFull(),
+                            return '';
+                        }),
+                ])->columns(2),
 
-                        Forms\Components\Toggle::make('is_approved')
-                            ->label('Zatwierdzony')
-                            ->default(false)
-                            ->helperText('Czy ten urlop został zatwierdzony przez managera?')
-                            ->required(),
-                    ]),
-            ]);
+            Section::make('Szczegóły')
+                ->schema([
+                    Forms\Components\Textarea::make('reason')
+                        ->label('Powód/Typ urlopu')
+                        ->rows(3)
+                        ->placeholder('np. "Urlop wypoczynkowy", "Urlop na żądanie", "Zwolnienie lekarskie"')
+                        ->columnSpanFull(),
+
+                    Forms\Components\Toggle::make('is_approved')
+                        ->label('Zatwierdzony')
+                        ->default(false)
+                        ->helperText('Czy ten urlop został zatwierdzony przez managera?')
+                        ->required(),
+                ]),
+        ]);
     }
 
     public static function table(Table $table): Table
@@ -137,7 +137,8 @@ class StaffVacationPeriodResource extends Resource
                     ->label('Długość')
                     ->formatStateUsing(function (StaffVacationPeriod $record) {
                         $days = $record->getDurationInDays();
-                        return $days . ' ' . ($days === 1 ? 'dzień' : 'dni');
+
+                        return $days.' '.($days === 1 ? 'dzień' : 'dni');
                     })
                     ->badge()
                     ->color('info'),
@@ -210,8 +211,9 @@ class StaffVacationPeriodResource extends Resource
                     ->label('Trwające teraz')
                     ->query(function (Builder $query) {
                         $today = now()->toDateString();
+
                         return $query->where('start_date', '<=', $today)
-                                     ->where('end_date', '>=', $today);
+                            ->where('end_date', '>=', $today);
                     }),
 
                 Tables\Filters\Filter::make('upcoming')

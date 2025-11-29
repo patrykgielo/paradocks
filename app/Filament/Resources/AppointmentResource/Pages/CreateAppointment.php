@@ -5,10 +5,8 @@ namespace App\Filament\Resources\AppointmentResource\Pages;
 use App\Filament\Resources\AppointmentResource;
 use App\Models\User;
 use App\Services\AppointmentService;
-use Filament\Actions;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
-use Illuminate\Database\Eloquent\Model;
 
 class CreateAppointment extends CreateRecord
 {
@@ -19,7 +17,7 @@ class CreateAppointment extends CreateRecord
         // Validate staff role
         if (isset($data['staff_id'])) {
             $staff = User::find($data['staff_id']);
-            if ($staff && !$staff->hasRole('staff')) {
+            if ($staff && ! $staff->hasRole('staff')) {
                 Notification::make()
                     ->danger()
                     ->title('Błąd walidacji')
@@ -41,7 +39,7 @@ class CreateAppointment extends CreateRecord
             endTime: $data['end_time']
         );
 
-        if (!$validation['valid']) {
+        if (! $validation['valid']) {
             foreach ($validation['errors'] as $error) {
                 Notification::make()
                     ->danger()

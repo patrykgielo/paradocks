@@ -63,8 +63,6 @@ class EmailSend extends Model
 
     /**
      * Get the email template associated with this send.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function emailTemplate(): BelongsTo
     {
@@ -73,8 +71,6 @@ class EmailSend extends Model
 
     /**
      * Get all events for this email send.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function emailEvents(): HasMany
     {
@@ -84,8 +80,7 @@ class EmailSend extends Model
     /**
      * Scope a query to filter by status.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $status
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeStatus($query, string $status)
@@ -96,8 +91,7 @@ class EmailSend extends Model
     /**
      * Scope a query to filter by recipient email.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $email
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeRecipient($query, string $email)
@@ -108,7 +102,7 @@ class EmailSend extends Model
     /**
      * Scope a query to only include emails sent in the last 7 days.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeRecent($query)
@@ -118,8 +112,6 @@ class EmailSend extends Model
 
     /**
      * Mark the email as successfully sent.
-     *
-     * @return void
      */
     public function markAsSent(): void
     {
@@ -131,9 +123,6 @@ class EmailSend extends Model
 
     /**
      * Mark the email as failed with error message.
-     *
-     * @param string $error
-     * @return void
      */
     public function markAsFailed(string $error): void
     {
@@ -145,8 +134,6 @@ class EmailSend extends Model
 
     /**
      * Mark the email as bounced.
-     *
-     * @return void
      */
     public function markAsBounced(): void
     {
@@ -157,8 +144,6 @@ class EmailSend extends Model
 
     /**
      * Check if the email was sent successfully.
-     *
-     * @return bool
      */
     public function isSent(): bool
     {
@@ -167,8 +152,6 @@ class EmailSend extends Model
 
     /**
      * Check if the email failed.
-     *
-     * @return bool
      */
     public function isFailed(): bool
     {
@@ -177,8 +160,6 @@ class EmailSend extends Model
 
     /**
      * Check if the email bounced.
-     *
-     * @return bool
      */
     public function isBounced(): bool
     {
@@ -187,8 +168,6 @@ class EmailSend extends Model
 
     /**
      * Check if the email is pending.
-     *
-     * @return bool
      */
     public function isPending(): bool
     {

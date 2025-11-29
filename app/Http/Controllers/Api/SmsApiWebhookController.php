@@ -32,15 +32,12 @@ class SmsApiWebhookController extends Controller
      *   "date_sent": "2025-11-12 10:30:00",
      *   "error_code": "optional_error_code"
      * }
-     *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\JsonResponse
      */
     public function handleDeliveryStatus(Request $request): JsonResponse
     {
         try {
             // Verify webhook signature for security
-            if (!$this->verifyWebhookSignature($request)) {
+            if (! $this->verifyWebhookSignature($request)) {
                 Log::warning('SMSAPI webhook: Invalid signature', [
                     'ip' => $request->ip(),
                     'payload' => $request->all(),
@@ -74,7 +71,7 @@ class SmsApiWebhookController extends Controller
             // Find the SMS send record
             $smsSend = SmsSend::where('sms_id', $smsId)->first();
 
-            if (!$smsSend) {
+            if (! $smsSend) {
                 Log::warning('SMSAPI webhook: SMS send not found', [
                     'sms_id' => $smsId,
                     'status' => $status,
@@ -148,7 +145,7 @@ class SmsApiWebhookController extends Controller
     /**
      * Map SMSAPI status to our event type.
      *
-     * @param string $smsapiStatus SMSAPI status string
+     * @param  string  $smsapiStatus  SMSAPI status string
      * @return string Event type (sent|delivered|failed|invalid_number|expired)
      */
     private function mapStatusToEventType(string $smsapiStatus): string
@@ -165,9 +162,6 @@ class SmsApiWebhookController extends Controller
 
     /**
      * Update SMS send status based on event type.
-     *
-     * @param \App\Models\SmsSend $smsSend
-     * @param string $eventType
      */
     private function updateSmsSendStatus(SmsSend $smsSend, string $eventType): void
     {
@@ -197,16 +191,12 @@ class SmsApiWebhookController extends Controller
 
     /**
      * Handle suppression list updates based on event type.
-     *
-     * @param \App\Models\SmsSend $smsSend
-     * @param string $eventType
-     * @param string|null $phone
      */
     private function handleSuppressionList(SmsSend $smsSend, string $eventType, ?string $phone): void
     {
         $phoneToSuppress = $phone ?? $smsSend->phone_to;
 
-        if (!$phoneToSuppress) {
+        if (! $phoneToSuppress) {
             return;
         }
 
@@ -245,7 +235,6 @@ class SmsApiWebhookController extends Controller
      *
      * SMSAPI.pl uses HMAC SHA-256 signature in X-SMSAPI-Signature header.
      *
-     * @param \Illuminate\Http\Request $request
      * @return bool True if signature is valid or webhook secret not configured
      */
     private function verifyWebhookSignature(Request $request): bool

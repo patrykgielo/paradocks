@@ -47,9 +47,9 @@ class MaintenanceStatusCommand extends Command
         $this->newLine();
 
         if ($isActive) {
-            $this->line("   Status: <fg=red>● ACTIVE</>");
+            $this->line('   Status: <fg=red>● ACTIVE</>');
             $this->line("   Type: <fg=yellow>{$type->label()}</>");
-            $this->line("   Can Bypass: " . ($type->canBypass() ? '<fg=green>Yes (admins + token)</>' : '<fg=red>No</>'));
+            $this->line('   Can Bypass: '.($type->canBypass() ? '<fg=green>Yes (admins + token)</>' : '<fg=red>No</>'));
             $this->line("   Retry After: {$type->retryAfter()} seconds");
 
             if ($status['enabled_at']) {
@@ -67,7 +67,7 @@ class MaintenanceStatusCommand extends Command
             }
 
             // Show configuration
-            if (!empty($config)) {
+            if (! empty($config)) {
                 $this->newLine();
                 $this->line('   <fg=blue>Configuration:</>');
                 foreach ($config as $key => $value) {
@@ -77,9 +77,9 @@ class MaintenanceStatusCommand extends Command
                 }
             }
         } else {
-            $this->line("   Status: <fg=green>● OPERATIONAL</>");
-            $this->line("   Type: <fg=gray>None</>");
-            $this->line("   Site is accessible to all users");
+            $this->line('   Status: <fg=green>● OPERATIONAL</>');
+            $this->line('   Type: <fg=gray>None</>');
+            $this->line('   Site is accessible to all users');
         }
 
         // Show recent event history if requested
@@ -96,8 +96,7 @@ class MaintenanceStatusCommand extends Command
                 ->get();
 
             if ($events->isEmpty()) {
-                $this->line('   <fg=gray>No events found</>')
-;
+                $this->line('   <fg=gray>No events found</>');
             } else {
                 $rows = $events->map(function ($event) {
                     return [

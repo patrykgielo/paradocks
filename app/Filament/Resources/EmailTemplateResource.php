@@ -4,31 +4,30 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
-use BackedEnum;
-use UnitEnum;
 use App\Filament\Resources\EmailTemplateResource\Pages;
 use App\Models\EmailTemplate;
 use App\Services\Email\EmailService;
+use BackedEnum;
+use Filament\Actions;
 use Filament\Forms;
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Utilities\Get;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Actions;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\HtmlString;
+use UnitEnum;
 
 class EmailTemplateResource extends Resource
 {
     protected static ?string $model = EmailTemplate::class;
 
-    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-document-text';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-document-text';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Email';
+    protected static string|UnitEnum|null $navigationGroup = 'Email';
 
     protected static ?int $navigationSort = 1;
 
@@ -37,89 +36,89 @@ class EmailTemplateResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-                Section::make('Template Details')
-                    ->schema([
-                        Forms\Components\Select::make('key')
-                            ->label('Template Key')
-                            ->required()
-                            ->options([
-                                'user-registered' => 'User Registered',
-                                'password-reset' => 'Password Reset',
-                                'appointment-created' => 'Appointment Created',
-                                'appointment-rescheduled' => 'Appointment Rescheduled',
-                                'appointment-cancelled' => 'Appointment Cancelled',
-                                'appointment-reminder-24h' => 'Appointment Reminder (24h)',
-                                'appointment-reminder-2h' => 'Appointment Reminder (2h)',
-                                'appointment-followup' => 'Appointment Follow-up',
-                                'admin-daily-digest' => 'Admin Daily Digest',
-                            ])
-                            ->searchable()
-                            ->helperText('Unique identifier for this template'),
+            Section::make('Template Details')
+                ->schema([
+                    Forms\Components\Select::make('key')
+                        ->label('Template Key')
+                        ->required()
+                        ->options([
+                            'user-registered' => 'User Registered',
+                            'password-reset' => 'Password Reset',
+                            'appointment-created' => 'Appointment Created',
+                            'appointment-rescheduled' => 'Appointment Rescheduled',
+                            'appointment-cancelled' => 'Appointment Cancelled',
+                            'appointment-reminder-24h' => 'Appointment Reminder (24h)',
+                            'appointment-reminder-2h' => 'Appointment Reminder (2h)',
+                            'appointment-followup' => 'Appointment Follow-up',
+                            'admin-daily-digest' => 'Admin Daily Digest',
+                        ])
+                        ->searchable()
+                        ->helperText('Unique identifier for this template'),
 
-                        Forms\Components\Select::make('language')
-                            ->label('Language')
-                            ->required()
-                            ->options([
-                                'pl' => 'Polski (PL)',
-                                'en' => 'English (EN)',
-                            ])
-                            ->default('pl')
-                            ->helperText('Template language'),
+                    Forms\Components\Select::make('language')
+                        ->label('Language')
+                        ->required()
+                        ->options([
+                            'pl' => 'Polski (PL)',
+                            'en' => 'English (EN)',
+                        ])
+                        ->default('pl')
+                        ->helperText('Template language'),
 
-                        Forms\Components\Toggle::make('active')
-                            ->label('Active')
-                            ->default(true)
-                            ->helperText('Enable/disable this template'),
-                    ])
-                    ->columns(3),
+                    Forms\Components\Toggle::make('active')
+                        ->label('Active')
+                        ->default(true)
+                        ->helperText('Enable/disable this template'),
+                ])
+                ->columns(3),
 
-                Section::make('Email Content')
-                    ->schema([
-                        Forms\Components\TextInput::make('subject')
-                            ->label('Subject Line')
-                            ->required()
-                            ->maxLength(255)
-                            ->placeholder('Welcome to {{app_name}}, {{user_name}}!')
-                            ->helperText('Use {{variable}} syntax for placeholders'),
+            Section::make('Email Content')
+                ->schema([
+                    Forms\Components\TextInput::make('subject')
+                        ->label('Subject Line')
+                        ->required()
+                        ->maxLength(255)
+                        ->placeholder('Welcome to {{app_name}}, {{user_name}}!')
+                        ->helperText('Use {{variable}} syntax for placeholders'),
 
-                        Forms\Components\Textarea::make('html_body')
-                            ->label('HTML Body')
-                            ->required()
-                            ->rows(15)
-                            ->placeholder('<h1>Hello {{user_name}}</h1>')
-                            ->helperText('HTML template with {{variable}} placeholders. Supports Blade syntax.'),
+                    Forms\Components\Textarea::make('html_body')
+                        ->label('HTML Body')
+                        ->required()
+                        ->rows(15)
+                        ->placeholder('<h1>Hello {{user_name}}</h1>')
+                        ->helperText('HTML template with {{variable}} placeholders. Supports Blade syntax.'),
 
-                        Forms\Components\Textarea::make('text_body')
-                            ->label('Plain Text Body (Optional)')
-                            ->rows(10)
-                            ->placeholder('Hello {{user_name}}...')
-                            ->helperText('Plain text version for email clients that don\'t support HTML'),
-                    ]),
+                    Forms\Components\Textarea::make('text_body')
+                        ->label('Plain Text Body (Optional)')
+                        ->rows(10)
+                        ->placeholder('Hello {{user_name}}...')
+                        ->helperText('Plain text version for email clients that don\'t support HTML'),
+                ]),
 
-                Section::make('Available Variables')
-                    ->schema([
-                        Forms\Components\Placeholder::make('variable_legend')
-                            ->label('')
-                            ->content(fn (Get $get): HtmlString => self::getVariableLegendForKey($get('key')))
-                            ->helperText('Copy these variable names into your template using {{variable_name}} syntax'),
-                    ])
-                    ->description('Variables you can use in the subject, HTML body, and text body')
-                    ->collapsible(),
+            Section::make('Available Variables')
+                ->schema([
+                    Forms\Components\Placeholder::make('variable_legend')
+                        ->label('')
+                        ->content(fn (Get $get): HtmlString => self::getVariableLegendForKey($get('key')))
+                        ->helperText('Copy these variable names into your template using {{variable_name}} syntax'),
+                ])
+                ->description('Variables you can use in the subject, HTML body, and text body')
+                ->collapsible(),
 
-                Section::make('Advanced Settings')
-                    ->schema([
-                        Forms\Components\TextInput::make('blade_path')
-                            ->label('Blade Path (Fallback)')
-                            ->placeholder('emails.user-registered')
-                            ->helperText('Fallback Blade view path if database template fails'),
+            Section::make('Advanced Settings')
+                ->schema([
+                    Forms\Components\TextInput::make('blade_path')
+                        ->label('Blade Path (Fallback)')
+                        ->placeholder('emails.user-registered')
+                        ->helperText('Fallback Blade view path if database template fails'),
 
-                        Forms\Components\TagsInput::make('variables')
-                            ->label('Available Variables')
-                            ->placeholder('user_name, app_name, etc.')
-                            ->helperText('List of variables available for this template (for reference only)'),
-                    ])
-                    ->collapsed(),
-            ]);
+                    Forms\Components\TagsInput::make('variables')
+                        ->label('Available Variables')
+                        ->placeholder('user_name, app_name, etc.')
+                        ->helperText('List of variables available for this template (for reference only)'),
+                ])
+                ->collapsed(),
+        ]);
     }
 
     public static function table(Table $table): Table
@@ -367,12 +366,12 @@ class EmailTemplateResource extends Resource
      * including both common variables (app_name, user_name, etc.) and
      * template-specific variables (appointment_date, verification_url, etc.).
      *
-     * @param string|null $key Template key (e.g., 'user-registered', 'appointment-created')
+     * @param  string|null  $key  Template key (e.g., 'user-registered', 'appointment-created')
      * @return \Illuminate\Support\HtmlString HTML content showing variable list
      */
     protected static function getVariableLegendForKey(?string $key): HtmlString
     {
-        if (!$key) {
+        if (! $key) {
             return new HtmlString('<p class="text-sm text-gray-500">Select a template key to see available variables</p>');
         }
 
@@ -441,7 +440,7 @@ class EmailTemplateResource extends Resource
         $html .= '</div>';
 
         // Template-specific variables section
-        if (!empty($specificVariables)) {
+        if (! empty($specificVariables)) {
             $html .= '<div>';
             $html .= '<h4 class="text-sm font-semibold text-gray-700 mb-2">Template-Specific Variables</h4>';
             $html .= '<div class="bg-blue-50 rounded-lg p-3 space-y-1">';
