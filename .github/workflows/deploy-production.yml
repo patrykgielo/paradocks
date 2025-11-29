@@ -116,14 +116,24 @@ jobs:
           DB_PASSWORD: secret
 
       - name: Run PHPUnit tests
-        run: php artisan test --testsuite=Feature
+        run: |
+          php artisan config:clear
+          php artisan test --testsuite=Feature
         env:
+          # Database (MySQL in CI)
           DB_CONNECTION: mysql
           DB_HOST: 127.0.0.1
           DB_PORT: 3306
           DB_DATABASE: paradocks_test
           DB_USERNAME: root
           DB_PASSWORD: secret
+          # Queue & Cache (sync/array for fast testing without Redis)
+          QUEUE_CONNECTION: sync
+          CACHE_STORE: array
+          # Session (array for stateless testing)
+          SESSION_DRIVER: array
+          # Mail (array to capture emails without sending)
+          MAIL_MAILER: array
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
