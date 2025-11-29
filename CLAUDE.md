@@ -563,37 +563,38 @@ https://paradocks.local:8444/horizon/failed
 
 ### Permission Denied: storage/framework/views
 
-**Problem:** Permission errors when writing to storage (especially during deployment).
+**Status:** ✅ **SOLVED** (v0.1.0+)
 
-**Symptoms:**
+**Symptoms** (Historical):
 ```
 ERROR  Failed to enter maintenance mode: file_put_contents(storage/framework/views/xxx.php): Permission denied
 ```
 
-**Cause:** Docker container UID doesn't match VPS file ownership. This happens when:
-- Docker build cache reuses old layers with different UID
-- Container built with uid=1000 but VPS files owned by uid=1002
-- Previous deployments used different user
+**Root Cause** (Historical):
+The old deployment workflow had a CATCH-22 problem:
+- Maintenance mode tried to write files BEFORE building new container
+- Old container had wrong UID (1000) but files owned by UID 1002
+- Permission denied → Build never happened → Deployment failed
 
-**Solution (Production VPS):**
-GitHub Actions workflow automatically handles this via:
-1. Detects VPS file ownership (`stat -c '%u' /var/www/paradocks`)
-2. Builds with matching UID: `--no-cache --build-arg USER_ID=1002`
-3. Verifies container has correct UID before deployment
+**Current Solution** (v0.1.0+):
+GitHub Actions now uses **zero-downtime healthcheck deployment**:
+1. Old container continues serving (no maintenance mode)
+2. Build new container with correct UID in background
+3. Wait for new container to be healthy
+4. Run migrations (~15s controlled downtime)
+5. Switch traffic to new container
+6. No permission errors
 
-**Solution (Local Development):**
+**For Local Development:**
 ```bash
-# Check what UID owns your files
-stat -c '%u:%g' storage
-
-# If files owned by different UID, rebuild:
+# If you encounter permission issues locally:
 docker compose build --no-cache app
 docker compose restart app
 ```
 
-**Important:** `--no-cache` is required because Docker layer cache can reuse old `RUN useradd` commands even when build-args change.
-
-**See:** [DEPLOYMENT.md Troubleshooting](DEPLOYMENT.md#permission-denied-storageframeworkviews) for detailed VPS fix.
+**See:**
+- [DEPLOYMENT.md - Deployment Strategy](DEPLOYMENT.md#deployment-strategy) for complete details
+- [ADR-011](app/docs/deployment/ADR-011-healthcheck-deployment-strategy.md) for architectural decision
 
 ### OPcache / Code Changes Not Applying
 
