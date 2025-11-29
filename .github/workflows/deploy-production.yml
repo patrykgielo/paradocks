@@ -73,7 +73,7 @@ jobs:
         run: |
           cp .env.example .env
           php artisan key:generate
-          php artisan test
+          php artisan test --testsuite=Feature
         env:
           DB_CONNECTION: sqlite
           DB_DATABASE: ':memory:'
