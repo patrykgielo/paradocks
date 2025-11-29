@@ -20,9 +20,9 @@ class ServiceAvailabilitySeeder extends Seeder
         })->get();
 
         if ($staffUsers->isEmpty()) {
-            $this->command->warn('No staff users found. Please create staff users first.');
-
-            return;
+            throw new \RuntimeException(
+                'No staff users with "staff" role found. Run RolePermissionSeeder first.'
+            );
         }
 
         // Get all services
