@@ -177,7 +177,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./docker/app/Dockerfile
+          file: ./Dockerfile
           push: false  # Don't push yet, scan first
           tags: ${{ steps.meta.outputs.tags }}
           cache-from: type=gha
