@@ -14,17 +14,14 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             SettingSeeder::class,
+            RolePermissionSeeder::class,
+            VehicleTypeSeeder::class,
+            EmailTemplateSeeder::class,
+            SmsTemplateSeeder::class,
         ]);
 
-        User::factory()->create([
-            'first_name' => 'Test',
-            'last_name' => 'User',
-            'email' => 'test@example.com',
-            'phone_e164' => '+48501234567',
-            'street_name' => 'Testowa',
-            'street_number' => '1',
-            'city' => 'Warszawa',
-            'postal_code' => '00-000',
-        ]);
+        // NOTE: Test users are created by individual tests via factories
+        // For manual testing, use: php artisan make:filament-user
+        // Or create via Tinker: User::factory()->create([...])
     }
 }

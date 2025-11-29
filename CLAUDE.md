@@ -26,12 +26,8 @@ Laravel 12 car detailing booking application with:
 # Add domain to hosts
 sudo ./add-hosts-entry.sh
 
-# Run required seeders (⚠️ CRITICAL - always after migrate:fresh)
-docker compose exec app php artisan db:seed --class=VehicleTypeSeeder
-docker compose exec app php artisan db:seed --class=RolePermissionSeeder
-docker compose exec app php artisan db:seed --class=EmailTemplateSeeder
-docker compose exec app php artisan db:seed --class=SmsTemplateSeeder
-docker compose exec app php artisan db:seed --class=SettingSeeder
+# ✅ NEW (v0.1.0+): All seeders run automatically
+docker compose exec app php artisan migrate:fresh --seed
 
 # Staff scheduling - SIMPLIFIED NAVIGATION (2 main sections):
 # - /admin/staff-schedules (Harmonogramy - base patterns + link to exceptions)
@@ -72,13 +68,15 @@ docker compose exec app php artisan migrate
 # Fresh migrations with seeding
 docker compose exec app php artisan migrate:fresh --seed
 
-# ⚠️ CRITICAL: migrate:fresh --seed only runs DatabaseSeeder!
-# You MUST manually run these seeders afterward:
-docker compose exec app php artisan db:seed --class=VehicleTypeSeeder
-docker compose exec app php artisan db:seed --class=RolePermissionSeeder
-docker compose exec app php artisan db:seed --class=EmailTemplateSeeder
-docker compose exec app php artisan db:seed --class=SmsTemplateSeeder
-docker compose exec app php artisan db:seed --class=SettingSeeder
+# ✅ UPDATED (v0.1.0): DatabaseSeeder now runs ALL required seeders automatically:
+# - SettingSeeder
+# - RolePermissionSeeder
+# - VehicleTypeSeeder
+# - EmailTemplateSeeder
+# - SmsTemplateSeeder
+#
+# ServiceAvailabilitySeeder must be run MANUALLY (requires staff users):
+# docker compose exec app php artisan db:seed --class=ServiceAvailabilitySeeder
 
 # NOTE: Staff availability is managed via admin panel (/admin/staff-schedules)
 # Use Employee edit page → Harmonogramy tab to set schedules for employees
