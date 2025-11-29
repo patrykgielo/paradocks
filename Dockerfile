@@ -40,8 +40,14 @@ RUN echo "upload_max_filesize = 20M" >> /usr/local/etc/php/conf.d/uploads.ini \
 # Get latest Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+# Accept UID/GID as build arguments for host permission matching
+ARG USER_ID=1000
+ARG GROUP_ID=1000
+
 # Create system user to run Composer and Artisan Commands
-RUN useradd -G www-data,root -u 1000 -d /home/laravel laravel
+# Use dynamic UID/GID to match host file ownership
+RUN groupadd -g ${GROUP_ID} laravel || true
+RUN useradd -G www-data,root -u ${USER_ID} -g ${GROUP_ID} -d /home/laravel laravel
 RUN mkdir -p /home/laravel/.composer && \
     chown -R laravel:laravel /home/laravel
 

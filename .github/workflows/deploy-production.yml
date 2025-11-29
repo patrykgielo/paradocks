@@ -249,23 +249,21 @@ jobs:
         run: |
           ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST "echo '✅ SSH connection successful'"
 
-      - name: Fix storage permissions
+      - name: Detect VPS file ownership
+        id: detect-uid
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
         run: |
-          echo "🔧 Fixing storage permissions..."
-          ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << 'ENDSSH'
-            cd /var/www/paradocks
-            # Fix ownership - deploy user needs to own files
-            sudo chown -R deploy:deploy storage bootstrap/cache
-            # Set proper permissions (rwxrwxr-x)
-            sudo chmod -R 775 storage bootstrap/cache
-            # Set SGID bit so new files inherit group ownership
-            sudo chmod g+s storage storage/framework storage/framework/cache storage/framework/sessions storage/framework/views storage/logs
-            echo "✅ Storage permissions fixed"
-          ENDSSH
+          echo "🔍 Detecting VPS file ownership..."
+          VPS_UID=$(ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST \
+            "stat -c '%u' /var/www/paradocks/storage 2>/dev/null || echo '1000'")
+          VPS_GID=$(ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST \
+            "stat -c '%g' /var/www/paradocks/storage 2>/dev/null || echo '1000'")
+          echo "Detected UID: $VPS_UID, GID: $VPS_GID"
+          echo "uid=$VPS_UID" >> $GITHUB_OUTPUT
+          echo "gid=$VPS_GID" >> $GITHUB_OUTPUT
 
       - name: Enable MaintenanceService
         env:
@@ -308,18 +306,29 @@ jobs:
             echo "${GHCR_TOKEN}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           ENDSSH
 
-      - name: Pull new Docker image
+      - name: Upload Dockerfile to VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
+        run: |
+          echo "📤 Uploading updated Dockerfile to VPS..."
+          scp -i ~/.ssh/deploy_key -P $VPS_PORT ./Dockerfile $VPS_USER@$VPS_HOST:/var/www/paradocks/Dockerfile
+
+      - name: Build Docker image on VPS with matching UID/GID
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
           VERSION: ${{ needs.build.outputs.version }}
         run: |
-          echo "⬇️ Pulling Docker image: ghcr.io/${{ github.repository }}:${VERSION}"
+          echo "🔨 Building Docker image with UID=${{ steps.detect-uid.outputs.uid }} GID=${{ steps.detect-uid.outputs.gid }}"
           ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << ENDSSH
             cd /var/www/paradocks
             export VERSION=${VERSION}
-            docker compose -f docker-compose.prod.yml pull app
+            # Build image with dynamic UID/GID matching VPS file ownership
+            docker compose -f docker-compose.prod.yml build --build-arg USER_ID=${{ steps.detect-uid.outputs.uid }} --build-arg GROUP_ID=${{ steps.detect-uid.outputs.gid }} app
+            echo "✅ Image built with UID/GID matching VPS files"
           ENDSSH
 
       - name: Restart containers with new image
