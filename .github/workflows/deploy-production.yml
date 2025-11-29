@@ -314,12 +314,23 @@ jobs:
           VERSION: ${{ needs.build.outputs.version }}
         run: |
           echo "💾 Backing up database..."
-          ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << ENDSSH
+          ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << 'ENDSSH'
             cd /var/www/paradocks
             mkdir -p backups
-            TIMESTAMP=\$(date +%Y%m%d-%H%M%S)
-            docker compose -f docker-compose.prod.yml exec -T mysql mysqldump -u \${DB_USERNAME:-paradocks} -p\${DB_PASSWORD} paradocks > "backups/db-${VERSION}-\${TIMESTAMP}.sql"
-            echo "✅ Database backup created: backups/db-${VERSION}-\${TIMESTAMP}.sql"
+
+            # Source .env to get database credentials
+            set -a
+            source .env
+            set +a
+
+            TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+
+            # Use DB_ROOT_PASSWORD if available, otherwise fall back to DB_PASSWORD
+            DB_PASS="${DB_ROOT_PASSWORD:-${DB_PASSWORD}}"
+            DB_USER="${DB_ROOT_USERNAME:-root}"
+
+            docker compose -f docker-compose.prod.yml exec -T mysql mysqldump -u "${DB_USER}" -p"${DB_PASS}" paradocks > "backups/db-v0.1.1-${TIMESTAMP}.sql"
+            echo "✅ Database backup created: backups/db-v0.1.1-${TIMESTAMP}.sql"
           ENDSSH
 
       - name: Upload deployment script to VPS
