@@ -26,7 +26,7 @@ return new class extends Migration
             // Indexes and constraints
             $table->index('key');
             $table->index('language');
-            $table->unique(['key', 'language'], 'unique_template_key_language');
+            $table->unique(['key', 'language'], 'email_templates_key_language_unique');
         });
     }
 
