@@ -42,23 +42,29 @@ class RolePermissionSeeder extends Seeder
             'manage availability',
             'view availability',
 
+            // Email management
+            'manage email templates',
+            'view email logs',
+            'view email events',
+            'manage suppressions',
+
             // Settings
             'manage settings',
         ];
 
         foreach ($permissions as $permission) {
-            Permission::create(['name' => $permission]);
+            Permission::firstOrCreate(['name' => $permission]);
         }
 
         // Create roles and assign permissions
 
         // Super Admin - all permissions
-        $superAdmin = Role::create(['name' => 'super-admin']);
-        $superAdmin->givePermissionTo(Permission::all());
+        $superAdmin = Role::firstOrCreate(['name' => 'super-admin']);
+        $superAdmin->syncPermissions(Permission::all());
 
         // Admin - most permissions except user management
-        $admin = Role::create(['name' => 'admin']);
-        $admin->givePermissionTo([
+        $admin = Role::firstOrCreate(['name' => 'admin']);
+        $admin->syncPermissions([
             'view users',
             'view services',
             'create services',
@@ -70,23 +76,29 @@ class RolePermissionSeeder extends Seeder
             'delete appointments',
             'manage availability',
             'view availability',
+            'manage email templates',
+            'view email logs',
+            'view email events',
+            'manage suppressions',
             'manage settings',
         ]);
 
         // Staff - can manage own availability and appointments
-        $staff = Role::create(['name' => 'staff']);
-        $staff->givePermissionTo([
+        $staff = Role::firstOrCreate(['name' => 'staff']);
+        $staff->syncPermissions([
             'view services',
             'view appointments',
             'create appointments',
             'edit appointments',
             'manage availability',
             'view availability',
+            'view email logs',
+            'view email events',
         ]);
 
         // Customer - can only view and book appointments
-        $customer = Role::create(['name' => 'customer']);
-        $customer->givePermissionTo([
+        $customer = Role::firstOrCreate(['name' => 'customer']);
+        $customer->syncPermissions([
             'view services',
             'view own appointments',
             'create appointments',

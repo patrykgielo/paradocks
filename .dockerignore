@@ -1,0 +1,47 @@
+# Dependencies
+app/node_modules
+app/vendor
+
+# Build outputs
+app/public/hot
+app/public/storage
+app/storage/*.key
+app/dist
+
+# Environment files
+app/.env
+app/.env.local
+app/.env.*.local
+
+# Log files
+app/storage/logs/*.log
+*.log
+
+# Runtime data
+app/storage/framework/cache/*
+app/storage/framework/sessions/*
+app/storage/framework/views/*
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose*.yml

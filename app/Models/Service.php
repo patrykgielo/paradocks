@@ -34,6 +34,15 @@ class Service extends Model
         return $this->hasMany(ServiceAvailability::class);
     }
 
+    /**
+     * Get the staff members that can perform this service.
+     */
+    public function staff()
+    {
+        return $this->belongsToMany(User::class, 'service_staff', 'service_id', 'user_id')
+                    ->withTimestamps();
+    }
+
     // Scopes
     public function scopeActive($query)
     {
@@ -43,5 +52,32 @@ class Service extends Model
     public function scopeOrdered($query)
     {
         return $query->orderBy('sort_order');
+    }
+
+    // Accessors
+    public function getFormattedDurationAttribute(): string
+    {
+        $totalMinutes = $this->duration_minutes;
+
+        $days = floor($totalMinutes / 1440);
+        $remainingAfterDays = $totalMinutes % 1440;
+        $hours = floor($remainingAfterDays / 60);
+        $minutes = $remainingAfterDays % 60;
+
+        $parts = [];
+
+        if ($days > 0) {
+            $parts[] = $days . ' ' . ($days === 1 ? 'dzień' : 'dni');
+        }
+
+        if ($hours > 0) {
+            $parts[] = $hours . ' ' . ($hours === 1 ? 'godz' : 'godz');
+        }
+
+        if ($minutes > 0) {
+            $parts[] = $minutes . ' min';
+        }
+
+        return !empty($parts) ? implode(', ', $parts) : '0 min';
     }
 }

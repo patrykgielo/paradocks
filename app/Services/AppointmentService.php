@@ -4,12 +4,26 @@ namespace App\Services;
 
 use App\Models\Appointment;
 use App\Models\ServiceAvailability;
+use App\Models\User;
+use App\Support\Settings\SettingsManager;
 use Carbon\Carbon;
 
 class AppointmentService
 {
+    public function __construct(
+        protected SettingsManager $settings,
+        protected StaffScheduleService $staffScheduleService
+    ) {
+    }
+
     /**
      * Check if staff member is available for given time slot
+     *
+     * Uses new calendar-based availability system (Option B):
+     * - Checks vacation periods
+     * - Checks date exceptions
+     * - Falls back to base schedule
+     * - Checks for appointment conflicts
      */
     public function checkStaffAvailability(
         int $staffId,
@@ -19,27 +33,25 @@ class AppointmentService
         Carbon $endTime,
         ?int $excludeAppointmentId = null
     ): bool {
-        // Check if staff has availability configured for this day
-        $dayOfWeek = $date->dayOfWeek;
+        $staff = User::find($staffId);
 
-        $availability = ServiceAvailability::query()
-            ->where('user_id', $staffId)
-            ->where('service_id', $serviceId)
-            ->where('day_of_week', $dayOfWeek)
-            ->where(function ($query) use ($startTime, $endTime) {
-                $query->where(function ($q) use ($startTime, $endTime) {
-                    // Check if requested time is within availability window
-                    $q->whereTime('start_time', '<=', $startTime->format('H:i:s'))
-                      ->whereTime('end_time', '>=', $endTime->format('H:i:s'));
-                });
-            })
-            ->exists();
-
-        if (!$availability) {
+        if (!$staff) {
             return false;
         }
 
-        // Check for conflicting appointments
+        // Step 1: Check if staff can perform this service
+        if (!$this->staffScheduleService->canPerformService($staff, $serviceId)) {
+            return false;
+        }
+
+        // Step 2: Check staff availability using new calendar-based system
+        $startDateTime = Carbon::parse($date->format('Y-m-d') . ' ' . $startTime->format('H:i:s'));
+
+        if (!$this->staffScheduleService->isStaffAvailable($staff, $startDateTime)) {
+            return false;
+        }
+
+        // Step 3: Check for conflicting appointments
         $hasConflict = Appointment::query()
             ->where('staff_id', $staffId)
             ->where('appointment_date', $date->format('Y-m-d'))
@@ -89,6 +101,8 @@ class AppointmentService
 
         $timeSlots = [];
 
+        $slotInterval = $this->settings->slotIntervalMinutes();
+
         foreach ($availabilities as $availability) {
             $currentSlot = Carbon::parse($availability->start_time);
             $endOfAvailability = Carbon::parse($availability->end_time);
@@ -112,12 +126,169 @@ class AppointmentService
                     ];
                 }
 
-                // Move to next slot (15 minute intervals)
-                $currentSlot->addMinutes(15);
+                // Move to next slot based on configured interval
+                $currentSlot->addMinutes($slotInterval);
             }
         }
 
         return $timeSlots;
+    }
+
+    /**
+     * Check if ANY staff member is available for the given time slot
+     *
+     * Uses new calendar-based system with service_staff pivot table
+     */
+    public function isAnyStaffAvailable(
+        int $serviceId,
+        Carbon $date,
+        Carbon $startTime,
+        Carbon $endTime,
+        ?int $excludeAppointmentId = null
+    ): bool {
+        // Get all staff members who can perform this service (using new pivot table)
+        $staffMembers = User::whereHas('roles', function ($query) {
+            $query->where('name', 'staff');
+        })->whereHas('services', function ($query) use ($serviceId) {
+            $query->where('service_id', $serviceId);
+        })->get();
+
+        // Check if at least one staff member is available
+        foreach ($staffMembers as $staff) {
+            if ($this->checkStaffAvailability(
+                $staff->id,
+                $serviceId,
+                $date,
+                $startTime,
+                $endTime,
+                $excludeAppointmentId
+            )) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Find the first available staff member for the given time slot
+     *
+     * Uses new calendar-based system with service_staff pivot table
+     *
+     * @return int|null Staff ID if available, null if no staff available
+     */
+    public function findFirstAvailableStaff(
+        int $serviceId,
+        Carbon $date,
+        Carbon $startTime,
+        Carbon $endTime,
+        ?int $excludeAppointmentId = null
+    ): ?int {
+        // Get all staff members who can perform this service (using new pivot table)
+        $staffMembers = User::whereHas('roles', function ($query) {
+            $query->where('name', 'staff');
+        })->whereHas('services', function ($query) use ($serviceId) {
+            $query->where('service_id', $serviceId);
+        })->get();
+
+        // Find first available staff member
+        foreach ($staffMembers as $staff) {
+            if ($this->checkStaffAvailability(
+                $staff->id,
+                $serviceId,
+                $date,
+                $startTime,
+                $endTime,
+                $excludeAppointmentId
+            )) {
+                return $staff->id;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Get available time slots across ALL staff members for a service on a specific date
+     *
+     * Uses new calendar-based system to find slots where at least one staff member is available
+     */
+    public function getAvailableSlotsAcrossAllStaff(
+        int $serviceId,
+        Carbon $date,
+        int $serviceDurationMinutes
+    ): array {
+        // Get all staff members who can perform this service (using new pivot table)
+        $staffMembers = User::whereHas('roles', function ($query) {
+            $query->where('name', 'staff');
+        })->whereHas('services', function ($query) use ($serviceId) {
+            $query->where('service_id', $serviceId);
+        })->get();
+
+        if ($staffMembers->isEmpty()) {
+            return [];
+        }
+
+        $allSlots = [];
+        $slotInterval = $this->settings->slotIntervalMinutes();
+        $businessHours = $this->settings->bookingBusinessHours();
+        $businessStart = Carbon::parse($date->format('Y-m-d') . ' ' . $businessHours['start']);
+        $businessEnd = Carbon::parse($date->format('Y-m-d') . ' ' . $businessHours['end']);
+
+        // Generate all possible slots within business hours
+        $currentSlot = $businessStart->copy();
+
+        while ($currentSlot->copy()->addMinutes($serviceDurationMinutes)->lte($businessEnd)) {
+            $slotEnd = $currentSlot->copy()->addMinutes($serviceDurationMinutes);
+
+            // Check if this slot is within business hours completely
+            if (!$this->isWithinBusinessHours($currentSlot, $slotEnd)) {
+                $currentSlot->addMinutes($slotInterval);
+                continue;
+            }
+
+            // Check if ANY staff member is available for this slot
+            if ($this->isAnyStaffAvailable($serviceId, $date, $currentSlot, $slotEnd)) {
+                $slotKey = $currentSlot->format('H:i');
+
+                // Avoid duplicate slots
+                if (!isset($allSlots[$slotKey])) {
+                    $allSlots[$slotKey] = [
+                        'start' => $currentSlot->format('H:i'),
+                        'end' => $slotEnd->format('H:i'),
+                        'datetime_start' => $date->format('Y-m-d') . ' ' . $currentSlot->format('H:i'),
+                        'datetime_end' => $date->format('Y-m-d') . ' ' . $slotEnd->format('H:i'),
+                    ];
+                }
+            }
+
+            $currentSlot->addMinutes($slotInterval);
+        }
+
+        return array_values($allSlots);
+    }
+
+    /**
+     * Check if the given time range is within business hours
+     */
+    public function isWithinBusinessHours(Carbon $startTime, Carbon $endTime): bool
+    {
+        $businessHours = $this->settings->bookingBusinessHours();
+        $businessStart = Carbon::parse($startTime->format('Y-m-d') . ' ' . $businessHours['start']);
+        $businessEnd = Carbon::parse($startTime->format('Y-m-d') . ' ' . $businessHours['end']);
+
+        return $startTime->gte($businessStart) && $endTime->lte($businessEnd);
+    }
+
+    /**
+     * Check if the appointment meets the advance booking requirement (24h minimum)
+     */
+    public function meetsAdvanceBookingRequirement(Carbon $appointmentDateTime): bool
+    {
+        $advanceHours = $this->settings->advanceBookingHours();
+        $minimumDateTime = now()->addHours($advanceHours);
+
+        return $appointmentDateTime->gte($minimumDateTime);
     }
 
     /**
@@ -140,6 +311,25 @@ class AppointmentService
         // Check if date is in the past
         if ($date->isPast() && !$date->isToday()) {
             $errors[] = 'Nie można zarezerwować wizyty w przeszłości.';
+        }
+
+        // Check 24-hour advance booking requirement
+        $advanceHours = $this->settings->advanceBookingHours();
+        if (!$this->meetsAdvanceBookingRequirement($start)) {
+            $errors[] = sprintf(
+                'Rezerwacja musi być dokonana co najmniej %d godzin przed terminem wizyty.',
+                $advanceHours
+            );
+        }
+
+        // Check if within business hours
+        if (!$this->isWithinBusinessHours($start, $end)) {
+            $businessHours = $this->settings->bookingBusinessHours();
+            $errors[] = sprintf(
+                'Wizyta musi się odbywać w godzinach pracy: %s - %s.',
+                $businessHours['start'],
+                $businessHours['end']
+            );
         }
 
         // Check if start time is before end time
