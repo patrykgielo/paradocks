@@ -6,6 +6,7 @@ namespace Database\Seeders;
 
 use App\Models\Setting;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Setting Seeder
@@ -25,6 +26,12 @@ class SettingSeeder extends Seeder
      */
     public function run(): void
     {
+        // SQLite-specific: Reconnect to fix "no such table" error
+        // when seeding immediately after migrations in same transaction
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            DB::connection()->reconnect();
+        }
+
         $this->seedBookingSettings();
         $this->seedMapSettings();
         $this->seedContactSettings();
