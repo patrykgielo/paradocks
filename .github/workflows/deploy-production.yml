@@ -259,10 +259,7 @@ jobs:
           echo "📋 Enabling maintenance mode..."
           ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << 'ENDSSH'
             cd /var/www/paradocks
-            docker compose -f docker-compose.prod.yml exec -T app php artisan maintenance:enable \
-              --type=deployment \
-              --message="Deploying version $VERSION - please wait 2-3 minutes" \
-              --estimated-duration="2 minutes"
+            docker compose -f docker-compose.prod.yml exec -T app php artisan down --render="errors::503" --retry=60
           ENDSSH
 
       - name: Backup database
@@ -394,7 +391,7 @@ jobs:
           echo "✅ Disabling maintenance mode..."
           ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << 'ENDSSH'
             cd /var/www/paradocks
-            docker compose -f docker-compose.prod.yml exec -T app php artisan maintenance:disable
+            docker compose -f docker-compose.prod.yml exec -T app php artisan up
           ENDSSH
 
       - name: Rollback on failure
@@ -408,7 +405,7 @@ jobs:
           ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << 'ENDSSH'
             cd /var/www/paradocks
             # Disable maintenance mode first
-            docker compose -f docker-compose.prod.yml exec -T app php artisan maintenance:disable || true
+            docker compose -f docker-compose.prod.yml exec -T app php artisan up || true
             # Note: Manual rollback to previous version may be needed
             echo "❌ Deployment failed - please check logs and consider manual rollback"
           ENDSSH
