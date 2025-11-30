@@ -168,7 +168,8 @@ start_new_container() {
     log_info "Starting new app container..."
 
     # Scale app service to 2 (old + new)
-    if ! docker compose -f "$COMPOSE_FILE" up -d --scale app=2 --no-recreate; then
+    # Note: Removed --no-recreate to ensure new env vars are applied to scaled containers
+    if ! docker compose -f "$COMPOSE_FILE" up -d --scale app=2; then
         exit_with_error "Failed to start new container" 3
     fi
 
@@ -230,10 +231,21 @@ run_migrations() {
     log_info "Clearing old config cache..."
     docker exec "$new_container" php artisan config:clear
 
+    # Debug: Show environment variables in new container
+    log_info "Debug: Environment variables in new container:"
+    docker exec "$new_container" sh -c 'echo "  DB_CONNECTION=$DB_CONNECTION"' || echo "  DB_CONNECTION not set"
+    docker exec "$new_container" sh -c 'echo "  DB_HOST=$DB_HOST"' || echo "  DB_HOST not set"
+    docker exec "$new_container" sh -c 'echo "  DB_PORT=$DB_PORT"' || echo "  DB_PORT not set"
+
     # Verify DB_CONNECTION environment variable is set to mysql
     log_info "Verifying database configuration..."
-    DB_CONN=$(docker exec "$new_container" printenv DB_CONNECTION)
+    DB_CONN=$(docker exec "$new_container" printenv DB_CONNECTION 2>/dev/null || echo "NOT_SET")
     if [ "$DB_CONN" != "mysql" ]; then
+        log_error "DB_CONNECTION verification failed!"
+        log_error "Expected: 'mysql'"
+        log_error "Actual: '$DB_CONN'"
+        log_error "All DB-related environment variables:"
+        docker exec "$new_container" sh -c 'env | grep -E "^DB_|^REDIS_" | sort' || true
         exit_with_error "DB_CONNECTION is '$DB_CONN', expected 'mysql'" 7
     fi
     log_success "Database configuration verified: MySQL (DB_CONNECTION=$DB_CONN)"
