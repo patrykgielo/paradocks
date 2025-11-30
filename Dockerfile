@@ -59,6 +59,10 @@ RUN docker-php-ext-configure gd --with-jpeg && \
     intl \
     opcache
 
+# Install Redis extension via PECL (required for Laravel Horizon)
+RUN pecl install redis && \
+    docker-php-ext-enable redis
+
 # Remove build dependencies (reduce image size by ~150MB)
 RUN apk del .build-deps
 
