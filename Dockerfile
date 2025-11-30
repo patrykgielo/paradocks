@@ -158,10 +158,9 @@ COPY --chown=laravel:laravel . .
 # Generate optimized autoloader (now that all files are present)
 RUN composer dump-autoload --optimize --no-dev --classmap-authoritative
 
-# Cache Laravel configuration, routes, and views
-# Note: These will be regenerated on container startup if .env changes
-RUN php artisan config:cache && \
-    php artisan route:cache && \
+# Cache Laravel routes and views (config:cache removed - must use production .env at runtime)
+# Note: Config cache is generated in deploy script with production .env to ensure correct DB connection
+RUN php artisan route:cache && \
     php artisan view:cache
 
 # Ensure storage and cache directories are writable
