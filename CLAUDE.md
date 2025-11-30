@@ -188,7 +188,10 @@ MAIL_PASSWORD=your-16-char-app-password
 
 # Queue (Redis)
 QUEUE_CONNECTION=redis
+REDIS_CLIENT=phpredis  # Use phpredis (C extension) for performance
 REDIS_HOST=redis
+REDIS_PASSWORD=your-redis-password
+REDIS_PORT=6379
 
 # Google Maps
 GOOGLE_MAPS_API_KEY=AIzaSy...
