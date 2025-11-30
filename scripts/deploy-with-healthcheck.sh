@@ -132,21 +132,18 @@ detect_uid_gid() {
 }
 
 ################################################################################
-# Build New Image
+# Pull New Image from Registry
 ################################################################################
 
 build_new_image() {
-    log_info "Building new Docker image with UID:GID = $DOCKER_USER_ID:$DOCKER_GROUP_ID..."
+    log_info "Pulling new Docker image from registry (version: ${VERSION})..."
 
-    # Build with --no-cache to force fresh build (prevents layer cache issues)
-    if ! docker compose -f "$COMPOSE_FILE" build --no-cache \
-        --build-arg USER_ID="$DOCKER_USER_ID" \
-        --build-arg GROUP_ID="$DOCKER_GROUP_ID" \
-        app horizon scheduler; then
-        exit_with_error "Docker build failed" 2
+    # Pull image from GitHub Container Registry (already built by CI/CD)
+    if ! docker compose -f "$COMPOSE_FILE" pull app horizon scheduler; then
+        exit_with_error "Docker pull failed" 2
     fi
 
-    log_success "Docker image built successfully"
+    log_success "Docker image pulled successfully"
 }
 
 ################################################################################
