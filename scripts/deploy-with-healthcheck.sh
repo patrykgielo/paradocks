@@ -230,6 +230,13 @@ run_migrations() {
     log_info "Clearing old config cache..."
     docker exec "$new_container" php artisan config:clear
 
+    # Verify .env has correct DB config before caching
+    log_info "Verifying database configuration..."
+    if ! docker exec "$new_container" cat /var/www/.env | grep -q "DB_CONNECTION=mysql"; then
+        exit_with_error ".env missing DB_CONNECTION=mysql" 7
+    fi
+    log_success "Database configuration verified: MySQL"
+
     # Cache configuration to ensure DB_CONNECTION is loaded from production .env
     log_info "Caching Laravel configuration with production .env..."
     docker exec "$new_container" php artisan config:cache
