@@ -141,7 +141,7 @@ jobs:
       packages: read      # Pull images from GHCR (if needed)
     environment:
       name: production  # Requires manual approval in GitHub
-      url: http://72.60.17.138:8081
+      url: http://72.60.17.138
 
     steps:
       - name: Checkout code (for deploy scripts)
@@ -291,7 +291,7 @@ jobs:
           sleep 5  # Wait for caches to clear
 
           HEALTH_STATUS=$(ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST \
-            "curl -f -s http://localhost:8081/health || echo 'FAILED'")
+            "curl -f -s http://localhost/up || echo 'FAILED'")
 
           if [[ "$HEALTH_STATUS" == *"FAILED"* ]] || [[ "$HEALTH_STATUS" == "" ]]; then
             echo "❌ Health check failed!"
@@ -338,7 +338,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Version:** ${VERSION}" >> $GITHUB_STEP_SUMMARY
           echo "**Environment:** Production" >> $GITHUB_STEP_SUMMARY
-          echo "**URL:** http://72.60.17.138:8081" >> $GITHUB_STEP_SUMMARY
+          echo "**URL:** http://72.60.17.138" >> $GITHUB_STEP_SUMMARY
           echo "**Deployment Strategy:** ✅ Zero-downtime healthcheck" >> $GITHUB_STEP_SUMMARY
           echo "**Health Check:** ✅ Passed" >> $GITHUB_STEP_SUMMARY
           echo "**Database:** ✅ Migrated" >> $GITHUB_STEP_SUMMARY
