@@ -1,60 +1,180 @@
-FROM php:8.2-fpm
+#################################################################################
+# Multi-Stage Dockerfile for Laravel 12 Application
+#
+# Build stages:
+# 1. composer-deps: Install Composer dependencies
+# 2. frontend-build: Build frontend assets with Vite
+# 3. php-base: PHP-FPM with extensions (Alpine-based)
+# 4. runtime: Final production image
+#
+# Cache strategy:
+# - Stage 1 rebuilds only when composer.lock changes
+# - Stage 2 rebuilds only when package-lock.json or resources/ change
+# - Stage 3 rebuilds only when PHP extensions list changes (rarely)
+# - Stage 4 rebuilds when application code changes
+#
+# Expected build times:
+# - First build: 5-7 minutes
+# - Code changes: 1-2 minutes
+# - Dependency changes: 3-4 minutes
+# - No changes: 15-30 seconds
+#################################################################################
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    git \
-    curl \
+#################################################################################
+# Stage 1: Composer Dependencies
+#################################################################################
+FROM composer:2 AS composer-deps
+
+WORKDIR /app
+
+# Copy dependency manifests
+COPY composer.json composer.lock ./
+
+# Install dependencies without scripts/autoloader (faster, cache-friendly)
+# --no-dev: Production dependencies only
+# --no-scripts: Skip post-install scripts (run in final stage)
+# --no-autoloader: Skip autoloader generation (run in final stage)
+# --prefer-dist: Download archives instead of cloning repos
+RUN composer install \
+    --no-dev \
+    --no-scripts \
+    --no-autoloader \
+    --prefer-dist \
+    --optimize-autoloader \
+    --no-interaction
+
+#################################################################################
+# Stage 2: Frontend Build
+#################################################################################
+FROM node:20-alpine AS frontend-build
+
+WORKDIR /app
+
+# Copy dependency manifests
+COPY package.json package-lock.json ./
+
+# Install ALL dependencies (including devDependencies needed for build)
+RUN npm ci --production=false
+
+# Copy source files needed for build
+COPY resources/ resources/
+COPY vite.config.js ./
+
+# Build production assets
+RUN npm run build
+
+#################################################################################
+# Stage 3: PHP Base with Extensions
+#################################################################################
+FROM php:8.2-fpm-alpine AS php-base
+
+# Install system dependencies (Alpine packages)
+# Runtime libraries only (no build tools)
+RUN apk add --no-cache \
+    libpng \
+    libjpeg-turbo \
+    libzip \
+    icu-libs \
+    libxml2 \
+    oniguruma
+
+# Install build dependencies (temporary, removed after extension build)
+RUN apk add --no-cache --virtual .build-deps \
     libpng-dev \
-    libonig-dev \
-    libxml2-dev \
+    libjpeg-turbo-dev \
     libzip-dev \
-    libicu-dev \
-    zip \
-    unzip \
-    sqlite3 \
-    libsqlite3-dev
-
-# Clear cache
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+    icu-dev \
+    libxml2-dev \
+    oniguruma-dev \
+    $PHPIZE_DEPS
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo_mysql pdo_sqlite mbstring exif pcntl bcmath gd zip intl opcache
-RUN docker-php-ext-configure intl
+# Note: pdo_sqlite removed (MySQL-only app), git/zip/unzip removed (not needed in runtime)
+RUN docker-php-ext-configure gd --with-jpeg && \
+    docker-php-ext-install -j$(nproc) \
+    pdo_mysql \
+    mbstring \
+    exif \
+    pcntl \
+    bcmath \
+    gd \
+    zip \
+    intl \
+    opcache
 
-# Configure Opcache for production performance
-RUN echo "opcache.enable=1" >> /usr/local/etc/php/conf.d/opcache.ini \
-    && echo "opcache.enable_cli=1" >> /usr/local/etc/php/conf.d/opcache.ini \
-    && echo "opcache.save_comments=1" >> /usr/local/etc/php/conf.d/opcache.ini \
-    && echo "opcache.memory_consumption=256" >> /usr/local/etc/php/conf.d/opcache.ini \
-    && echo "opcache.max_accelerated_files=20000" >> /usr/local/etc/php/conf.d/opcache.ini \
-    && echo "opcache.validate_timestamps=0" >> /usr/local/etc/php/conf.d/opcache.ini \
-    && echo "opcache.revalidate_freq=0" >> /usr/local/etc/php/conf.d/opcache.ini \
-    && echo "opcache.interned_strings_buffer=16" >> /usr/local/etc/php/conf.d/opcache.ini
+# Remove build dependencies (reduce image size by ~150MB)
+RUN apk del .build-deps
+
+# Configure OPcache for production performance
+RUN echo "opcache.enable=1" >> /usr/local/etc/php/conf.d/opcache.ini && \
+    echo "opcache.enable_cli=1" >> /usr/local/etc/php/conf.d/opcache.ini && \
+    echo "opcache.save_comments=1" >> /usr/local/etc/php/conf.d/opcache.ini && \
+    echo "opcache.memory_consumption=256" >> /usr/local/etc/php/conf.d/opcache.ini && \
+    echo "opcache.max_accelerated_files=20000" >> /usr/local/etc/php/conf.d/opcache.ini && \
+    echo "opcache.validate_timestamps=0" >> /usr/local/etc/php/conf.d/opcache.ini && \
+    echo "opcache.revalidate_freq=0" >> /usr/local/etc/php/conf.d/opcache.ini && \
+    echo "opcache.interned_strings_buffer=16" >> /usr/local/etc/php/conf.d/opcache.ini
 
 # Configure PHP upload limits for CMS file uploads
-RUN echo "upload_max_filesize = 20M" >> /usr/local/etc/php/conf.d/uploads.ini \
-    && echo "post_max_size = 25M" >> /usr/local/etc/php/conf.d/uploads.ini \
-    && echo "max_execution_time = 300" >> /usr/local/etc/php/conf.d/uploads.ini \
-    && echo "memory_limit = 256M" >> /usr/local/etc/php/conf.d/uploads.ini
+RUN echo "upload_max_filesize = 20M" >> /usr/local/etc/php/conf.d/uploads.ini && \
+    echo "post_max_size = 25M" >> /usr/local/etc/php/conf.d/uploads.ini && \
+    echo "max_execution_time = 300" >> /usr/local/etc/php/conf.d/uploads.ini && \
+    echo "memory_limit = 256M" >> /usr/local/etc/php/conf.d/uploads.ini
 
-# Get latest Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# Copy Composer binary from official image
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+#################################################################################
+# Stage 4: Final Runtime
+#################################################################################
+FROM php-base AS runtime
 
 # Accept UID/GID as build arguments for host permission matching
 ARG USER_ID=1000
 ARG GROUP_ID=1000
 
-# Create system user to run Composer and Artisan Commands
-# Use dynamic UID/GID to match host file ownership
-RUN groupadd -g ${GROUP_ID} laravel || true
-RUN useradd -G www-data,root -u ${USER_ID} -g ${GROUP_ID} -d /home/laravel laravel
-RUN mkdir -p /home/laravel/.composer && \
-    chown -R laravel:laravel /home/laravel
+# Create laravel user with dynamic UID/GID (Alpine syntax)
+# -D: Don't assign password
+# -u: User ID
+# -G: Primary group
+RUN addgroup -g ${GROUP_ID} laravel && \
+    adduser -D -u ${USER_ID} -G laravel laravel && \
+    addgroup laravel www-data
 
 # Set working directory
 WORKDIR /var/www
 
-# Change ownership of our applications
-RUN chown -R laravel:laravel /var/www
+# Copy vendor/ from composer-deps stage
+COPY --chown=laravel:laravel --from=composer-deps /app/vendor/ ./vendor/
 
+# Copy built frontend assets from frontend-build stage
+COPY --chown=laravel:laravel --from=frontend-build /app/public/build/ ./public/build/
+
+# Copy application code
+COPY --chown=laravel:laravel . .
+
+# Generate optimized autoloader (now that all files are present)
+RUN composer dump-autoload --optimize --no-dev --classmap-authoritative
+
+# Cache Laravel configuration, routes, and views
+# Note: These will be regenerated on container startup if .env changes
+RUN php artisan config:cache && \
+    php artisan route:cache && \
+    php artisan view:cache
+
+# Ensure storage and cache directories are writable
+RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views && \
+    chown -R laravel:laravel storage bootstrap/cache
+
+# Switch to non-root user
 USER laravel
+
+# Expose PHP-FPM port
+EXPOSE 9000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+    CMD php -v || exit 1
+
+# Start PHP-FPM
+CMD ["php-fpm"]
