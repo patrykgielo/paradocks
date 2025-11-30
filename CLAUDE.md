@@ -514,6 +514,16 @@ $user->last_name   // Returns "Kowalski"
 
 **⚠️ IMPORTANT:** All documentation is in `app/docs/` directory, NOT `/docs/` in repository root!
 
+### Critical Deployment Knowledge (READ FIRST!)
+
+**Essential reading before ANY deployment:**
+1. **[Deployment History](app/docs/deployment/deployment-history.md)** - Complete journey v0.2.1→v0.2.11, all failures and solutions
+2. **[Environment Variables](app/docs/deployment/environment-variables.md)** - Docker env var hierarchy (root cause of v0.2.5-v0.2.7 failures!)
+3. **[Known Issues](app/docs/deployment/known-issues.md)** - Quick fixes for 12 critical issues
+4. **[Dependencies](app/docs/dependencies.md)** - Complete stack inventory (Laravel 12.32.5, PHP 8.2, etc.)
+
+**Key Insight:** Docker environment variables MUST be in `docker-compose.yml` environment section. Being in `.env` file alone is NOT enough. This pattern caused 3 consecutive deployment failures.
+
 **Key Documentation:**
 - [Project Map](app/docs/project_map.md) - System topology, modules, key files
 - [Staging Server Docs](app/docs/environments/staging/) - Live staging documentation
