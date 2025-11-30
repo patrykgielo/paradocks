@@ -221,6 +221,15 @@ run_migrations() {
     local new_container
     new_container=$(docker compose -f "$COMPOSE_FILE" ps -q app | tail -n 1)
 
+    # Ensure storage permissions are correct (UID match)
+    log_info "Fixing storage permissions for UID=$DOCKER_USER_ID..."
+    docker exec "$new_container" chown -R laravel:laravel /var/www/storage /var/www/bootstrap/cache 2>/dev/null || true
+
+    # Cache configuration to ensure DB_CONNECTION is loaded
+    log_info "Caching Laravel configuration..."
+    docker exec "$new_container" php artisan config:cache
+
+    # Run migrations
     if ! timeout "$MIGRATION_TIMEOUT" docker exec "$new_container" php artisan migrate --force; then
         exit_with_error "Migration failed or timed out" 4
     fi
