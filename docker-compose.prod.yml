@@ -11,7 +11,7 @@ services:
         USER_ID: ${DOCKER_USER_ID:-1000}
         GROUP_ID: ${DOCKER_GROUP_ID:-1000}
     image: ghcr.io/patrykgielo/paradocks:${VERSION:-latest}
-    container_name: paradocks-app-prod
+    # Note: No container_name to allow scaling (zero-downtime deployments)
     restart: unless-stopped
     working_dir: /var/www
     volumes:
@@ -120,7 +120,7 @@ services:
         USER_ID: ${DOCKER_USER_ID:-1000}
         GROUP_ID: ${DOCKER_GROUP_ID:-1000}
     image: ghcr.io/patrykgielo/paradocks:${VERSION:-latest}
-    container_name: paradocks-horizon-prod
+    # Note: No container_name to allow scaling (zero-downtime deployments)
     restart: unless-stopped
     working_dir: /var/www
     volumes:
@@ -153,7 +153,7 @@ services:
         USER_ID: ${DOCKER_USER_ID:-1000}
         GROUP_ID: ${DOCKER_GROUP_ID:-1000}
     image: ghcr.io/patrykgielo/paradocks:${VERSION:-latest}
-    container_name: paradocks-scheduler-prod
+    # Note: No container_name to allow scaling (zero-downtime deployments)
     restart: unless-stopped
     working_dir: /var/www
     volumes:
