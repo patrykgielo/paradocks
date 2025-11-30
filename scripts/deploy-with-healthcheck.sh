@@ -226,8 +226,12 @@ run_migrations() {
     fi
     log_success "Storage permissions fixed successfully"
 
-    # Cache configuration to ensure DB_CONNECTION is loaded
-    log_info "Caching Laravel configuration..."
+    # Clear old config cache to ensure fresh generation with production .env
+    log_info "Clearing old config cache..."
+    docker exec "$new_container" php artisan config:clear
+
+    # Cache configuration to ensure DB_CONNECTION is loaded from production .env
+    log_info "Caching Laravel configuration with production .env..."
     docker exec "$new_container" php artisan config:cache
 
     # Run migrations
