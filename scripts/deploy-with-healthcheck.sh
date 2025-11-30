@@ -219,8 +219,12 @@ run_migrations() {
     new_container=$(docker compose -f "$COMPOSE_FILE" ps -q app | tail -n 1)
 
     # Ensure storage permissions are correct (UID match)
+    # Must run as root because container USER is laravel (non-root)
     log_info "Fixing storage permissions for UID=$DOCKER_USER_ID..."
-    docker exec "$new_container" chown -R laravel:laravel /var/www/storage /var/www/bootstrap/cache 2>/dev/null || true
+    if ! docker exec --user root "$new_container" chown -R laravel:laravel /var/www/storage /var/www/bootstrap/cache; then
+        exit_with_error "Failed to fix storage permissions (chown failed as root)" 6
+    fi
+    log_success "Storage permissions fixed successfully"
 
     # Cache configuration to ensure DB_CONNECTION is loaded
     log_info "Caching Laravel configuration..."
