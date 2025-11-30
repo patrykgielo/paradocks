@@ -2,15 +2,15 @@
 # Multi-Stage Dockerfile for Laravel 12 Application
 #
 # Build stages:
-# 1. composer-deps: Install Composer dependencies
-# 2. frontend-build: Build frontend assets with Vite
-# 3. php-base: PHP-FPM with extensions (Alpine-based)
+# 1. php-base: PHP-FPM with extensions (Alpine-based)
+# 2. composer-deps: Install Composer dependencies
+# 3. frontend-build: Build frontend assets with Vite
 # 4. runtime: Final production image
 #
 # Cache strategy:
-# - Stage 1 rebuilds only when composer.lock changes
-# - Stage 2 rebuilds only when package-lock.json or resources/ change
-# - Stage 3 rebuilds only when PHP extensions list changes (rarely)
+# - Stage 1 rebuilds only when PHP extensions list changes (rarely)
+# - Stage 2 rebuilds only when composer.lock changes
+# - Stage 3 rebuilds only when package-lock.json or resources/ change
 # - Stage 4 rebuilds when application code changes
 #
 # Expected build times:
@@ -21,50 +21,7 @@
 #################################################################################
 
 #################################################################################
-# Stage 1: Composer Dependencies
-#################################################################################
-FROM composer:2 AS composer-deps
-
-WORKDIR /app
-
-# Copy dependency manifests
-COPY composer.json composer.lock ./
-
-# Install dependencies without scripts/autoloader (faster, cache-friendly)
-# --no-dev: Production dependencies only
-# --no-scripts: Skip post-install scripts (run in final stage)
-# --no-autoloader: Skip autoloader generation (run in final stage)
-# --prefer-dist: Download archives instead of cloning repos
-RUN composer install \
-    --no-dev \
-    --no-scripts \
-    --no-autoloader \
-    --prefer-dist \
-    --optimize-autoloader \
-    --no-interaction
-
-#################################################################################
-# Stage 2: Frontend Build
-#################################################################################
-FROM node:20-alpine AS frontend-build
-
-WORKDIR /app
-
-# Copy dependency manifests
-COPY package.json package-lock.json ./
-
-# Install ALL dependencies (including devDependencies needed for build)
-RUN npm ci --production=false
-
-# Copy source files needed for build
-COPY resources/ resources/
-COPY vite.config.js ./
-
-# Build production assets
-RUN npm run build
-
-#################################################################################
-# Stage 3: PHP Base with Extensions
+# Stage 1: PHP Base with Extensions
 #################################################################################
 FROM php:8.2-fpm-alpine AS php-base
 
@@ -123,6 +80,51 @@ RUN echo "upload_max_filesize = 20M" >> /usr/local/etc/php/conf.d/uploads.ini &&
 
 # Copy Composer binary from official image
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+#################################################################################
+# Stage 2: Composer Dependencies
+#################################################################################
+FROM php-base AS composer-deps
+
+WORKDIR /app
+
+# Copy dependency manifests
+COPY composer.json composer.lock ./
+
+# Install dependencies without scripts/autoloader (faster, cache-friendly)
+# --no-dev: Production dependencies only
+# --no-scripts: Skip post-install scripts (run in final stage)
+# --no-autoloader: Skip autoloader generation (run in final stage)
+# --prefer-dist: Download archives instead of cloning repos
+RUN composer install \
+    --no-dev \
+    --no-scripts \
+    --no-autoloader \
+    --prefer-dist \
+    --optimize-autoloader \
+    --no-interaction
+
+#################################################################################
+# Stage 3: Frontend Build
+#################################################################################
+FROM node:20-alpine AS frontend-build
+
+WORKDIR /app
+
+# Copy dependency manifests
+COPY package.json package-lock.json ./
+
+# Install ALL dependencies (including devDependencies needed for build)
+RUN npm ci --production=false
+
+# Copy source files needed for build
+COPY resources/ resources/
+COPY vite.config.js ./
+COPY scripts/generate-theme.js ./scripts/
+COPY design-system.json ./
+
+# Build production assets
+RUN npm run build
 
 #################################################################################
 # Stage 4: Final Runtime
