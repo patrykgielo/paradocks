@@ -336,6 +336,15 @@ jobs:
             echo "✅ Database backup created: backups/db-v0.1.1-${TIMESTAMP}.sql"
           ENDSSH
 
+      - name: Sync docker-compose.prod.yml to VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
+        run: |
+          echo "📤 Syncing docker-compose.prod.yml to VPS..."
+          scp -i ~/.ssh/deploy_key -P $VPS_PORT ./docker-compose.prod.yml $VPS_USER@$VPS_HOST:/var/www/paradocks/
+
       - name: Upload deployment script to VPS
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
