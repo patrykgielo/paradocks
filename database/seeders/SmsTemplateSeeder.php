@@ -30,8 +30,6 @@ class SmsTemplateSeeder extends Seeder
 {
     /**
      * Seed SMS templates for all transactional messages.
-     *
-     * @return void
      */
     public function run(): void
     {

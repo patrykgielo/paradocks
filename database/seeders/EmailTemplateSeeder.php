@@ -31,8 +31,6 @@ class EmailTemplateSeeder extends Seeder
 {
     /**
      * Seed email templates for all transactional emails.
-     *
-     * @return void
      */
     public function run(): void
     {

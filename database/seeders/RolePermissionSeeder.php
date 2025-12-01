@@ -18,8 +18,6 @@ class RolePermissionSeeder extends Seeder
      * - customer: Self-service (own bookings, profile, notifications)
      *
      * This seeder is idempotent - can be run multiple times safely.
-     *
-     * @return void
      */
     public function run(): void
     {

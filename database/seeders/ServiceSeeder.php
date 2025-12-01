@@ -12,8 +12,6 @@ class ServiceSeeder extends Seeder
      *
      * This seeder is idempotent - can be run multiple times safely.
      * Uses 'name' field as unique key for updateOrCreate.
-     *
-     * @return void
      */
     public function run(): void
     {

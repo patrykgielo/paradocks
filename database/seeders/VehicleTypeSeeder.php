@@ -18,8 +18,6 @@ class VehicleTypeSeeder extends Seeder
      * - SUV/Crossover - Toyota RAV4, VW Tiguan
      *
      * This seeder is idempotent - can be run multiple times safely.
-     *
-     * @return void
      */
     public function run(): void
     {

@@ -25,8 +25,6 @@ class DatabaseSeeder extends Seeder
      * - SMS templates (14 templates: 7 types × 2 languages)
      *
      * All seeders are idempotent - safe to run multiple times.
-     *
-     * @return void
      */
     public function run(): void
     {
