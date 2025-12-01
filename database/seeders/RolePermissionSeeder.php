@@ -9,7 +9,17 @@ use Spatie\Permission\Models\Role;
 class RolePermissionSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * Seed roles and permissions for RBAC (production lookup data).
+     *
+     * Creates 4 roles with hierarchical permissions:
+     * - super-admin: Full system access (all permissions)
+     * - admin: Business operations (users, bookings, content, reports)
+     * - staff: Service delivery (appointments, customers, schedules)
+     * - customer: Self-service (own bookings, profile, notifications)
+     *
+     * This seeder is idempotent - can be run multiple times safely.
+     *
+     * @return void
      */
     public function run(): void
     {

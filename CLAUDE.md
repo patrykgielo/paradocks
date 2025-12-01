@@ -68,18 +68,21 @@ docker compose exec app php artisan migrate
 # Fresh migrations with seeding
 docker compose exec app php artisan migrate:fresh --seed
 
-# ✅ UPDATED (v0.1.0): DatabaseSeeder now runs ALL required seeders automatically:
-# - SettingSeeder
-# - RolePermissionSeeder
-# - VehicleTypeSeeder
-# - EmailTemplateSeeder
-# - SmsTemplateSeeder
+# ✅ UPDATED (v0.3.0): DatabaseSeeder runs ALL production-safe seeders automatically:
+# - SettingSeeder (application configuration)
+# - RolePermissionSeeder (roles: super-admin, admin, staff, customer)
+# - VehicleTypeSeeder (5 vehicle types for booking)
+# - ServiceSeeder (8 car detailing services) ← NEW in v0.3.0
+# - EmailTemplateSeeder (28 templates: 14 types × 2 languages)
+# - SmsTemplateSeeder (14 templates: 7 types × 2 languages)
 #
-# ServiceAvailabilitySeeder must be run MANUALLY (requires staff users):
-# docker compose exec app php artisan db:seed --class=ServiceAvailabilitySeeder
-
-# NOTE: Staff availability is managed via admin panel (/admin/staff-schedules)
-# Use Employee edit page → Harmonogramy tab to set schedules for employees
+# ✅ FIRST ADMIN USER: Create via Filament command (NOT seeder):
+docker compose exec app php artisan make:filament-user
+# (Interactive prompts: name, email, password - assigns super-admin role)
+#
+# NOTE: Staff scheduling managed via admin panel:
+# - /admin/staff-schedules (Harmonogramy - base patterns)
+# - /admin/staff-vacation-periods (Urlopy - vacation management)
 ```
 
 **See:** [Commands Reference](app/docs/guides/commands.md)

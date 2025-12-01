@@ -8,7 +8,12 @@ use Illuminate\Database\Seeder;
 class ServiceSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * Seed car detailing services (production lookup data).
+     *
+     * This seeder is idempotent - can be run multiple times safely.
+     * Uses 'name' field as unique key for updateOrCreate.
+     *
+     * @return void
      */
     public function run(): void
     {
@@ -79,10 +84,13 @@ class ServiceSeeder extends Seeder
             ],
         ];
 
-        foreach ($services as $service) {
-            Service::create($service);
+        foreach ($services as $serviceData) {
+            Service::updateOrCreate(
+                ['name' => $serviceData['name']],
+                $serviceData
+            );
         }
 
-        $this->command->info('Services created successfully!');
+        $this->command->info('Services seeded successfully!');
     }
 }

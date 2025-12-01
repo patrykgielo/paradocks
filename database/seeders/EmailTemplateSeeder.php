@@ -10,12 +10,29 @@ use Illuminate\Database\Seeder;
 /**
  * Email Template Seeder
  *
- * Seeds 28 email templates (14 types × 2 languages: PL, EN)
+ * Seeds transactional email templates (production lookup data).
+ *
+ * Creates 28 email templates covering 14 event types in 2 languages (PL, EN):
+ * - user-registered, user-email-verified, password-reset-requested
+ * - appointment-booked, appointment-confirmed, appointment-reminder-24h
+ * - appointment-reminder-2h, appointment-cancelled, appointment-completed
+ * - appointment-rescheduled, appointment-no-show, appointment-feedback
+ * - payment-received, payment-failed
+ *
+ * Each template includes:
+ * - HTML body (rich email with styling)
+ * - Plain text body (fallback)
+ * - Subject line with variable placeholders
+ * - Blade view path for custom rendering
+ *
+ * This seeder is idempotent - can be run multiple times safely.
  */
 class EmailTemplateSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * Seed email templates for all transactional emails.
+     *
+     * @return void
      */
     public function run(): void
     {
