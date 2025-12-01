@@ -609,6 +609,199 @@ resources/css/app.css:
 
 **See:** [Production Build Guide](app/docs/guides/production-build.md)
 
+## Git Workflow
+
+**Model**: Gitflow with staging-based release approval
+**Documentation**: [CONTRIBUTING.md](CONTRIBUTING.md) | [docs/deployment/GIT_WORKFLOW.md](app/docs/deployment/GIT_WORKFLOW.md)
+
+### Quick Reference
+
+**Create Feature**:
+```bash
+git checkout -b feature/my-feature develop
+# ... develop ...
+git push -u origin feature/my-feature
+# Create PR: feature/my-feature → develop
+```
+
+**Create Release** (after staging approval):
+```bash
+git checkout -b release/v0.3.0 develop
+# Update CHANGELOG.md, bump versions
+./scripts/release.sh minor  # v0.2.11 → v0.3.0
+# Merge to main (triggers deployment)
+```
+
+**Emergency Hotfix**:
+```bash
+git checkout -b hotfix/v0.3.1-patch main
+# ... fix ...
+./scripts/release.sh patch  # v0.3.0 → v0.3.1
+```
+
+### Branching Strategy
+
+```
+main (production, tagged with versions)
+  ↑
+  └─ release/v0.3.0 ← created after staging approval
+      ↑
+      └─ develop (integration, auto-deploys to staging)
+          ↑
+          ├─ feature/security-audit
+          ├─ feature/customer-profile
+          └─ feature/booking-system
+```
+
+**Primary Branches** (long-lived, protected):
+- `main` - Production-ready code (requires PR + review)
+- `develop` - Integration branch (requires PR)
+- `staging` - Auto-deploys from develop
+
+**Supporting Branches** (short-lived, auto-deleted):
+- `feature/*` - New features (from develop)
+- `release/*` - Release preparation (from develop, after staging approval)
+- `hotfix/*` - Emergency production fixes (from main)
+
+### Tagging Strategy
+
+**Production Tags** (on main):
+- `v0.3.0` - Minor release (new features)
+- `v0.3.1` - Patch release (bug fixes)
+- `v1.0.0` - Major release (breaking changes or production-ready)
+
+**Pre-Release Tags** (optional, on release/*):
+- `v0.3.0-rc1` - Release candidate
+- `v0.3.0-staging` - Deployed to staging
+
+**Semantic Versioning**:
+- **MAJOR**: Breaking changes or production launch (v0.x.x → v1.0.0)
+- **MINOR**: New features, backward-compatible (v0.3.0 → v0.4.0)
+- **PATCH**: Bug fixes, security patches (v0.3.0 → v0.3.1)
+
+### Commit Message Conventions
+
+**Format**: `type(scope): subject`
+
+**Types**: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `perf`, `ci`
+**Scopes**: `auth`, `booking`, `email`, `admin`, `cms`, `profile`, `ui`, `api`, `db`, `docker`, `ci`
+
+**Examples**:
+```bash
+feat(booking): add appointment cancellation feature
+fix(auth): resolve session fixation vulnerability
+docs(readme): update installation instructions
+refactor(services): extract email logic to service class
+test(appointment): add integration tests for booking flow
+chore(deps): upgrade Laravel to 12.32.5
+```
+
+### Workflow
+
+**1. Feature Development**:
+```bash
+# Create feature branch from develop
+git checkout develop
+git pull origin develop
+git checkout -b feature/customer-profile
+
+# Develop feature (atomic commits)
+git commit -m "feat(profile): add profile page"
+git commit -m "feat(profile): add validation"
+git commit -m "test(profile): add tests"
+
+# Push and create PR
+git push -u origin feature/customer-profile
+# Create PR: feature/customer-profile → develop
+# After approval → merge (squash recommended)
+# Branch auto-deleted ✅
+```
+
+**2. Deploy to Staging** (auto):
+```bash
+# develop → staging (auto-deploy via CI/CD)
+# Test on https://staging.paradocks.com
+# Verify: ✅ works, ✅ no regressions, ✅ ready for production
+```
+
+**3. Create Release** (after staging approval):
+```bash
+# Create release branch from develop
+git checkout -b release/v0.3.0 develop
+
+# Update CHANGELOG.md
+# Bump versions in package.json, composer.json
+
+# Push release branch
+git push -u origin release/v0.3.0
+```
+
+**4. Deploy to Production**:
+```bash
+# Merge release to main
+git checkout main
+git merge --no-ff release/v0.3.0
+
+# Create production tag (triggers deployment)
+git tag -a v0.3.0 -m "Release v0.3.0 - Customer Profile Feature
+
+Added:
+- Customer profile management
+- Google Maps integration
+
+See: CHANGELOG.md"
+
+git push origin main v0.3.0
+
+# Merge back to develop
+git checkout develop
+git merge --no-ff release/v0.3.0
+
+# Delete release branch
+git branch -d release/v0.3.0
+git push origin --delete release/v0.3.0
+```
+
+### Branch Protection Rules
+
+**`main` branch**:
+- ✅ Require PR + 1 approval
+- ✅ Status checks must pass (tests, lint)
+- ❌ Force push disabled
+- ❌ Deletion disabled
+
+**`develop` branch**:
+- ✅ Require PR
+- ✅ Status checks must pass
+- ❌ Force push disabled
+
+**`staging` branch**:
+- Auto-managed by CI/CD
+- No direct commits
+
+### Release Script
+
+```bash
+# Automated tagging with version bump
+./scripts/release.sh patch  # v0.3.0 → v0.3.1
+./scripts/release.sh minor  # v0.3.1 → v0.4.0
+./scripts/release.sh major  # v0.4.0 → v1.0.0
+```
+
+**What the script does**:
+1. Validates git state (clean, on main)
+2. Fetches latest tags
+3. Bumps version (semantic versioning)
+4. Creates annotated tag
+5. Pushes tag to origin
+6. Triggers GitHub Actions deployment
+
+**See**:
+- [CONTRIBUTING.md](CONTRIBUTING.md) - Contributor guidelines
+- [Git Workflow Guide](app/docs/deployment/GIT_WORKFLOW.md) - Detailed workflow
+- [CHANGELOG.md](CHANGELOG.md) - Version history
+- [CI/CD Deployment Runbook](app/docs/deployment/runbooks/ci-cd-deployment.md) - Deployment procedures
+
 ## User Model Pattern
 
 **Important:** User model has `first_name` and `last_name` fields, NOT `name` column.
