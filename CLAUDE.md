@@ -458,6 +458,121 @@ $service->enable(MaintenanceType::DEPLOYMENT, Auth::user(), ['message' => 'Deplo
 
 **See:** [Maintenance Mode Documentation](app/docs/features/maintenance-mode/README.md)
 
+## Security Audits
+
+**Agent**: `security-audit-specialist`
+**Documentation**: [app/docs/security/README.md](app/docs/security/README.md)
+
+Complete security audit system with OWASP Top 10 + GDPR compliance tracking.
+
+- **Use Cases**: Ad-hoc security questions, vulnerability scanning, pre-deployment audits
+- **Coverage**: Laravel security, Docker/VPS hardening, DevOps (GitHub Actions), GDPR
+- **Features**: Smart caching (instant responses), guided remediation, collaboration with laravel-senior-architect
+- **Documentation**: Vulnerability tracking, remediation guides, audit reports, project-specific patterns
+
+### Quick Commands
+
+```bash
+# Generate initial baseline (first time, 5-7 min)
+Ask agent: "Generate security baseline"
+
+# Ad-hoc security questions (<30 sec)
+Ask agent: "Is my booking endpoint secure?"
+Ask agent: "How do I prevent SQL injection?"
+Ask agent: "Check Docker security"
+
+# Pre-deployment audit (1-2 min incremental scan)
+Ask agent: "Run pre-deployment security audit"
+
+# Fix vulnerability (hands off to laravel-senior-architect)
+Ask agent: "Fix VULN-001"
+```
+
+### Capabilities
+
+✅ **OWASP Top 10 2021** - Comprehensive vulnerability detection patterns
+✅ **Laravel Security** - Mass assignment, IDOR, XSS, SQL injection, CSRF, Filament authorization
+✅ **Infrastructure Security** - Docker (exposed ports, secrets), VPS (Ubuntu, Nginx, UFW), CI/CD
+✅ **GDPR Compliance** - Consent tracking, data retention, audit logging, right to erasure
+✅ **Smart Caching** - File checksums for change detection, instant responses from cached baseline
+✅ **Guided Remediation** - Code examples (vulnerable → secure), effort estimates, step-by-step instructions
+
+### Documentation Structure
+
+```
+app/docs/security/
+├── README.md           # Security hub
+├── baseline.md         # Current security posture (cached)
+├── compliance.md       # OWASP + GDPR checklist
+├── vulnerabilities/    # VULN-001, VULN-002, ...
+├── remediation-guides/ # SQL injection, XSS, rate limiting, etc.
+├── audit-reports/      # Historical scans
+└── patterns/           # Project-specific security (service layer, maintenance mode)
+```
+
+### First-Time Setup
+
+```bash
+# 1. Ask agent to generate baseline
+"Generate security baseline"
+
+# Agent will (5-7 minutes):
+# - Scan routes, models, controllers, middleware
+# - Detect OWASP Top 10 vulnerabilities
+# - Generate baseline.md with risk profile
+# - Create vulnerability docs for CRITICAL/HIGH issues
+# - Provide prioritized fix list
+
+# 2. Address critical vulnerabilities
+# - VULN-001: Missing rate limiting (30 min)
+# - VULN-003: Exposed Docker ports (15 min)
+# - VULN-002: Plaintext API tokens (2 hours)
+
+# 3. Run before each deployment
+"Run pre-deployment security audit"
+```
+
+### Current Security Status (Expected)
+
+**Risk Profile**: 🟡 **MODERATE** (Acceptable for MVP, hardening recommended)
+**OWASP Compliance**: 60% (6/10 categories passed)
+**GDPR Compliance**: 50% (3/6 requirements met)
+
+**Critical Issues** (discovered during research):
+- 🔴 Missing rate limiting on auth/booking endpoints
+- 🔴 Exposed Docker ports (MySQL 3306, Redis 6379)
+- 🔴 Plaintext API tokens in database
+
+**See**: [Security Baseline](app/docs/security/baseline.md) after first scan
+
+### Security Workflow
+
+**Daily Development**:
+```markdown
+Developer: "I'm adding a file upload feature"
+Agent: "💡 Security Checklist: validate magic bytes, limit file size,
+        sanitize filenames, store outside webroot, serve via controller"
+```
+
+**Pre-Deployment**:
+```markdown
+Developer: "Run pre-deployment security audit"
+Agent: [Detects changed files via checksums]
+       [Scans only changed files - 1-2 min]
+       [Blocks deployment if CRITICAL issues found]
+       "🔴 2 CRITICAL vulnerabilities block deployment. Fix or override?"
+```
+
+**Remediation**:
+```markdown
+Developer: "Fix VULN-001"
+Agent: [Reads vulnerability doc]
+       [Provides code examples + step-by-step guide]
+       "Hand off to laravel-senior-architect for implementation? [y/N]"
+```
+
+**See**: [Security Documentation](app/docs/security/README.md)
+
 ## Production Build
 
 **IMPORTANT:** This project uses Tailwind CSS 4.0 with `@tailwindcss/vite` plugin.
