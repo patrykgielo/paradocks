@@ -10,9 +10,9 @@ use Illuminate\Database\Seeder;
 /**
  * SMS Template Seeder
  *
- * Seeds 14 SMS templates (7 types × 2 languages: PL, EN)
+ * Seeds transactional SMS templates (production lookup data).
  *
- * Template types:
+ * Creates 14 SMS templates covering 7 event types in 2 languages (PL, EN):
  * 1. appointment-created - Booking created confirmation
  * 2. appointment-confirmed - Admin confirmation
  * 3. appointment-rescheduled - Date/time change notification
@@ -20,11 +20,18 @@ use Illuminate\Database\Seeder;
  * 5. appointment-reminder-24h - 24-hour reminder
  * 6. appointment-reminder-2h - 2-hour reminder
  * 7. appointment-followup - Post-service follow-up
+ *
+ * Each template is 160 characters or less (single SMS).
+ * Includes variable placeholders: {{customer_name}}, {{date}}, {{time}}, etc.
+ *
+ * This seeder is idempotent - can be run multiple times safely.
  */
 class SmsTemplateSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * Seed SMS templates for all transactional messages.
+     *
+     * @return void
      */
     public function run(): void
     {

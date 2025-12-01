@@ -8,7 +8,18 @@ use Illuminate\Database\Seeder;
 class VehicleTypeSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * Seed vehicle types for booking wizard (production lookup data).
+     *
+     * Creates 5 vehicle categories with Polish names and examples:
+     * - Auto miejskie (City car) - Toyota Aygo, Fiat 500
+     * - Auto małe (Small car) - VW Polo, Ford Fiesta
+     * - Auto średnie (Medium car) - VW Golf, Toyota Corolla
+     * - Auto duże (Large car) - BMW 5, Audi A6, Mercedes E
+     * - SUV/Crossover - Toyota RAV4, VW Tiguan
+     *
+     * This seeder is idempotent - can be run multiple times safely.
+     *
+     * @return void
      */
     public function run(): void
     {
