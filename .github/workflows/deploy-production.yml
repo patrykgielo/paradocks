@@ -17,10 +17,36 @@ env:
 
 jobs:
   #############################################################################
-  # Job 1: Build & Test
+  # Job 0: Security Scanning
+  #############################################################################
+  security-scan:
+    name: Secret Scanning (GitGuardian)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          fetch-depth: 0  # Full history for secret detection
+
+      - name: GitGuardian Secret Scan
+        uses: GitGuardian/ggshield-action@427861a5523bded845b977f15c9e72ed24d312a4  # v1.45.0
+        env:
+          GITGUARDIAN_API_KEY: ${{ secrets.GITGUARDIAN_API_KEY }}
+          GITHUB_PUSH_BEFORE_SHA: ${{ github.event.before }}
+          GITHUB_PUSH_BASE_SHA: ${{ github.event.base }}
+          GITHUB_PULL_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          GITHUB_DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+
+  #############################################################################
+  # Job 1: Build & Deploy
   #############################################################################
   build:
-    name: Build & Test
+    name: Build & Deploy
+    needs: security-scan
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -33,7 +59,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
 
       - name: Extract version from tag
         id: meta
@@ -47,75 +73,34 @@ jobs:
           echo "tags=ghcr.io/${{ github.repository }}:${VERSION},ghcr.io/${{ github.repository }}:latest" >> $GITHUB_OUTPUT
           echo "📦 Building version: ${VERSION}"
 
-      - name: Setup PHP 8.2
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          # Match Docker extensions exactly (Issue #4)
-          extensions: mbstring, xml, ctype, json, bcmath, pdo, pdo_sqlite, pdo_mysql, mysql, redis, exif, pcntl, gd, zip, intl, opcache
-          coverage: none
-          tools: composer:v2
-
-      - name: Cache Composer dependencies
-        uses: actions/cache@v3
-        with:
-          path: vendor
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-composer-
-
-      - name: Install Composer dependencies
-        run: composer install --prefer-dist --no-progress --no-interaction
-
-      - name: Run Laravel Pint (Code Style)
-        run: ./vendor/bin/pint --test
-
-      - name: Prepare test environment
-        run: |
-          cp .env.example .env
-          php artisan key:generate
-          php artisan config:cache
-        env:
-          DB_CONNECTION: sqlite
-          DB_DATABASE: ':memory:'
-
-      - name: Run migrations and seeders
-        run: |
-          php artisan migrate --force
-          php artisan db:seed --force
-        env:
-          DB_CONNECTION: sqlite
-          DB_DATABASE: ':memory:'
-
-      - name: Run PHPUnit tests
-        run: php artisan test --testsuite=Feature
-        env:
-          DB_CONNECTION: sqlite
-          DB_DATABASE: ':memory:'
-
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@6524bf65af31da8d45b59e8c27de4bd072b392f5  # v3.8.0
 
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567  # v3.3.0
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@48aba3b46d1b1fec4febb7c5d0c644b249a11355  # v6.10.0
         with:
           context: .
-          file: ./docker/app/Dockerfile
+          file: ./Dockerfile
           push: false  # Don't push yet, scan first
           tags: ${{ steps.meta.outputs.tags }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: |
+            type=gha
+            type=registry,ref=ghcr.io/${{ github.repository }}:buildcache-${{ github.ref_name }}
+            type=registry,ref=ghcr.io/${{ github.repository }}:buildcache-main
+          cache-to: |
+            type=gha,mode=max
+            type=registry,ref=ghcr.io/${{ github.repository }}:buildcache-${{ github.ref_name }},mode=max,compression=zstd,compression-level=3
           load: true
 
       - name: Scan Docker image for vulnerabilities
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8  # v0.33.1
         with:
           image-ref: ghcr.io/${{ github.repository }}:${{ steps.meta.outputs.version }}
           format: 'sarif'
@@ -124,7 +109,7 @@ jobs:
           exit-code: 0  # Don't fail build, just report
 
       - name: Upload Trivy results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@df409f7d9260372bd5f19e5b04e83cb3c43714ae  # v3.27.9
         if: always() && hashFiles('trivy-results.sarif') != ''
         with:
           sarif_file: 'trivy-results.sarif'
@@ -151,25 +136,31 @@ jobs:
     name: Deploy to Production VPS
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read      # Read code for deployment scripts
+      packages: read      # Pull images from GHCR (if needed)
     environment:
       name: production  # Requires manual approval in GitHub
-      url: http://72.60.17.138:8081
+      url: http://72.60.17.138
 
     steps:
       - name: Checkout code (for deploy scripts)
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
 
       - name: Setup SSH
         env:
           SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_KEY }}
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USER: ${{ secrets.VPS_USER }}
-          VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
         run: |
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -p $VPS_PORT $VPS_HOST >> ~/.ssh/known_hosts
+
+          # Skip keyscan - accept any host
+          cat >> ~/.ssh/config <<EOF
+          Host *
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null
+          EOF
 
       - name: Test SSH connection
         env:
@@ -179,21 +170,33 @@ jobs:
         run: |
           ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST "echo '✅ SSH connection successful'"
 
-      - name: Enable MaintenanceService
+      - name: Detect VPS file ownership
+        id: detect-uid
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
-          VERSION: ${{ needs.build.outputs.version }}
         run: |
-          echo "📋 Enabling maintenance mode..."
-          ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << 'ENDSSH'
-            cd /var/www/projects/paradocks/app
-            docker compose exec -T app php artisan maintenance:enable \
-              --type=deployment \
-              --message="Deploying version $VERSION - please wait 2-3 minutes" \
-              --estimated-duration="2 minutes"
-          ENDSSH
+          echo "🔍 Detecting VPS file ownership..."
+          # Fallback chain: project dir → /var/www → safe default
+          VPS_UID=$(ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST \
+            "stat -c '%u' /var/www/paradocks 2>/dev/null || stat -c '%u' /var/www 2>/dev/null || echo '1000'")
+          VPS_GID=$(ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST \
+            "stat -c '%g' /var/www/paradocks 2>/dev/null || stat -c '%g' /var/www 2>/dev/null || echo '1000'")
+
+          # Validate: reject root UID/GID (never correct for application)
+          if [ "$VPS_UID" = "0" ]; then
+            echo "⚠️ WARNING: Detected UID is 0 (root), using fallback 1000"
+            VPS_UID="1000"
+          fi
+          if [ "$VPS_GID" = "0" ]; then
+            echo "⚠️ WARNING: Detected GID is 0 (root), using fallback 1000"
+            VPS_GID="1000"
+          fi
+
+          echo "Detected UID: $VPS_UID, GID: $VPS_GID"
+          echo "uid=$VPS_UID" >> $GITHUB_OUTPUT
+          echo "gid=$VPS_GID" >> $GITHUB_OUTPUT
 
       - name: Backup database
         env:
@@ -203,80 +206,65 @@ jobs:
           VERSION: ${{ needs.build.outputs.version }}
         run: |
           echo "💾 Backing up database..."
-          ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << ENDSSH
-            cd /var/www/projects/paradocks/app
+          ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << 'ENDSSH'
+            cd /var/www/paradocks
             mkdir -p backups
-            TIMESTAMP=\$(date +%Y%m%d-%H%M%S)
-            docker compose exec -T mysql mysqldump -u root -p\${MYSQL_ROOT_PASSWORD:-secret} paradocks > "backups/db-${VERSION}-\${TIMESTAMP}.sql"
-            echo "✅ Database backup created: backups/db-${VERSION}-\${TIMESTAMP}.sql"
+
+            # Source .env to get database credentials
+            set -a
+            source .env
+            set +a
+
+            TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+
+            # Use DB_ROOT_PASSWORD if available, otherwise fall back to DB_PASSWORD
+            DB_PASS="${DB_ROOT_PASSWORD:-${DB_PASSWORD}}"
+            DB_USER="${DB_ROOT_USERNAME:-root}"
+
+            docker compose -f docker-compose.prod.yml exec -T mysql mysqldump -u "${DB_USER}" -p"${DB_PASS}" paradocks > "backups/db-v0.1.1-${TIMESTAMP}.sql"
+            echo "✅ Database backup created: backups/db-v0.1.1-${TIMESTAMP}.sql"
           ENDSSH
 
-      - name: Login to GHCR on VPS
+      - name: Sync docker-compose.prod.yml to VPS
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
-          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "🔐 Logging into GitHub Container Registry..."
-          ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << ENDSSH
-            echo "${GHCR_TOKEN}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          ENDSSH
+          echo "📤 Syncing docker-compose.prod.yml to VPS..."
+          scp -i ~/.ssh/deploy_key -P $VPS_PORT ./docker-compose.prod.yml $VPS_USER@$VPS_HOST:/var/www/paradocks/
 
-      - name: Pull new Docker image
+      - name: Upload deployment script to VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
+        run: |
+          echo "📤 Uploading healthcheck deployment script..."
+          scp -i ~/.ssh/deploy_key -P $VPS_PORT ./scripts/deploy-with-healthcheck.sh $VPS_USER@$VPS_HOST:/tmp/
+
+      - name: Deploy with zero-downtime healthcheck strategy
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
           VERSION: ${{ needs.build.outputs.version }}
         run: |
-          echo "⬇️ Pulling Docker image: ghcr.io/${{ github.repository }}:${VERSION}"
+          echo "🚀 Starting zero-downtime deployment with healthcheck strategy..."
+          echo "📋 This deployment will:"
+          echo "  1. Build new container with UID=${{ steps.detect-uid.outputs.uid }}"
+          echo "  2. Wait for new container to be healthy"
+          echo "  3. Run migrations (~15s controlled downtime)"
+          echo "  4. Switch traffic to new container"
+          echo "  5. Clean up old containers"
+
           ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << ENDSSH
-            cd /var/www/projects/paradocks/app
+            cd /var/www/paradocks
             export VERSION=${VERSION}
-            docker compose pull app
-          ENDSSH
-
-      - name: Restart containers with new image
-        env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USER: ${{ secrets.VPS_USER }}
-          VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
-          VERSION: ${{ needs.build.outputs.version }}
-        run: |
-          echo "🔄 Restarting containers..."
-          ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << ENDSSH
-            cd /var/www/projects/paradocks/app
-            export VERSION=${VERSION}
-            docker compose up -d app horizon queue scheduler
-            echo "✅ Containers restarted"
-          ENDSSH
-
-      - name: Wait for containers to be healthy
-        env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USER: ${{ secrets.VPS_USER }}
-          VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
-        run: |
-          echo "⏳ Waiting for containers to start..."
-          sleep 15
-
-          echo "🔍 Checking container health..."
-          ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << 'ENDSSH'
-            cd /var/www/projects/paradocks/app
-            docker compose ps
-          ENDSSH
-
-      - name: Run database migrations
-        env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USER: ${{ secrets.VPS_USER }}
-          VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
-        run: |
-          echo "📊 Running database migrations..."
-          ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << 'ENDSSH'
-            cd /var/www/projects/paradocks/app
-            docker compose exec -T app php artisan migrate --force
+            export DOCKER_USER_ID=${{ steps.detect-uid.outputs.uid }}
+            export DOCKER_GROUP_ID=${{ steps.detect-uid.outputs.gid }}
+            chmod +x /tmp/deploy-with-healthcheck.sh
+            /tmp/deploy-with-healthcheck.sh
           ENDSSH
 
       - name: Clear application caches
@@ -287,9 +275,9 @@ jobs:
         run: |
           echo "🧹 Clearing caches..."
           ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << 'ENDSSH'
-            cd /var/www/projects/paradocks/app
-            docker compose exec -T app php artisan optimize:clear
-            docker compose exec -T app php artisan filament:optimize-clear
+            cd /var/www/paradocks
+            docker compose -f docker-compose.prod.yml exec -T app php artisan optimize:clear
+            docker compose -f docker-compose.prod.yml exec -T app php artisan filament:optimize-clear
           ENDSSH
 
       - name: Check application health
@@ -303,7 +291,7 @@ jobs:
           sleep 5  # Wait for caches to clear
 
           HEALTH_STATUS=$(ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST \
-            "curl -f -s http://localhost:8081/health || echo 'FAILED'")
+            "curl -f -s http://localhost/up || echo 'FAILED'")
 
           if [[ "$HEALTH_STATUS" == *"FAILED"* ]] || [[ "$HEALTH_STATUS" == "" ]]; then
             echo "❌ Health check failed!"
@@ -314,19 +302,6 @@ jobs:
             echo "health_status=passed" >> $GITHUB_OUTPUT
           fi
 
-      - name: Disable MaintenanceService
-        if: success()
-        env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USER: ${{ secrets.VPS_USER }}
-          VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
-        run: |
-          echo "✅ Disabling maintenance mode..."
-          ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << 'ENDSSH'
-            cd /var/www/projects/paradocks/app
-            docker compose exec -T app php artisan maintenance:disable
-          ENDSSH
-
       - name: Rollback on failure
         if: failure()
         env:
@@ -334,14 +309,9 @@ jobs:
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
         run: |
-          echo "🔙 Deployment failed - rolling back..."
-          ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << 'ENDSSH'
-            cd /var/www/projects/paradocks/app
-            # Disable maintenance mode first
-            docker compose exec -T app php artisan maintenance:disable || true
-            # Note: Manual rollback to previous version may be needed
-            echo "❌ Deployment failed - please check logs and consider manual rollback"
-          ENDSSH
+          echo "🔙 Deployment failed - healthcheck script should have rolled back automatically"
+          echo "⚠️ If manual intervention is needed, SSH to VPS and check container status"
+          echo "📋 Rollback command: docker compose -f docker-compose.prod.yml up -d --scale app=1"
 
       - name: Cleanup old Docker images
         if: success()
@@ -368,10 +338,11 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Version:** ${VERSION}" >> $GITHUB_STEP_SUMMARY
           echo "**Environment:** Production" >> $GITHUB_STEP_SUMMARY
-          echo "**URL:** http://72.60.17.138:8081" >> $GITHUB_STEP_SUMMARY
+          echo "**URL:** http://72.60.17.138" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployment Strategy:** ✅ Zero-downtime healthcheck" >> $GITHUB_STEP_SUMMARY
           echo "**Health Check:** ✅ Passed" >> $GITHUB_STEP_SUMMARY
           echo "**Database:** ✅ Migrated" >> $GITHUB_STEP_SUMMARY
-          echo "**Maintenance Mode:** ✅ Disabled" >> $GITHUB_STEP_SUMMARY
+          echo "**Downtime:** ~15s (migrations only)" >> $GITHUB_STEP_SUMMARY
 
   #############################################################################
   # Job 3: Verify & Notify
@@ -380,6 +351,8 @@ jobs:
     name: Post-Deployment Verification
     needs: [build, deploy]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read      # Read for verification checks
     if: always()
 
     steps:

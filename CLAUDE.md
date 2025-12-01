@@ -188,7 +188,10 @@ MAIL_PASSWORD=your-16-char-app-password
 
 # Queue (Redis)
 QUEUE_CONNECTION=redis
+REDIS_CLIENT=phpredis  # Use phpredis (C extension) for performance
 REDIS_HOST=redis
+REDIS_PASSWORD=your-redis-password
+REDIS_PORT=6379
 
 # Google Maps
 GOOGLE_MAPS_API_KEY=AIzaSy...
@@ -511,6 +514,16 @@ $user->last_name   // Returns "Kowalski"
 
 **⚠️ IMPORTANT:** All documentation is in `app/docs/` directory, NOT `/docs/` in repository root!
 
+### Critical Deployment Knowledge (READ FIRST!)
+
+**Essential reading before ANY deployment:**
+1. **[Deployment History](app/docs/deployment/deployment-history.md)** - Complete journey v0.2.1→v0.2.11, all failures and solutions
+2. **[Environment Variables](app/docs/deployment/environment-variables.md)** - Docker env var hierarchy (root cause of v0.2.5-v0.2.7 failures!)
+3. **[Known Issues](app/docs/deployment/known-issues.md)** - Quick fixes for 12 critical issues
+4. **[Dependencies](app/docs/dependencies.md)** - Complete stack inventory (Laravel 12.32.5, PHP 8.2, etc.)
+
+**Key Insight:** Docker environment variables MUST be in `docker-compose.yml` environment section. Being in `.env` file alone is NOT enough. This pattern caused 3 consecutive deployment failures.
+
 **Key Documentation:**
 - [Project Map](app/docs/project_map.md) - System topology, modules, key files
 - [Staging Server Docs](app/docs/environments/staging/) - Live staging documentation
@@ -560,6 +573,41 @@ docker compose exec app php artisan queue:retry all
 # Check failed jobs
 https://paradocks.local:8444/horizon/failed
 ```
+
+### Permission Denied: storage/framework/views
+
+**Status:** ✅ **SOLVED** (v0.1.0+)
+
+**Symptoms** (Historical):
+```
+ERROR  Failed to enter maintenance mode: file_put_contents(storage/framework/views/xxx.php): Permission denied
+```
+
+**Root Cause** (Historical):
+The old deployment workflow had a CATCH-22 problem:
+- Maintenance mode tried to write files BEFORE building new container
+- Old container had wrong UID (1000) but files owned by UID 1002
+- Permission denied → Build never happened → Deployment failed
+
+**Current Solution** (v0.1.0+):
+GitHub Actions now uses **zero-downtime healthcheck deployment**:
+1. Old container continues serving (no maintenance mode)
+2. Build new container with correct UID in background
+3. Wait for new container to be healthy
+4. Run migrations (~15s controlled downtime)
+5. Switch traffic to new container
+6. No permission errors
+
+**For Local Development:**
+```bash
+# If you encounter permission issues locally:
+docker compose build --no-cache app
+docker compose restart app
+```
+
+**See:**
+- [DEPLOYMENT.md - Deployment Strategy](DEPLOYMENT.md#deployment-strategy) for complete details
+- [ADR-011](app/docs/deployment/ADR-011-healthcheck-deployment-strategy.md) for architectural decision
 
 ### OPcache / Code Changes Not Applying
 

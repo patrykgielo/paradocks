@@ -4,8 +4,14 @@
 services:
   # PHP-FPM Application Container (Production optimized)
   app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USER_ID: ${DOCKER_USER_ID:-1000}
+        GROUP_ID: ${DOCKER_GROUP_ID:-1000}
     image: ghcr.io/patrykgielo/paradocks:${VERSION:-latest}
-    container_name: paradocks-app-prod
+    # Note: No container_name to allow scaling (zero-downtime deployments)
     restart: unless-stopped
     working_dir: /var/www
     volumes:
@@ -18,8 +24,15 @@ services:
     environment:
       - APP_ENV=production
       - APP_DEBUG=false
+      - APP_KEY=${APP_KEY}
+      - DB_CONNECTION=mysql
       - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_DATABASE=${DB_DATABASE:-paradocks}
+      - DB_USERNAME=${DB_USERNAME:-paradocks}
+      - DB_PASSWORD=${DB_PASSWORD}
       - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
       - QUEUE_CONNECTION=redis
       - CACHE_DRIVER=redis
       - SESSION_DRIVER=redis
@@ -81,7 +94,7 @@ services:
     depends_on:
       - app
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1/up"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -107,8 +120,14 @@ services:
 
   # Laravel Horizon (Queue Worker with Dashboard)
   horizon:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USER_ID: ${DOCKER_USER_ID:-1000}
+        GROUP_ID: ${DOCKER_GROUP_ID:-1000}
     image: ghcr.io/patrykgielo/paradocks:${VERSION:-latest}
-    container_name: paradocks-horizon-prod
+    # Note: No container_name to allow scaling (zero-downtime deployments)
     restart: unless-stopped
     working_dir: /var/www
     volumes:
@@ -118,8 +137,15 @@ services:
       - paradocks-prod
     environment:
       - APP_ENV=production
+      - APP_KEY=${APP_KEY}
+      - DB_CONNECTION=mysql
       - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_DATABASE=${DB_DATABASE:-paradocks}
+      - DB_USERNAME=${DB_USERNAME:-paradocks}
+      - DB_PASSWORD=${DB_PASSWORD}
       - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
     depends_on:
       mysql:
         condition: service_healthy
@@ -134,8 +160,14 @@ services:
 
   # Laravel Scheduler (Cron jobs)
   scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USER_ID: ${DOCKER_USER_ID:-1000}
+        GROUP_ID: ${DOCKER_GROUP_ID:-1000}
     image: ghcr.io/patrykgielo/paradocks:${VERSION:-latest}
-    container_name: paradocks-scheduler-prod
+    # Note: No container_name to allow scaling (zero-downtime deployments)
     restart: unless-stopped
     working_dir: /var/www
     volumes:
@@ -145,8 +177,15 @@ services:
       - paradocks-prod
     environment:
       - APP_ENV=production
+      - APP_KEY=${APP_KEY}
+      - DB_CONNECTION=mysql
       - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_DATABASE=${DB_DATABASE:-paradocks}
+      - DB_USERNAME=${DB_USERNAME:-paradocks}
+      - DB_PASSWORD=${DB_PASSWORD}
       - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
     depends_on:
       mysql:
         condition: service_healthy

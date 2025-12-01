@@ -7,7 +7,6 @@ use App\Models\Service;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
-use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class AppointmentStaffValidationTest extends TestCase

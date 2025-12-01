@@ -333,7 +333,124 @@ docker compose -f docker-compose.prod.yml exec app php artisan optimize
 
 ---
 
+## Deployment Strategy
+
+### Zero-Downtime Healthcheck Deployment
+
+**GitHub Actions CI/CD** uses a blue-green deployment pattern with health checks for container rebuilds:
+
+```
+OLD DEPLOYMENT FLOW (Before v0.1.0):
+❌ Enable maintenance mode (503 page)
+❌ Build new container
+❌ Restart containers
+❌ Run migrations
+❌ Disable maintenance mode
+Problem: Maintenance mode fails with permission denied (CATCH-22)
+
+NEW DEPLOYMENT FLOW (v0.1.0+):
+✅ Old container continues serving traffic
+✅ Build new container with correct UID in background
+✅ Start new container, wait for healthy
+✅ Run migrations (~15s controlled downtime)
+✅ Switch traffic to new container
+✅ Clean up old containers
+```
+
+**Benefits:**
+- ✅ Zero user-visible downtime (no 503 maintenance page)
+- ✅ Automatic fallback if new container fails health check
+- ✅ ~15 seconds downtime (migrations only, not full restart)
+- ✅ Modern container orchestration pattern
+- ✅ Fixes permission denied errors during deployment
+
+**Deployment Script:**
+GitHub Actions automatically runs `/scripts/deploy-with-healthcheck.sh` on the VPS during deployments. This script:
+
+1. Detects file ownership (UID/GID) from VPS
+2. Builds new Docker image with matching UID (--no-cache)
+3. Starts new container in parallel with old one (scale to 2)
+4. Waits for new container to pass health check (5-minute timeout)
+5. Runs database migrations on new container
+6. Switches traffic to new container (stops old one)
+7. Verifies deployment success
+8. Cleans up old images
+
+**Rollback Strategy:**
+- If health check fails → New container never receives traffic, old container still running
+- If migrations fail → Stop new container, keep old container
+- If deployed but issues found → Deploy previous version tag (same healthcheck process)
+
+**For Manual Deployments:**
+```bash
+cd /var/www/paradocks
+# Export version and UID/GID
+export VERSION=v0.1.0
+export DOCKER_USER_ID=$(stat -c '%u' storage)
+export DOCKER_GROUP_ID=$(stat -c '%g' storage)
+
+# Run healthcheck deployment
+./scripts/deploy-with-healthcheck.sh
+```
+
+**Related Documentation:**
+- Plan: `glimmering-mapping-galaxy.md` (zero-downtime strategy)
+- ADR-010: Docker UID permission solution
+- ADR-011: Healthcheck deployment strategy (coming soon)
+
+---
+
 ## Troubleshooting
+
+### Permission Denied: storage/framework/views
+
+**Symptoms**:
+```
+ERROR  Failed to enter maintenance mode: file_put_contents(storage/framework/views/xxx.php): Permission denied
+```
+
+**Status**: ✅ **SOLVED** - This issue is now resolved by the zero-downtime healthcheck deployment strategy (v0.1.0+)
+
+**Root Cause** (Historical):
+Docker container UID didn't match host file ownership. The old deployment workflow had a CATCH-22 problem:
+- Maintenance mode tried to write files BEFORE building new container
+- Old container had wrong UID (1000) but files owned by UID 1002
+- Permission denied → Build never happened → Deployment failed
+
+**Current Solution** (v0.1.0+):
+The healthcheck deployment strategy skips maintenance mode during container rebuilds:
+
+1. **UID Detection** - Detects file ownership from `/var/www/paradocks`
+2. **Docker Build** - Builds with `--no-cache --build-arg USER_ID=X`
+3. **Health Check** - Waits for new container to be healthy before switching traffic
+4. **No Maintenance Mode** - Old container keeps serving, no permission errors
+
+**Manual Fix** (if needed):
+```bash
+# On VPS: Check current file ownership
+cd /var/www/paradocks
+stat -c '%u:%g' storage
+
+# Example output: 1002:1002
+
+# Rebuild Docker image with correct UID
+docker compose -f docker-compose.prod.yml build \
+  --no-cache \
+  --build-arg USER_ID=1002 \
+  --build-arg GROUP_ID=1002 \
+  app
+
+# Verify container UID matches
+docker compose -f docker-compose.prod.yml run --rm app id -u laravel
+# Should output: 1002
+
+# Restart containers
+docker compose -f docker-compose.prod.yml up -d
+```
+
+**Why `--no-cache` is required**: Docker layer cache can reuse old `RUN useradd` commands even when build-args change. Without `--no-cache`, the container may still have uid=1000 despite passing `USER_ID=1002`.
+
+**Related**: See `app/docs/deployment/ADR-010-docker-uid-permission-solution.md` for architectural decision details.
 
 ### Application Returns 502 Bad Gateway
 **Cause**: PHP-FPM container not running or crashed

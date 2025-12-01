@@ -3,6 +3,11 @@ import laravel from 'laravel-vite-plugin';
 import tailwindcss from '@tailwindcss/vite';
 import fs from 'fs';
 
+// Check if SSL certificates exist (dev environment only)
+const sslKeyPath = './docker/ssl/key.pem';
+const sslCertPath = './docker/ssl/cert.pem';
+const hasSSL = fs.existsSync(sslKeyPath) && fs.existsSync(sslCertPath);
+
 export default defineConfig({
     plugins: [
         tailwindcss(), // MUST be before laravel plugin for Tailwind v4.0
@@ -18,13 +23,13 @@ export default defineConfig({
         host: '0.0.0.0',        // Listen on all interfaces (required for Docker)
         port: 5173,
         strictPort: true,
-        https: {
-            key: fs.readFileSync('./docker/ssl/key.pem'),
-            cert: fs.readFileSync('./docker/ssl/cert.pem'),
-        },
+        https: hasSSL ? {
+            key: fs.readFileSync(sslKeyPath),
+            cert: fs.readFileSync(sslCertPath),
+        } : false,
         hmr: {
             host: 'paradocks.local',  // Browser-accessible hostname
-            protocol: 'wss',          // Secure WebSocket for HMR
+            protocol: hasSSL ? 'wss' : 'ws',  // Secure WebSocket for HMR (if SSL available)
             clientPort: 8444,         // Match nginx SSL port
         },
         cors: true,  // Enable CORS for cross-origin requests

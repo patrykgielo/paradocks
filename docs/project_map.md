@@ -1,9 +1,114 @@
 # Project Map - Paradocks Booking System
 
-**Last Updated:** 2025-11-26
-**Laravel Version:** 12
+**Last Updated:** 2025-11-30
+**Laravel Version:** 12.32.5
 **PHP Version:** 8.2+
-**Database:** SQLite (development), MySQL (Docker production)
+**Node.js:** 20.19 LTS
+**Database:** SQLite (development), MySQL 8.0 (production)
+**Deployment Version:** v0.2.11
+
+---
+
+## Documentation Structure
+
+This project maintains comprehensive documentation in `/var/www/projects/paradocks/app/docs/`. All documentation is organized by purpose and audience.
+
+### Core Documentation (Start Here)
+
+| Document | Purpose | Audience | Last Updated |
+|----------|---------|----------|--------------|
+| [README.md](README.md) | Project overview, quick start | All | 2025-11-29 |
+| [dependencies.md](dependencies.md) | Complete version inventory | Developers | 2025-11-30 |
+| [project_map.md](project_map.md) | This file - system topology | Developers | 2025-11-30 |
+
+### Deployment Documentation
+
+**Location:** `docs/deployment/`
+
+| Document | Purpose | Critical Info |
+|----------|---------|---------------|
+| [deployment-history.md](deployment/deployment-history.md) | v0.2.1→v0.2.11 journey, lessons learned | ✅ Read before first deployment |
+| [environment-variables.md](deployment/environment-variables.md) | Complete env var reference for all 6 services | ✅ Critical for troubleshooting |
+| [docker-infrastructure.md](deployment/docker-infrastructure.md) | 6-service architecture, multi-stage Dockerfile | Technical details |
+| [known-issues.md](deployment/known-issues.md) | All deployment gotchas and workarounds | ✅ Read when deployment fails |
+| [cicd-pipeline.md](deployment/cicd-pipeline.md) | GitHub Actions workflow details | CI/CD configuration |
+| [PRE_DEPLOYMENT_CHECKLIST.md](deployment/PRE_DEPLOYMENT_CHECKLIST.md) | Step-by-step deployment guide | Pre-deployment validation |
+
+**Architecture Decision Records (ADRs):**
+- [ADR-007: UFW-Docker Security](deployment/ADR-007-ufw-docker-security.md)
+- [ADR-008: Storage Volume Removal](deployment/ADR-008-storage-volume-removal.md)
+- [ADR-009: Vite Manifest Symlink](deployment/ADR-009-vite-manifest-symlink.md)
+- [ADR-012: GitHub Actions Security Hardening](deployment/ADR-012-github-actions-security-hardening.md)
+
+### Feature Documentation
+
+**Location:** `docs/features/`
+
+| Feature | Documentation | Status |
+|---------|--------------|--------|
+| **Email System** | [email-system/README.md](features/email-system/README.md) | ✅ Complete |
+| **Booking System** | [booking-system/README.md](features/booking-system/README.md) | ✅ Complete |
+| **Staff Scheduling** | [staff-scheduling/README.md](features/staff-scheduling/README.md) | ✅ Complete |
+| **Vehicle Management** | [vehicle-management/README.md](features/vehicle-management/README.md) | ✅ Complete |
+| **Google Maps** | [google-maps/README.md](features/google-maps/README.md) | ✅ Complete |
+| **CMS System** | [cms-system/README.md](features/cms-system/README.md) | ✅ Complete |
+| **Customer Profile** | [customer-profile/README.md](features/customer-profile/README.md) | ✅ Complete |
+| **Maintenance Mode** | [maintenance-mode/README.md](features/maintenance-mode/README.md) | ✅ Complete |
+| **Settings System** | [settings-system/README.md](features/settings-system/README.md) | ✅ Complete |
+
+### Operational Guides
+
+**Location:** `docs/guides/`
+
+| Guide | Purpose |
+|-------|---------|
+| [quick-start.md](guides/quick-start.md) | One-command local setup |
+| [docker.md](guides/docker.md) | Docker architecture, commands |
+| [commands.md](guides/commands.md) | All artisan commands |
+| [production-build.md](guides/production-build.md) | Vite production build |
+| [troubleshooting.md](guides/troubleshooting.md) | Common issues & fixes |
+| [staff-availability.md](guides/staff-availability.md) | Staff scheduling UX guide |
+
+### Environment-Specific Documentation
+
+**Location:** `docs/environments/`
+
+- **staging/** - Live staging server documentation (72.60.17.138)
+  - [00-SERVER-INFO.md](environments/staging/00-SERVER-INFO.md)
+  - [01-DEPLOYMENT-LOG.md](environments/staging/01-DEPLOYMENT-LOG.md)
+  - [02-CONFIGURATIONS.md](environments/staging/02-CONFIGURATIONS.md)
+  - [03-CREDENTIALS.md](environments/staging/03-CREDENTIALS.md) 🔒 **Sensitive**
+  - [04-SERVICES.md](environments/staging/04-SERVICES.md)
+  - [05-ISSUES-WORKAROUNDS.md](environments/staging/05-ISSUES-WORKAROUNDS.md)
+  - [06-MAINTENANCE.md](environments/staging/06-MAINTENANCE.md)
+  - [07-NEXT-STEPS.md](environments/staging/07-NEXT-STEPS.md)
+
+### Critical Deployment Knowledge
+
+**Before Your First Deployment, Read These (In Order):**
+
+1. **[deployment-history.md](deployment/deployment-history.md)** - Learn from 11 deployments (v0.2.1→v0.2.11)
+   - The `--no-recreate` trap (env vars not updated)
+   - DB_CONNECTION must be explicit
+   - REDIS_PASSWORD required everywhere
+   - Permission CATCH-22 (UID mismatch)
+   - OPcache restart requirement
+
+2. **[environment-variables.md](deployment/environment-variables.md)** - Understand Docker env var hierarchy
+   - Why `.env` file is NOT enough
+   - Service-by-service requirements
+   - Complete variable reference
+
+3. **[known-issues.md](deployment/known-issues.md)** - Quick fixes for common problems
+   - Database connection refused
+   - Queue jobs not processing
+   - Permission denied errors
+   - Code changes not applying
+
+**Key Insight from 11 Deployments:**
+Docker Compose services (horizon, scheduler) do NOT read `.env` file. You MUST explicitly pass environment variables in `docker-compose.yml`. This was the #1 failure mode in v0.2.1-v0.2.6.
+
+---
 
 ## Architecture Pattern
 
