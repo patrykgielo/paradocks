@@ -8,10 +8,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- (empty - ready for next changes)
+
+## [0.3.0] - 2025-12-02
+
+### Added
+- Admin-created user welcome email notification system
+  - Secure password setup flow with 24-hour token expiration
+  - Dedicated email templates for admin-created users (PL/EN)
+  - Password setup form with token validation
+  - Event-driven architecture (AdminCreatedUser event + notification)
+  - Integration with existing EmailService
 - Security audit specialist agent for OWASP + GDPR compliance
 - Comprehensive Git workflow documentation (Gitflow with staging-based release approval)
 - CONTRIBUTING.md for contributor guidelines
 - Complete Git workflow guide at docs/deployment/GIT_WORKFLOW.md
+
+### Changed
+- Filament UserResource password field made optional for admin user creation
+- User model extended with password setup token methods
+- Updated EmailTemplateSeeder with 2 new templates (30 total)
+
+### Security
+- Password setup tokens use 256-bit entropy (Str::random(64))
+- Rate limiting on password setup endpoint (6 attempts/minute)
+- Token expiration enforced at 24 hours
 
 ## [0.2.11] - 2025-11-30
 
