@@ -103,11 +103,11 @@ class UserResource extends Resource
                         ->password()
                         ->dehydrateStateUsing(fn ($state) => Hash::make($state))
                         ->dehydrated(fn ($state) => filled($state))
-                        ->required(fn (string $context): bool => $context === 'create')
+                        ->required(fn (string $context): bool => false)
                         ->minLength(8)
                         ->maxLength(255)
                         ->revealable()
-                        ->helperText('Pozostaw puste, aby zachować obecne hasło'),
+                        ->helperText('Pozostaw puste, aby wysłać link do ustawienia hasła (zalecane) lub wprowadź hasło tymczasowe'),
                 ]),
 
             Section::make('Role i uprawnienia')

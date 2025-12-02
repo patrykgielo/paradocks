@@ -61,6 +61,13 @@ Route::get('/portfolio/{slug}', [PortfolioController::class, 'show'])->name('por
 // Authentication routes
 Auth::routes();
 
+// Password Setup Routes (for admin-created users)
+Route::get('/password/setup/{token}', [App\Http\Controllers\Auth\SetPasswordController::class, 'show'])
+    ->name('password.setup');
+Route::post('/password/setup', [App\Http\Controllers\Auth\SetPasswordController::class, 'store'])
+    ->name('password.setup.store')
+    ->middleware('throttle:6,1'); // Rate limit: 6 attempts per minute
+
 // Webhook routes (no authentication required, rate limited)
 Route::prefix('api/webhooks')->name('webhooks.')->middleware('throttle:120,1')->group(function () {
     Route::post('/smsapi/delivery-status', [SmsApiWebhookController::class, 'handleDeliveryStatus'])
