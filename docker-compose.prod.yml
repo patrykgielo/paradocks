@@ -31,11 +31,23 @@ services:
       - DB_DATABASE=${DB_DATABASE:-paradocks}
       - DB_USERNAME=${DB_USERNAME:-paradocks}
       - DB_PASSWORD=${DB_PASSWORD}
+      # Redis Configuration
+      - REDIS_CLIENT=${REDIS_CLIENT:-phpredis}
       - REDIS_HOST=redis
       - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_PORT=${REDIS_PORT:-6379}
       - QUEUE_CONNECTION=redis
-      - CACHE_DRIVER=redis
-      - SESSION_DRIVER=redis
+      - CACHE_STORE=${CACHE_STORE:-redis}
+      - SESSION_DRIVER=${SESSION_DRIVER:-redis}
+      # Mail Configuration
+      - MAIL_MAILER=${MAIL_MAILER:-smtp}
+      - MAIL_HOST=${MAIL_HOST:-smtp.gmail.com}
+      - MAIL_PORT=${MAIL_PORT:-587}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - MAIL_ENCRYPTION=${MAIL_ENCRYPTION:-tls}
+      - MAIL_FROM_ADDRESS=${MAIL_FROM_ADDRESS}
+      - MAIL_FROM_NAME=${MAIL_FROM_NAME}
     depends_on:
       mysql:
         condition: service_healthy
@@ -144,8 +156,23 @@ services:
       - DB_DATABASE=${DB_DATABASE:-paradocks}
       - DB_USERNAME=${DB_USERNAME:-paradocks}
       - DB_PASSWORD=${DB_PASSWORD}
+      # Redis Configuration
+      - REDIS_CLIENT=${REDIS_CLIENT:-phpredis}
       - REDIS_HOST=redis
       - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - QUEUE_CONNECTION=redis
+      - CACHE_STORE=${CACHE_STORE:-redis}
+      - SESSION_DRIVER=${SESSION_DRIVER:-redis}
+      # Mail Configuration
+      - MAIL_MAILER=${MAIL_MAILER:-smtp}
+      - MAIL_HOST=${MAIL_HOST:-smtp.gmail.com}
+      - MAIL_PORT=${MAIL_PORT:-587}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - MAIL_ENCRYPTION=${MAIL_ENCRYPTION:-tls}
+      - MAIL_FROM_ADDRESS=${MAIL_FROM_ADDRESS}
+      - MAIL_FROM_NAME=${MAIL_FROM_NAME}
     depends_on:
       mysql:
         condition: service_healthy
@@ -184,8 +211,14 @@ services:
       - DB_DATABASE=${DB_DATABASE:-paradocks}
       - DB_USERNAME=${DB_USERNAME:-paradocks}
       - DB_PASSWORD=${DB_PASSWORD}
+      # Redis Configuration
+      - REDIS_CLIENT=${REDIS_CLIENT:-phpredis}
       - REDIS_HOST=redis
       - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - QUEUE_CONNECTION=redis
+      - CACHE_STORE=${CACHE_STORE:-redis}
+      - SESSION_DRIVER=${SESSION_DRIVER:-redis}
     depends_on:
       mysql:
         condition: service_healthy
