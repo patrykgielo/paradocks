@@ -10,6 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - (empty - ready for next changes)
 
+## [0.3.2] - 2025-12-03
+
+### Fixed
+- GitGuardian false positive security alerts in documentation
+  - Replaced example SMTP credentials (smtp.gmail.com → smtp.example.com)
+  - Obfuscated example email addresses and passwords in docs
+  - No actual secrets were exposed - all were documentation examples
+
+### Added
+- .gitguardian.yaml configuration to ignore false positives in docs and tests
+
 ## [0.3.1] - 2025-12-03
 
 ### Changed
