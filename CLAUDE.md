@@ -68,18 +68,21 @@ docker compose exec app php artisan migrate
 # Fresh migrations with seeding
 docker compose exec app php artisan migrate:fresh --seed
 
-# ✅ UPDATED (v0.1.0): DatabaseSeeder now runs ALL required seeders automatically:
-# - SettingSeeder
-# - RolePermissionSeeder
-# - VehicleTypeSeeder
-# - EmailTemplateSeeder
-# - SmsTemplateSeeder
+# ✅ UPDATED (v0.3.0): DatabaseSeeder runs ALL production-safe seeders automatically:
+# - SettingSeeder (application configuration)
+# - RolePermissionSeeder (roles: super-admin, admin, staff, customer)
+# - VehicleTypeSeeder (5 vehicle types for booking)
+# - ServiceSeeder (8 car detailing services) ← NEW in v0.3.0
+# - EmailTemplateSeeder (28 templates: 14 types × 2 languages)
+# - SmsTemplateSeeder (14 templates: 7 types × 2 languages)
 #
-# ServiceAvailabilitySeeder must be run MANUALLY (requires staff users):
-# docker compose exec app php artisan db:seed --class=ServiceAvailabilitySeeder
-
-# NOTE: Staff availability is managed via admin panel (/admin/staff-schedules)
-# Use Employee edit page → Harmonogramy tab to set schedules for employees
+# ✅ FIRST ADMIN USER: Create via Filament command (NOT seeder):
+docker compose exec app php artisan make:filament-user
+# (Interactive prompts: name, email, password - assigns super-admin role)
+#
+# NOTE: Staff scheduling managed via admin panel:
+# - /admin/staff-schedules (Harmonogramy - base patterns)
+# - /admin/staff-vacation-periods (Urlopy - vacation management)
 ```
 
 **See:** [Commands Reference](app/docs/guides/commands.md)
@@ -458,6 +461,121 @@ $service->enable(MaintenanceType::DEPLOYMENT, Auth::user(), ['message' => 'Deplo
 
 **See:** [Maintenance Mode Documentation](app/docs/features/maintenance-mode/README.md)
 
+## Security Audits
+
+**Agent**: `security-audit-specialist`
+**Documentation**: [app/docs/security/README.md](app/docs/security/README.md)
+
+Complete security audit system with OWASP Top 10 + GDPR compliance tracking.
+
+- **Use Cases**: Ad-hoc security questions, vulnerability scanning, pre-deployment audits
+- **Coverage**: Laravel security, Docker/VPS hardening, DevOps (GitHub Actions), GDPR
+- **Features**: Smart caching (instant responses), guided remediation, collaboration with laravel-senior-architect
+- **Documentation**: Vulnerability tracking, remediation guides, audit reports, project-specific patterns
+
+### Quick Commands
+
+```bash
+# Generate initial baseline (first time, 5-7 min)
+Ask agent: "Generate security baseline"
+
+# Ad-hoc security questions (<30 sec)
+Ask agent: "Is my booking endpoint secure?"
+Ask agent: "How do I prevent SQL injection?"
+Ask agent: "Check Docker security"
+
+# Pre-deployment audit (1-2 min incremental scan)
+Ask agent: "Run pre-deployment security audit"
+
+# Fix vulnerability (hands off to laravel-senior-architect)
+Ask agent: "Fix VULN-001"
+```
+
+### Capabilities
+
+✅ **OWASP Top 10 2021** - Comprehensive vulnerability detection patterns
+✅ **Laravel Security** - Mass assignment, IDOR, XSS, SQL injection, CSRF, Filament authorization
+✅ **Infrastructure Security** - Docker (exposed ports, secrets), VPS (Ubuntu, Nginx, UFW), CI/CD
+✅ **GDPR Compliance** - Consent tracking, data retention, audit logging, right to erasure
+✅ **Smart Caching** - File checksums for change detection, instant responses from cached baseline
+✅ **Guided Remediation** - Code examples (vulnerable → secure), effort estimates, step-by-step instructions
+
+### Documentation Structure
+
+```
+app/docs/security/
+├── README.md           # Security hub
+├── baseline.md         # Current security posture (cached)
+├── compliance.md       # OWASP + GDPR checklist
+├── vulnerabilities/    # VULN-001, VULN-002, ...
+├── remediation-guides/ # SQL injection, XSS, rate limiting, etc.
+├── audit-reports/      # Historical scans
+└── patterns/           # Project-specific security (service layer, maintenance mode)
+```
+
+### First-Time Setup
+
+```bash
+# 1. Ask agent to generate baseline
+"Generate security baseline"
+
+# Agent will (5-7 minutes):
+# - Scan routes, models, controllers, middleware
+# - Detect OWASP Top 10 vulnerabilities
+# - Generate baseline.md with risk profile
+# - Create vulnerability docs for CRITICAL/HIGH issues
+# - Provide prioritized fix list
+
+# 2. Address critical vulnerabilities
+# - VULN-001: Missing rate limiting (30 min)
+# - VULN-003: Exposed Docker ports (15 min)
+# - VULN-002: Plaintext API tokens (2 hours)
+
+# 3. Run before each deployment
+"Run pre-deployment security audit"
+```
+
+### Current Security Status (Expected)
+
+**Risk Profile**: 🟡 **MODERATE** (Acceptable for MVP, hardening recommended)
+**OWASP Compliance**: 60% (6/10 categories passed)
+**GDPR Compliance**: 50% (3/6 requirements met)
+
+**Critical Issues** (discovered during research):
+- 🔴 Missing rate limiting on auth/booking endpoints
+- 🔴 Exposed Docker ports (MySQL 3306, Redis 6379)
+- 🔴 Plaintext API tokens in database
+
+**See**: [Security Baseline](app/docs/security/baseline.md) after first scan
+
+### Security Workflow
+
+**Daily Development**:
+```markdown
+Developer: "I'm adding a file upload feature"
+Agent: "💡 Security Checklist: validate magic bytes, limit file size,
+        sanitize filenames, store outside webroot, serve via controller"
+```
+
+**Pre-Deployment**:
+```markdown
+Developer: "Run pre-deployment security audit"
+Agent: [Detects changed files via checksums]
+       [Scans only changed files - 1-2 min]
+       [Blocks deployment if CRITICAL issues found]
+       "🔴 2 CRITICAL vulnerabilities block deployment. Fix or override?"
+```
+
+**Remediation**:
+```markdown
+Developer: "Fix VULN-001"
+Agent: [Reads vulnerability doc]
+       [Provides code examples + step-by-step guide]
+       "Hand off to laravel-senior-architect for implementation? [y/N]"
+```
+
+**See**: [Security Documentation](app/docs/security/README.md)
+
 ## Production Build
 
 **IMPORTANT:** This project uses Tailwind CSS 4.0 with `@tailwindcss/vite` plugin.
@@ -493,6 +611,199 @@ resources/css/app.css:
 ```
 
 **See:** [Production Build Guide](app/docs/guides/production-build.md)
+
+## Git Workflow
+
+**Model**: Gitflow with staging-based release approval
+**Documentation**: [CONTRIBUTING.md](CONTRIBUTING.md) | [docs/deployment/GIT_WORKFLOW.md](app/docs/deployment/GIT_WORKFLOW.md)
+
+### Quick Reference
+
+**Create Feature**:
+```bash
+git checkout -b feature/my-feature develop
+# ... develop ...
+git push -u origin feature/my-feature
+# Create PR: feature/my-feature → develop
+```
+
+**Create Release** (after staging approval):
+```bash
+git checkout -b release/v0.3.0 develop
+# Update CHANGELOG.md, bump versions
+./scripts/release.sh minor  # v0.2.11 → v0.3.0
+# Merge to main (triggers deployment)
+```
+
+**Emergency Hotfix**:
+```bash
+git checkout -b hotfix/v0.3.1-patch main
+# ... fix ...
+./scripts/release.sh patch  # v0.3.0 → v0.3.1
+```
+
+### Branching Strategy
+
+```
+main (production, tagged with versions)
+  ↑
+  └─ release/v0.3.0 ← created after staging approval
+      ↑
+      └─ develop (integration, auto-deploys to staging)
+          ↑
+          ├─ feature/security-audit
+          ├─ feature/customer-profile
+          └─ feature/booking-system
+```
+
+**Primary Branches** (long-lived, protected):
+- `main` - Production-ready code (requires PR + review)
+- `develop` - Integration branch (requires PR)
+- `staging` - Auto-deploys from develop
+
+**Supporting Branches** (short-lived, auto-deleted):
+- `feature/*` - New features (from develop)
+- `release/*` - Release preparation (from develop, after staging approval)
+- `hotfix/*` - Emergency production fixes (from main)
+
+### Tagging Strategy
+
+**Production Tags** (on main):
+- `v0.3.0` - Minor release (new features)
+- `v0.3.1` - Patch release (bug fixes)
+- `v1.0.0` - Major release (breaking changes or production-ready)
+
+**Pre-Release Tags** (optional, on release/*):
+- `v0.3.0-rc1` - Release candidate
+- `v0.3.0-staging` - Deployed to staging
+
+**Semantic Versioning**:
+- **MAJOR**: Breaking changes or production launch (v0.x.x → v1.0.0)
+- **MINOR**: New features, backward-compatible (v0.3.0 → v0.4.0)
+- **PATCH**: Bug fixes, security patches (v0.3.0 → v0.3.1)
+
+### Commit Message Conventions
+
+**Format**: `type(scope): subject`
+
+**Types**: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `perf`, `ci`
+**Scopes**: `auth`, `booking`, `email`, `admin`, `cms`, `profile`, `ui`, `api`, `db`, `docker`, `ci`
+
+**Examples**:
+```bash
+feat(booking): add appointment cancellation feature
+fix(auth): resolve session fixation vulnerability
+docs(readme): update installation instructions
+refactor(services): extract email logic to service class
+test(appointment): add integration tests for booking flow
+chore(deps): upgrade Laravel to 12.32.5
+```
+
+### Workflow
+
+**1. Feature Development**:
+```bash
+# Create feature branch from develop
+git checkout develop
+git pull origin develop
+git checkout -b feature/customer-profile
+
+# Develop feature (atomic commits)
+git commit -m "feat(profile): add profile page"
+git commit -m "feat(profile): add validation"
+git commit -m "test(profile): add tests"
+
+# Push and create PR
+git push -u origin feature/customer-profile
+# Create PR: feature/customer-profile → develop
+# After approval → merge (squash recommended)
+# Branch auto-deleted ✅
+```
+
+**2. Deploy to Staging** (auto):
+```bash
+# develop → staging (auto-deploy via CI/CD)
+# Test on https://staging.paradocks.com
+# Verify: ✅ works, ✅ no regressions, ✅ ready for production
+```
+
+**3. Create Release** (after staging approval):
+```bash
+# Create release branch from develop
+git checkout -b release/v0.3.0 develop
+
+# Update CHANGELOG.md
+# Bump versions in package.json, composer.json
+
+# Push release branch
+git push -u origin release/v0.3.0
+```
+
+**4. Deploy to Production**:
+```bash
+# Merge release to main
+git checkout main
+git merge --no-ff release/v0.3.0
+
+# Create production tag (triggers deployment)
+git tag -a v0.3.0 -m "Release v0.3.0 - Customer Profile Feature
+
+Added:
+- Customer profile management
+- Google Maps integration
+
+See: CHANGELOG.md"
+
+git push origin main v0.3.0
+
+# Merge back to develop
+git checkout develop
+git merge --no-ff release/v0.3.0
+
+# Delete release branch
+git branch -d release/v0.3.0
+git push origin --delete release/v0.3.0
+```
+
+### Branch Protection Rules
+
+**`main` branch**:
+- ✅ Require PR + 1 approval
+- ✅ Status checks must pass (tests, lint)
+- ❌ Force push disabled
+- ❌ Deletion disabled
+
+**`develop` branch**:
+- ✅ Require PR
+- ✅ Status checks must pass
+- ❌ Force push disabled
+
+**`staging` branch**:
+- Auto-managed by CI/CD
+- No direct commits
+
+### Release Script
+
+```bash
+# Automated tagging with version bump
+./scripts/release.sh patch  # v0.3.0 → v0.3.1
+./scripts/release.sh minor  # v0.3.1 → v0.4.0
+./scripts/release.sh major  # v0.4.0 → v1.0.0
+```
+
+**What the script does**:
+1. Validates git state (clean, on main)
+2. Fetches latest tags
+3. Bumps version (semantic versioning)
+4. Creates annotated tag
+5. Pushes tag to origin
+6. Triggers GitHub Actions deployment
+
+**See**:
+- [CONTRIBUTING.md](CONTRIBUTING.md) - Contributor guidelines
+- [Git Workflow Guide](app/docs/deployment/GIT_WORKFLOW.md) - Detailed workflow
+- [CHANGELOG.md](CHANGELOG.md) - Version history
+- [CI/CD Deployment Runbook](app/docs/deployment/runbooks/ci-cd-deployment.md) - Deployment procedures
 
 ## User Model Pattern
 
