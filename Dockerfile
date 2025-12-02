@@ -156,8 +156,8 @@ COPY --chown=laravel:laravel --from=composer-deps /app/vendor/ ./vendor/
 # Copy built frontend assets from frontend-build stage
 COPY --chown=laravel:laravel --from=frontend-build /app/public/build/ ./public/build/
 
-# Copy application code
-COPY --chown=laravel:laravel . .
+# Copy application code (FORCE FRESH - no cache reuse)
+COPY --chown=laravel:laravel --link . .
 
 # Generate optimized autoloader (now that all files are present)
 RUN composer dump-autoload --optimize --no-dev --classmap-authoritative
