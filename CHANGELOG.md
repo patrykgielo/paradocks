@@ -10,6 +10,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - (empty - ready for next changes)
 
+## [0.3.1] - 2025-12-03
+
+### Changed
+- **BREAKING (Internal):** Converted email/SMS seeders to data migrations (Laravel best practice)
+  - EmailTemplateSeeder → database/migrations/2025_12_02_224732_seed_email_templates.php (30 templates)
+  - SmsTemplateSeeder → database/migrations/2025_12_02_225216_seed_sms_templates.php (14 templates)
+  - Seeders now development/testing ONLY, data migrations for production
+  - Production deployments: `php artisan migrate --force` (automatic, tracked, idempotent)
+- Removed DeploySeederCommand (over-engineered, no longer needed)
+- Updated DatabaseSeeder to call only dev/test seeders (Settings, Roles, Vehicle Types, Services)
+- Simplified deployment workflow (removed manual seeder execution step)
+
+### Added
+- Comprehensive data migrations pattern guide (docs/guides/data-migrations.md)
+- Data migration template section in FEATURE_TEMPLATE.md
+
+### Fixed
+- v0.3.0 deployment issue: email templates now properly seeded in production via migrations
+- Missing 12 email templates will be added automatically on deployment (18→30)
+- SMS templates will be seeded for the first time (0→14)
+
+### Documentation
+- Updated quick-start.md with data migrations pattern
+- Updated CLAUDE.md deployment instructions
+- Updated ci-cd-deployment.md runbook (removed seeder step)
+- Updated FEATURE_TEMPLATE.md with seeder vs data migration guidance
+
 ## [0.3.0] - 2025-12-02
 
 ### Added
