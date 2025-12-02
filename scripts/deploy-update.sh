@@ -279,6 +279,17 @@ run_migrations() {
         disable_maintenance_mode
         exit 1
     fi
+
+    # Run production-safe seeders with smart detection
+    log "Running production-safe seeders..."
+    if docker compose -f "$DOCKER_COMPOSE_FILE" exec -T app php artisan deploy:seed; then
+        success "Seeders completed successfully"
+    else
+        error "Seeder execution failed!"
+        # Disable maintenance mode before exiting
+        disable_maintenance_mode
+        exit 1
+    fi
 }
 
 clear_and_rebuild_caches() {

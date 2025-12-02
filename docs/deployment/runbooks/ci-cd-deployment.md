@@ -226,9 +226,14 @@ cd /var/www/paradocks
 5. **Pull Docker image** - From GHCR: `ghcr.io/patrykgielo/paradocks:$VERSION`
 6. **Restart services** - App, Horizon, Scheduler containers
 7. **Run migrations** - `php artisan migrate --force`
-8. **Rebuild caches** - Config, routes, views, Filament
-9. **Verify deployment** - Check containers, logs, health
-10. **Disable maintenance mode** - MaintenanceService disabled
+8. **Run seeders** - `php artisan deploy:seed` (smart detection: first vs subsequent deployment)
+   - First deployment: All 6 seeders (Settings, Roles, Vehicle Types, Services, Email Templates, SMS Templates)
+   - Subsequent: Only EmailTemplateSeeder + SmsTemplateSeeder
+   - Exit code 0 = success, 1 = failure (blocks deployment)
+   - Logs show: detection result, seeders executed, timing per seeder
+9. **Rebuild caches** - Config, routes, views, Filament
+10. **Verify deployment** - Check containers, logs, health
+11. **Disable maintenance mode** - MaintenanceService disabled
 
 ---
 

@@ -43,6 +43,7 @@ readonly COMPOSE_FILE="docker-compose.prod.yml"
 readonly HEALTH_CHECK_TIMEOUT=300  # 5 minutes
 readonly HEALTH_CHECK_INTERVAL=5   # 5 seconds
 readonly MIGRATION_TIMEOUT=60      # 1 minute
+readonly SEEDER_TIMEOUT=120        # 2 minutes (allows first deployment buffer)
 
 ################################################################################
 # Helper Functions
@@ -261,13 +262,12 @@ run_migrations() {
 
     log_success "Migrations completed successfully"
 
-    # Run critical seeders (email templates, settings, etc.)
+    # Run production-safe seeders with smart detection
     log_info "Running production-safe seeders..."
-    if ! timeout "$MIGRATION_TIMEOUT" docker exec "$new_container" php artisan db:seed --class=EmailTemplateSeeder --force; then
-        log_warning "EmailTemplateSeeder failed - continuing deployment (non-critical)"
-    else
-        log_success "EmailTemplateSeeder completed successfully"
+    if ! timeout "$SEEDER_TIMEOUT" docker exec "$new_container" php artisan deploy:seed; then
+        exit_with_error "Seeder execution failed - deployment aborted" 4
     fi
+    log_success "Seeders completed successfully"
 }
 
 ################################################################################

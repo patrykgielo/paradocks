@@ -54,15 +54,24 @@ echo "127.0.0.1 paradocks.local" | sudo tee -a /etc/hosts
 
 ## Step 4: Run Required Seeders
 
-⚠️ **CRITICAL:** The `migrate:fresh --seed` command only runs `DatabaseSeeder`. You MUST manually run these additional seeders:
+✅ **AUTOMATIC SEEDING (v0.3.0+):** The `migrate:fresh --seed` command runs `DatabaseSeeder`, which orchestrates all 6 production-safe seeders automatically:
 
 ```bash
-docker compose exec app php artisan db:seed --class=VehicleTypeSeeder
-docker compose exec app php artisan db:seed --class=RolePermissionSeeder
-docker compose exec app php artisan db:seed --class=ServiceAvailabilitySeeder
-docker compose exec app php artisan db:seed --class=EmailTemplateSeeder
-docker compose exec app php artisan db:seed --class=SettingSeeder
+# One command seeds everything
+docker compose exec app php artisan migrate:fresh --seed
+
+# DatabaseSeeder runs these in order:
+# 1. SettingSeeder (application configuration)
+# 2. RolePermissionSeeder (roles: super-admin, admin, staff, customer)
+# 3. VehicleTypeSeeder (5 vehicle types for booking)
+# 4. ServiceSeeder (8 car detailing services)
+# 5. EmailTemplateSeeder (30 templates: 15 types × 2 languages)
+# 6. SmsTemplateSeeder (14 templates: 7 types × 2 languages)
 ```
+
+**Deployment Note:** Production deployments use `php artisan deploy:seed`, which intelligently runs:
+- **First deployment** (empty database): All 6 seeders
+- **Subsequent deployments**: Only EmailTemplateSeeder + SmsTemplateSeeder
 
 ## Step 5: Create Admin User
 

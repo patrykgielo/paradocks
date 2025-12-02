@@ -68,13 +68,22 @@ docker compose exec app php artisan migrate
 # Fresh migrations with seeding
 docker compose exec app php artisan migrate:fresh --seed
 
-# ✅ UPDATED (v0.3.0): DatabaseSeeder runs ALL production-safe seeders automatically:
+# ✅ PRODUCTION DEPLOYMENTS (v0.3.1+): Smart seeder execution via deploy:seed
+# docker compose exec app php artisan deploy:seed              # Smart detection
+# docker compose exec app php artisan deploy:seed --dry-run    # Preview only
+# docker compose exec app php artisan deploy:seed --force-all  # Override detection
+#
+# First deployment (empty DB): Runs all 6 seeders
 # - SettingSeeder (application configuration)
 # - RolePermissionSeeder (roles: super-admin, admin, staff, customer)
 # - VehicleTypeSeeder (5 vehicle types for booking)
-# - ServiceSeeder (8 car detailing services) ← NEW in v0.3.0
-# - EmailTemplateSeeder (28 templates: 14 types × 2 languages)
+# - ServiceSeeder (8 car detailing services)
+# - EmailTemplateSeeder (30 templates: 15 types × 2 languages)
 # - SmsTemplateSeeder (14 templates: 7 types × 2 languages)
+#
+# Subsequent deployments: Runs only EmailTemplateSeeder + SmsTemplateSeeder
+# Automatic detection via Settings table count (0 = first, >0 = subsequent)
+# Critical failures block deployment (exit code 1, triggers rollback)
 #
 # ✅ FIRST ADMIN USER: Create via Filament command (NOT seeder):
 docker compose exec app php artisan make:filament-user
