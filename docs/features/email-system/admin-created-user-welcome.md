@@ -122,11 +122,12 @@ docker compose exec app php artisan tinker --execute="App\\Models\\EmailTemplate
 
 **Existing variables used:**
 ```bash
+# Example SMTP configuration (replace with your actual values)
 MAIL_MAILER=smtp
-MAIL_HOST=smtp.gmail.com
+MAIL_HOST=smtp.example.com
 MAIL_PORT=587
-MAIL_USERNAME=your-email@gmail.com
-MAIL_PASSWORD=your-16-char-app-password
+MAIL_USERNAME=your-email@example.com
+MAIL_PASSWORD=your-app-specific-password-here
 MAIL_ENCRYPTION=tls
 MAIL_FROM_ADDRESS=noreply@paradocks.com
 MAIL_FROM_NAME="${APP_NAME}"
