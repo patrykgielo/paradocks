@@ -260,6 +260,14 @@ run_migrations() {
     fi
 
     log_success "Migrations completed successfully"
+
+    # Run critical seeders (email templates, settings, etc.)
+    log_info "Running production-safe seeders..."
+    if ! timeout "$MIGRATION_TIMEOUT" docker exec "$new_container" php artisan db:seed --class=EmailTemplateSeeder --force; then
+        log_warning "EmailTemplateSeeder failed - continuing deployment (non-critical)"
+    else
+        log_success "EmailTemplateSeeder completed successfully"
+    fi
 }
 
 ################################################################################
