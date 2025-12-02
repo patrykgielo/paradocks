@@ -52,26 +52,25 @@ sudo ./add-hosts-entry.sh
 echo "127.0.0.1 paradocks.local" | sudo tee -a /etc/hosts
 ```
 
-## Step 4: Run Required Seeders
+## Step 4: Run Migrations & Seeders
 
-✅ **AUTOMATIC SEEDING (v0.3.0+):** The `migrate:fresh --seed` command runs `DatabaseSeeder`, which orchestrates all 6 production-safe seeders automatically:
+✅ **AUTOMATIC SETUP (v0.3.1+):** Migrations handle both schema AND reference data automatically:
 
 ```bash
-# One command seeds everything
+# One command for everything (schema + data)
 docker compose exec app php artisan migrate:fresh --seed
 
-# DatabaseSeeder runs these in order:
-# 1. SettingSeeder (application configuration)
-# 2. RolePermissionSeeder (roles: super-admin, admin, staff, customer)
-# 3. VehicleTypeSeeder (5 vehicle types for booking)
-# 4. ServiceSeeder (8 car detailing services)
-# 5. EmailTemplateSeeder (30 templates: 15 types × 2 languages)
-# 6. SmsTemplateSeeder (14 templates: 7 types × 2 languages)
+# What happens:
+# 1. Schema migrations create tables (users, appointments, email_templates, etc.)
+# 2. Data migrations seed reference data (email templates, SMS templates)
+# 3. DatabaseSeeder adds development data (settings, roles, vehicle types, services)
 ```
 
-**Deployment Note:** Production deployments use `php artisan deploy:seed`, which intelligently runs:
-- **First deployment** (empty database): All 6 seeders
-- **Subsequent deployments**: Only EmailTemplateSeeder + SmsTemplateSeeder
+**Development vs Production:**
+- **Development:** `migrate:fresh --seed` (wipes DB, creates schema, seeds ALL data)
+- **Production:** `migrate --force` (runs new migrations only, preserves existing data)
+
+**Note:** Email/SMS templates are now seeded via **data migrations** (not seeders), ensuring proper versioning in production.
 
 ## Step 5: Create Admin User
 

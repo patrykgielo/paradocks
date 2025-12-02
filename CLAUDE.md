@@ -68,22 +68,25 @@ docker compose exec app php artisan migrate
 # Fresh migrations with seeding
 docker compose exec app php artisan migrate:fresh --seed
 
-# ✅ PRODUCTION DEPLOYMENTS (v0.3.1+): Smart seeder execution via deploy:seed
-# docker compose exec app php artisan deploy:seed              # Smart detection
-# docker compose exec app php artisan deploy:seed --dry-run    # Preview only
-# docker compose exec app php artisan deploy:seed --force-all  # Override detection
+# ✅ PRODUCTION DEPLOYMENTS (v0.3.1+): Data migrations handle reference data
+docker compose exec app php artisan migrate --force
+
+# What runs automatically:
+# 1. Schema migrations (create/alter tables)
+# 2. Data migrations (seed email/SMS templates, update reference data)
 #
-# First deployment (empty DB): Runs all 6 seeders
+# Seeders are ONLY for development/testing:
+docker compose exec app php artisan migrate:fresh --seed  # Local dev only!
+#
+# DatabaseSeeder runs these (development ONLY):
 # - SettingSeeder (application configuration)
 # - RolePermissionSeeder (roles: super-admin, admin, staff, customer)
 # - VehicleTypeSeeder (5 vehicle types for booking)
 # - ServiceSeeder (8 car detailing services)
-# - EmailTemplateSeeder (30 templates: 15 types × 2 languages)
-# - SmsTemplateSeeder (14 templates: 7 types × 2 languages)
 #
-# Subsequent deployments: Runs only EmailTemplateSeeder + SmsTemplateSeeder
-# Automatic detection via Settings table count (0 = first, >0 = subsequent)
-# Critical failures block deployment (exit code 1, triggers rollback)
+# Email/SMS templates seeded via DATA MIGRATIONS (not seeders):
+# - database/migrations/2025_12_02_224732_seed_email_templates.php (30 templates)
+# - database/migrations/2025_12_02_225216_seed_sms_templates.php (14 templates)
 #
 # ✅ FIRST ADMIN USER: Create via Filament command (NOT seeder):
 docker compose exec app php artisan make:filament-user

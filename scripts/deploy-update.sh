@@ -271,21 +271,11 @@ run_migrations() {
     log "Running database migrations..."
 
     # Run migrations (MaintenanceService already enabled)
+    # Note: Migrations handle BOTH schema changes AND reference data (email/SMS templates)
     if docker compose -f "$DOCKER_COMPOSE_FILE" exec -T app php artisan migrate --force; then
-        success "Migrations completed successfully"
+        success "Migrations completed successfully (schema + data migrations)"
     else
         error "Migrations failed!"
-        # Disable maintenance mode before exiting
-        disable_maintenance_mode
-        exit 1
-    fi
-
-    # Run production-safe seeders with smart detection
-    log "Running production-safe seeders..."
-    if docker compose -f "$DOCKER_COMPOSE_FILE" exec -T app php artisan deploy:seed; then
-        success "Seeders completed successfully"
-    else
-        error "Seeder execution failed!"
         # Disable maintenance mode before exiting
         disable_maintenance_mode
         exit 1

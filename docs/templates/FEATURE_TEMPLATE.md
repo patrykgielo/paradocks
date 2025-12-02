@@ -56,7 +56,16 @@ docker compose exec mysql mysql -u paradocks -ppassword paradocks -e "SHOW INDEX
 
 ### Seeders
 
-**⚠️ CRITICAL FOR DEPLOYMENT**
+**⚠️ IMPORTANT:** Seeders are for development/testing ONLY. For production reference data, use **data migrations** instead.
+
+- **Use seeders:** Local dev fixtures, test data
+- **Use data migrations:** Email templates, SMS templates, lookup tables, system settings
+
+**See:** [Data Migrations Guide](../../guides/data-migrations.md)
+
+---
+
+**⚠️ CRITICAL FOR DEPLOYMENT (if using data migrations)**
 
 #### Seeder Files
 
@@ -79,10 +88,14 @@ EmailTemplate::updateOrCreate(
 ```
 
 **Deploy Script Recognition:**
-- ✅ **First deployment:** Runs via DatabaseSeeder
-- ✅ **Subsequent deployments:** [EVERY deployment | FIRST ONLY]
-  - If **EVERY deployment:** Add to `SUBSEQUENT_DEPLOYMENT_SEEDERS` in `DeploySeederCommand.php`
-  - If **FIRST ONLY:** Only runs on first deployment via DatabaseSeeder
+- ✅ If reference data (email templates, SMS templates, settings):
+  - Use **data migration** instead of seeder
+  - Runs automatically via `php artisan migrate --force`
+  - See: [Data Migrations Guide](../../guides/data-migrations.md)
+
+- ✅ If development-only data:
+  - Keep as seeder in `DatabaseSeeder.php`
+  - Only runs locally via `migrate:fresh --seed`
 
 **Verification Commands:**
 ```bash

@@ -8,33 +8,37 @@ use Illuminate\Database\Seeder;
 class DatabaseSeeder extends Seeder
 {
     /**
-     * Seed the application's database with production lookup data.
+     * Seed the application's database with development lookup data.
      *
-     * This seeder orchestrates all production-safe seeders that populate
-     * essential lookup tables required for application functionality.
+     * This seeder orchestrates development/testing seeders ONLY.
+     * For production deployments, reference data is seeded via DATA MIGRATIONS.
      *
      * IMPORTANT: This seeder does NOT create users!
      * For first admin user, use: php artisan make:filament-user
      *
-     * What gets seeded (v0.3.0):
+     * What gets seeded (v0.3.1+):
      * - Application settings (booking, map, contact, marketing)
      * - Roles and permissions (super-admin, admin, staff, customer)
      * - Vehicle types (5 categories for booking wizard)
      * - Services (8 car detailing services)
-     * - Email templates (28 templates: 14 types × 2 languages)
-     * - SMS templates (14 templates: 7 types × 2 languages)
+     *
+     * What's now seeded via DATA MIGRATIONS (v0.3.1+):
+     * - Email templates (30 templates: 15 types × 2 languages) → database/migrations/2025_12_02_224732_seed_email_templates.php
+     * - SMS templates (14 templates: 7 types × 2 languages) → database/migrations/2025_12_02_225216_seed_sms_templates.php
+     *
+     * See: docs/guides/data-migrations.md for pattern explanation
      *
      * All seeders are idempotent - safe to run multiple times.
      */
     public function run(): void
     {
         $this->call([
-            SettingSeeder::class,
-            RolePermissionSeeder::class,
-            VehicleTypeSeeder::class,
-            ServiceSeeder::class,
-            EmailTemplateSeeder::class,
-            SmsTemplateSeeder::class,
+            SettingSeeder::class,           // ✅ Dev settings
+            RolePermissionSeeder::class,    // ✅ Dev roles
+            VehicleTypeSeeder::class,       // ✅ Dev vehicle types
+            ServiceSeeder::class,           // ✅ Dev services
+            // EmailTemplateSeeder removed - now data migration (2025_12_02_224732_seed_email_templates.php)
+            // SmsTemplateSeeder removed - now data migration (2025_12_02_225216_seed_sms_templates.php)
         ]);
 
         // NOTE: Test users are created by individual tests via factories

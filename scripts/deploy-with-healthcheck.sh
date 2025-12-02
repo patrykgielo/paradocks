@@ -260,14 +260,7 @@ run_migrations() {
         exit_with_error "Migration failed or timed out" 4
     fi
 
-    log_success "Migrations completed successfully"
-
-    # Run production-safe seeders with smart detection
-    log_info "Running production-safe seeders..."
-    if ! timeout "$SEEDER_TIMEOUT" docker exec "$new_container" php artisan deploy:seed; then
-        exit_with_error "Seeder execution failed - deployment aborted" 4
-    fi
-    log_success "Seeders completed successfully"
+    log_success "Migrations completed successfully (schema + data migrations)"
 }
 
 ################################################################################
