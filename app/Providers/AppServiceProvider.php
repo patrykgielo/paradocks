@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Events\AdminCreatedUser;
 use App\Events\AppointmentCancelled;
 use App\Events\AppointmentConfirmed;
 use App\Events\AppointmentCreated;
@@ -15,6 +16,7 @@ use App\Events\PasswordResetRequested;
 use App\Events\UserRegistered;
 use App\Models\Appointment;
 use App\Models\User;
+use App\Notifications\AdminCreatedUserNotification;
 use App\Notifications\AppointmentCancelledNotification;
 use App\Notifications\AppointmentCreatedNotification;
 use App\Notifications\AppointmentFollowUpNotification;
@@ -120,6 +122,11 @@ class AppServiceProvider extends ServiceProvider
         // Password Reset
         Event::listen(PasswordResetRequested::class, function (PasswordResetRequested $event) {
             $event->user->notify(new PasswordResetNotification($event->user, $event->token));
+        });
+
+        // Admin Created User (password setup email)
+        Event::listen(AdminCreatedUser::class, function (AdminCreatedUser $event) {
+            $event->user->notify(new AdminCreatedUserNotification($event->user));
         });
 
         // Appointment Created

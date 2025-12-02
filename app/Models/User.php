@@ -59,6 +59,9 @@ class User extends Authenticatable implements FilamentUser, HasName
         'pending_email_expires_at',
         'deletion_requested_at',
         'deletion_token',
+        // Password setup fields (admin-created users)
+        'password_setup_token',
+        'password_setup_expires_at',
     ];
 
     /**
@@ -94,6 +97,8 @@ class User extends Authenticatable implements FilamentUser, HasName
             'sms_marketing_opted_out_at' => 'datetime',
             'pending_email_expires_at' => 'datetime',
             'deletion_requested_at' => 'datetime',
+            // Password setup casts
+            'password_setup_expires_at' => 'datetime',
         ];
     }
 
@@ -591,5 +596,52 @@ class User extends Authenticatable implements FilamentUser, HasName
     public function hasPendingDeletion(): bool
     {
         return $this->deletion_requested_at !== null;
+    }
+
+    // =========================================================================
+    // PASSWORD SETUP FLOW (Admin-Created Users)
+    // =========================================================================
+
+    /**
+     * Initiate password setup for admin-created user (generates 24h token).
+     *
+     * @return string The password setup token
+     */
+    public function initiatePasswordSetup(): string
+    {
+        $token = Str::random(64);
+
+        $this->update([
+            'password_setup_token' => $token,
+            'password_setup_expires_at' => now()->addHours(24),
+        ]);
+
+        return $token;
+    }
+
+    /**
+     * Complete password setup with token validation.
+     *
+     * @param  string  $token  The setup token
+     * @param  string  $password  The new password (will be hashed)
+     * @return bool True if successful, false if invalid/expired
+     */
+    public function completePasswordSetup(string $token, string $password): bool
+    {
+        if ($this->password_setup_token !== $token) {
+            return false;
+        }
+
+        if ($this->password_setup_expires_at && $this->password_setup_expires_at->isPast()) {
+            return false;
+        }
+
+        $this->update([
+            'password' => $password, // Will be hashed by 'hashed' cast
+            'password_setup_token' => null,
+            'password_setup_expires_at' => null,
+        ]);
+
+        return true;
     }
 }
