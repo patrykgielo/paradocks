@@ -346,6 +346,28 @@ class EmailTemplateSeeder extends Seeder
                 'variables' => ['customer_name', 'app_name'],
                 'active' => true,
             ],
+
+            // 15. Admin Created User - Password Setup (Polish)
+            [
+                'key' => 'admin-user-created',
+                'language' => 'pl',
+                'subject' => 'Ustaw hasło do konta - {{app_name}}',
+                'html_body' => '<h1>Witaj {{user_name}}!</h1><p>Administrator właśnie utworzył dla Ciebie konto w systemie {{app_name}}.</p><p>Aby aktywować konto i zalogować się, musisz ustawić swoje hasło.</p><p style="margin: 30px 0;"><a href="{{setup_url}}" style="background: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Ustaw hasło</a></p><p><strong>Dane dostępu:</strong><br>Email: <code>{{user_email}}</code><br>Link ważny do: {{expires_at}}</p><p style="color: #666; font-size: 14px;">Link jest ważny przez 24 godziny. Po tym czasie wygaśnie i będziesz musiał poprosić o nowy.</p><p>Pozdrawiamy,<br>Zespół {{app_name}}</p>',
+                'text_body' => 'Witaj {{user_name}}! Administrator właśnie utworzył dla Ciebie konto w systemie {{app_name}}. Aby aktywować konto, ustaw swoje hasło: {{setup_url}}. Email: {{user_email}}. Link ważny do: {{expires_at}}. Pozdrawiamy, Zespół {{app_name}}',
+                'blade_path' => null,
+                'variables' => ['user_name', 'app_name', 'user_email', 'setup_url', 'expires_at'],
+                'active' => true,
+            ],
+            [
+                'key' => 'admin-user-created',
+                'language' => 'en',
+                'subject' => 'Set Your Password - {{app_name}}',
+                'html_body' => '<h1>Hello {{user_name}}!</h1><p>An administrator has created an account for you in {{app_name}}.</p><p>To activate your account and log in, you must set your password.</p><p style="margin: 30px 0;"><a href="{{setup_url}}" style="background: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Set Your Password</a></p><p><strong>Login details:</strong><br>Email: <code>{{user_email}}</code><br>Link valid until: {{expires_at}}</p><p style="color: #666; font-size: 14px;">This link is valid for 24 hours. After that, you will need to request a new one.</p><p>Best regards,<br>{{app_name}} Team</p>',
+                'text_body' => 'Hello {{user_name}}! An administrator has created an account for you in {{app_name}}. Set your password here: {{setup_url}}. Email: {{user_email}}. Link valid until: {{expires_at}}. Best regards, {{app_name}} Team',
+                'blade_path' => null,
+                'variables' => ['user_name', 'app_name', 'user_email', 'setup_url', 'expires_at'],
+                'active' => true,
+            ],
         ];
 
         foreach ($templates as $template) {
@@ -358,6 +380,6 @@ class EmailTemplateSeeder extends Seeder
             );
         }
 
-        $this->command->info('✓ Email templates seeded successfully (28 templates)');
+        $this->command->info('✓ Email templates seeded successfully (30 templates)');
     }
 }
