@@ -1,0 +1,28 @@
+name: Cleanup Build Caches
+
+on:
+  schedule:
+    - cron: '0 2 * * 0'  # Every Sunday at 2 AM UTC
+  workflow_dispatch:     # Allow manual trigger
+
+jobs:
+  cleanup:
+    name: Cleanup Old Registry Caches
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+
+    steps:
+      - name: Cleanup old build caches
+        run: |
+          echo "🧹 Cleaning up old registry cache images..."
+
+          # Keep only last 5 version-specific caches
+          gh api repos/${{ github.repository }}/packages/container/paradocks/versions \
+            --jq '.[] | select(.metadata.container.tags[]? | startswith("buildcache-")) | {id: .id, tags: .metadata.container.tags, created: .created_at}' \
+            | jq -s 'sort_by(.created) | reverse | .[5:] | .[].id' \
+            | xargs -I {} gh api -X DELETE repos/${{ github.repository }}/packages/container/paradocks/versions/{} || true
+
+          echo "✅ Cache cleanup completed - kept last 5 versions"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
