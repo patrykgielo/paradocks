@@ -131,9 +131,9 @@ COPY design-system.json ./
 RUN npm run build
 
 #################################################################################
-# Stage 4: Final Runtime
+# Stage 4a: Runtime Dependencies (CACHE-FRIENDLY - Stable)
 #################################################################################
-FROM php-base AS runtime
+FROM php-base AS runtime-deps
 
 # Accept UID/GID as build arguments for host permission matching
 ARG USER_ID=1000
@@ -150,15 +150,23 @@ RUN addgroup -g ${GROUP_ID} laravel && \
 # Set working directory
 WORKDIR /var/www
 
-# Copy vendor/ from composer-deps stage
+# Copy ONLY dependencies (change rarely - safe to cache aggressively)
+# These layers are cached across deployments unless composer.lock or package-lock.json change
 COPY --chown=laravel:laravel --from=composer-deps /app/vendor/ ./vendor/
-
-# Copy built frontend assets from frontend-build stage
 COPY --chown=laravel:laravel --from=frontend-build /app/public/build/ ./public/build/
 
-# Copy application code (FORCE FRESH - no cache reuse)
-# Note: --link requires numeric UID:GID, not username (USER_ID=1000, GROUP_ID=1000)
-COPY --chown=1000:1000 --link . .
+# Create directory structure (cheap operation, safe to cache)
+RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache
+
+#################################################################################
+# Stage 4b: Application Code (NEVER CACHED - Always Fresh)
+#################################################################################
+FROM runtime-deps AS runtime
+
+# Copy application code - NO --link flag, standard COPY ensures proper cache invalidation
+# This layer is ALWAYS rebuilt on every deployment (guarantees all code changes deploy)
+# Multi-layered cache strategy: dependencies cached (stage 4a), code always fresh (stage 4b)
+COPY --chown=laravel:laravel . .
 
 # Generate optimized autoloader (now that all files are present)
 RUN composer dump-autoload --optimize --no-dev --classmap-authoritative
@@ -168,9 +176,8 @@ RUN composer dump-autoload --optimize --no-dev --classmap-authoritative
 RUN php artisan route:cache && \
     php artisan view:cache
 
-# Ensure storage and cache directories are writable
-RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views && \
-    chown -R laravel:laravel storage bootstrap/cache
+# Fix permissions (ensure storage/cache writable after code copy)
+RUN chown -R laravel:laravel storage bootstrap/cache
 
 # Switch to non-root user
 USER laravel
