@@ -12,8 +12,6 @@ RUN npm ci
 # Copy source files needed for build
 COPY resources ./resources
 COPY vite.config.js ./
-COPY tailwind.config.js ./
-COPY postcss.config.js ./
 COPY public ./public
 COPY scripts ./scripts
 
