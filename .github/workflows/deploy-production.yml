@@ -45,6 +45,8 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             cd /var/www/paradocks
+            echo "📥 Updating docker-compose.prod.yml from repo..."
+            curl -o docker-compose.prod.yml https://raw.githubusercontent.com/patrykgielo/paradocks/main/docker-compose.prod.yml
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u patrykgielo --password-stdin
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d --force-recreate app mysql redis nginx
