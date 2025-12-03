@@ -1,3 +1,26 @@
+# Stage 1: Build frontend assets
+FROM node:20-alpine AS frontend-builder
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json package-lock.json ./
+
+# Install dependencies
+RUN npm ci
+
+# Copy source files needed for build
+COPY resources ./resources
+COPY vite.config.js ./
+COPY tailwind.config.js ./
+COPY postcss.config.js ./
+COPY public ./public
+COPY scripts ./scripts
+
+# Build frontend assets
+RUN npm run build
+
+# Stage 2: PHP runtime
 FROM php:8.2-fpm-alpine
 
 # Runtime dependencies
@@ -55,6 +78,9 @@ RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
 
 # Copy ALL code (bez --link!)
 COPY . .
+
+# Copy built frontend assets from frontend-builder stage
+COPY --from=frontend-builder /app/public/build ./public/build
 
 # Autoload
 RUN composer dump-autoload --optimize --no-dev
