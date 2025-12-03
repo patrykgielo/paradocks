@@ -84,11 +84,20 @@ COPY --from=frontend-builder /app/public/build ./public/build
 # Autoload
 RUN composer dump-autoload --optimize --no-dev
 
+# Copy public directory to /tmp for entrypoint script
+RUN cp -r /var/www/public /tmp/public
+
+# Copy entrypoint script
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
 # Simple user
 RUN addgroup -g 1000 laravel && \
     adduser -D -u 1000 -G laravel laravel && \
-    chown -R laravel:laravel /var/www
+    chown -R laravel:laravel /var/www && \
+    chown -R laravel:laravel /tmp/public
 
 USER laravel
 
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["php-fpm"]
