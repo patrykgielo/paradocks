@@ -96,13 +96,15 @@ jobs:
           push: false  # Don't push yet, scan first
           tags: ${{ steps.meta.outputs.tags }}
           no-cache: ${{ inputs.no_cache || false }}
+          # Multi-layered cache strategy:
+          # 1. GHA cache (7-day auto-expiry) - PRIMARY safety net
+          # 2. Version-specific registry cache - SECONDARY (for dependencies)
+          # 3. NO main branch fallback - Prevents stale inheritance
           cache-from: |
             type=gha
-            type=registry,ref=ghcr.io/${{ github.repository }}:buildcache-${{ github.ref_name }}
-            type=registry,ref=ghcr.io/${{ github.repository }}:buildcache-main
-          cache-to: |
-            type=gha,mode=max
-            type=registry,ref=ghcr.io/${{ github.repository }}:buildcache-${{ github.ref_name }},mode=max,compression=zstd,compression-level=3
+            type=registry,ref=ghcr.io/${{ github.repository }}:buildcache-${{ steps.meta.outputs.version }}
+          # Cache ONLY to GHA (auto-expiry protection)
+          cache-to: type=gha,mode=max
           load: true
 
       - name: Scan Docker image for vulnerabilities
@@ -121,10 +123,17 @@ jobs:
           sarif_file: 'trivy-results.sarif'
         continue-on-error: true  # Don't fail if Security tab not enabled
 
-      - name: Push Docker image to GHCR
+      - name: Push Docker image to GHCR with inline cache
         run: |
-          docker push ghcr.io/${{ github.repository }}:${{ steps.meta.outputs.version }}
-          docker push ghcr.io/${{ github.repository }}:latest
+          # Push with inline cache metadata (dependencies cached in image itself)
+          docker buildx build \
+            --push \
+            --tag ghcr.io/${{ github.repository }}:${{ steps.meta.outputs.version }} \
+            --tag ghcr.io/${{ github.repository }}:latest \
+            --cache-from type=gha \
+            --cache-to type=inline \
+            --file ./Dockerfile \
+            .
 
       - name: ✅ Build Summary
         run: |
@@ -272,6 +281,18 @@ jobs:
             chmod +x /tmp/deploy-with-healthcheck.sh
             /tmp/deploy-with-healthcheck.sh
           ENDSSH
+
+      - name: Verify file deployment
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
+        run: |
+          echo "📤 Uploading verification script..."
+          scp -i ~/.ssh/deploy_key -P $VPS_PORT ./scripts/verify-deployment.sh $VPS_USER@$VPS_HOST:/tmp/
+
+          echo "🔍 Verifying deployment..."
+          ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST "chmod +x /tmp/verify-deployment.sh && bash /tmp/verify-deployment.sh"
 
       - name: Clear application caches
         env:
