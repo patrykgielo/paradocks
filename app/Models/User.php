@@ -613,7 +613,7 @@ class User extends Authenticatable implements FilamentUser, HasName
 
         $this->update([
             'password_setup_token' => $token,
-            'password_setup_expires_at' => now()->addHours(24),
+            'password_setup_expires_at' => now()->addMinutes(30),
         ]);
 
         return $token;

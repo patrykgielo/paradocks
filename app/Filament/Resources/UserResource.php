@@ -98,17 +98,39 @@ class UserResource extends Resource
 
             Section::make('Hasło')
                 ->schema([
+                    Forms\Components\Checkbox::make('send_setup_email')
+                        ->label('Wyślij email z linkiem do ustawienia hasła')
+                        ->helperText('Użytkownik otrzyma bezpieczny link ważny 30 minut do samodzielnego ustawienia hasła')
+                        ->default(true)
+                        ->live()
+                        ->afterStateUpdated(function ($state, callable $set) {
+                            if ($state) {
+                                $set('password', null);
+                                $set('password_confirmation', null);
+                            }
+                        })
+                        ->columnSpanFull(),
+
                     Forms\Components\TextInput::make('password')
-                        ->label('Hasło')
+                        ->label('Lub ustaw hasło tymczasowe')
                         ->password()
-                        ->dehydrateStateUsing(fn ($state) => Hash::make($state))
                         ->dehydrated(fn ($state) => filled($state))
-                        ->required(fn (string $context): bool => false)
-                        ->minLength(8)
-                        ->maxLength(255)
+                        ->required(fn (callable $get) => ! $get('send_setup_email'))
+                        ->disabled(fn (callable $get) => $get('send_setup_email'))
                         ->revealable()
-                        ->helperText('Pozostaw puste, aby wysłać link do ustawienia hasła (zalecane) lub wprowadź hasło tymczasowe'),
-                ]),
+                        ->confirmed()
+                        ->minLength(8)
+                        ->helperText('Minimum 8 znaków. Pole wyłączone gdy wybrano wysyłkę emaila.')
+                        ->dehydrateStateUsing(fn ($state) => $state ? Hash::make($state) : null),
+
+                    Forms\Components\TextInput::make('password_confirmation')
+                        ->label('Potwierdź hasło')
+                        ->password()
+                        ->required(fn (callable $get) => ! $get('send_setup_email'))
+                        ->disabled(fn (callable $get) => $get('send_setup_email'))
+                        ->revealable()
+                        ->dehydrated(false),
+                ])->columns(2),
 
             Section::make('Role i uprawnienia')
                 ->schema([

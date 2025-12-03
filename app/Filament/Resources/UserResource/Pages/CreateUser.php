@@ -12,8 +12,8 @@ class CreateUser extends CreateRecord
 
     protected function afterCreate(): void
     {
-        // Only send setup email if password was not set
-        if (empty($this->data['password'])) {
+        // Check checkbox instead of empty password
+        if ($this->data['send_setup_email'] ?? false) {
             // Generate password setup token
             $token = $this->record->initiatePasswordSetup();
 
@@ -24,8 +24,8 @@ class CreateUser extends CreateRecord
 
     protected function getCreatedNotificationTitle(): ?string
     {
-        if (empty($this->data['password'])) {
-            return 'Użytkownik utworzony - email z linkiem do ustawienia hasła wysłany';
+        if ($this->data['send_setup_email'] ?? false) {
+            return 'Użytkownik utworzony - email z linkiem wysłany (ważny 30 minut)';
         }
 
         return 'Użytkownik utworzony pomyślnie';
