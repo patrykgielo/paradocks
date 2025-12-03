@@ -45,6 +45,7 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             cd /var/www/paradocks
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u patrykgielo --password-stdin
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d app mysql redis nginx
             docker compose -f docker-compose.prod.yml exec -T app php artisan migrate --force
