@@ -157,7 +157,8 @@ COPY --chown=laravel:laravel --from=composer-deps /app/vendor/ ./vendor/
 COPY --chown=laravel:laravel --from=frontend-build /app/public/build/ ./public/build/
 
 # Copy application code (FORCE FRESH - no cache reuse)
-COPY --chown=laravel:laravel --link . .
+# Note: --link requires numeric UID:GID, not username (USER_ID=1000, GROUP_ID=1000)
+COPY --chown=1000:1000 --link . .
 
 # Generate optimized autoloader (now that all files are present)
 RUN composer dump-autoload --optimize --no-dev --classmap-authoritative
