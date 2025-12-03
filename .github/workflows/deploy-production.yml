@@ -51,6 +51,6 @@ jobs:
             curl -o docker/nginx/app.prod.conf https://raw.githubusercontent.com/patrykgielo/paradocks/main/docker/nginx/app.prod.conf
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u patrykgielo --password-stdin
             docker compose -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.prod.yml up -d --force-recreate app mysql redis nginx
+            docker compose -f docker-compose.prod.yml up -d --force-recreate app mysql redis nginx horizon scheduler
             docker compose -f docker-compose.prod.yml exec -T app php artisan migrate --force
             echo "✅ Deployment completed at $(date)"
