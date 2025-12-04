@@ -52,5 +52,11 @@ jobs:
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d --force-recreate app mysql redis nginx horizon scheduler
+            echo "⏳ Waiting for MySQL to be ready..."
+            until docker compose -f docker-compose.prod.yml exec -T mysql mysqladmin ping -h localhost --silent; do
+              echo "MySQL not ready yet, waiting 2s..."
+              sleep 2
+            done
+            echo "✅ MySQL is ready!"
             docker compose -f docker-compose.prod.yml exec -T app php artisan migrate --force
             echo "✅ Deployment completed at $(date)"
