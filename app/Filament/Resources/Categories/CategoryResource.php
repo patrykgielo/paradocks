@@ -166,4 +166,12 @@ class CategoryResource extends Resource
             'index' => ManageCategories::route('/'),
         ];
     }
+
+    /**
+     * Restrict access to admins and super-admins only.
+     */
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->hasAnyRole(['admin', 'super-admin']) ?? false;
+    }
 }

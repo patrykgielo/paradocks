@@ -43,7 +43,15 @@ class StaffVacationPeriodResource extends Resource
                         ->getOptionLabelFromRecordUsing(fn (User $record) => $record->name)
                         ->searchable()
                         ->preload()
-                        ->required(),
+                        ->required()
+                        ->default(function () {
+                            // Auto-fill with current user if they are staff
+                            $user = auth()->user();
+
+                            return $user?->hasRole('staff') ? $user->id : null;
+                        })
+                        ->disabled(fn () => auth()->user()?->hasRole('staff') ?? false)
+                        ->dehydrated(true), // CRITICAL: Ensure value is saved even when disabled
                 ]),
 
             Section::make('Okres urlopu')
@@ -274,5 +282,78 @@ class StaffVacationPeriodResource extends Resource
             'create' => Pages\CreateStaffVacationPeriod::route('/create'),
             'edit' => Pages\EditStaffVacationPeriod::route('/{record}/edit'),
         ];
+    }
+
+    /**
+     * Determine who can view the vacation periods list.
+     */
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->hasAnyRole(['admin', 'super-admin', 'staff']) ?? false;
+    }
+
+    /**
+     * Determine who can create new vacation periods.
+     */
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->hasAnyRole(['admin', 'super-admin', 'staff']) ?? false;
+    }
+
+    /**
+     * Determine who can edit a specific vacation period.
+     * Staff can only edit their own pending vacations.
+     */
+    public static function canEdit($record): bool
+    {
+        $user = auth()->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        // Admins can edit any vacation
+        if ($user->hasAnyRole(['admin', 'super-admin'])) {
+            return true;
+        }
+
+        // Staff can only edit their own pending vacations
+        return $record->user_id === $user->id && ! $record->is_approved;
+    }
+
+    /**
+     * Determine who can delete a specific vacation period.
+     */
+    public static function canDelete($record): bool
+    {
+        $user = auth()->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        // Admins can delete any vacation
+        if ($user->hasAnyRole(['admin', 'super-admin'])) {
+            return true;
+        }
+
+        // Staff can only delete their own pending vacations
+        return $record->user_id === $user->id && ! $record->is_approved;
+    }
+
+    /**
+     * Filter table query - staff see only their own vacations.
+     */
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        // Staff can only see their own vacation periods
+        if (auth()->user()?->hasRole('staff')) {
+            return $query->where('user_id', auth()->id());
+        }
+
+        // Admins see all vacation periods
+        return $query;
     }
 }

@@ -277,4 +277,12 @@ class CustomerResource extends Resource
     {
         return static::getEloquentQuery()->count();
     }
+
+    /**
+     * Restrict access to admins and super-admins only.
+     */
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->hasAnyRole(['admin', 'super-admin']) ?? false;
+    }
 }
