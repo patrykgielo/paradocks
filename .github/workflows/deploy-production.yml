@@ -49,7 +49,7 @@ jobs:
             curl -o docker-compose.prod.yml https://raw.githubusercontent.com/patrykgielo/paradocks/main/docker-compose.prod.yml
             echo "📥 Updating nginx config from repo..."
             curl -o docker/nginx/app.prod.conf https://raw.githubusercontent.com/patrykgielo/paradocks/main/docker/nginx/app.prod.conf
-            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u patrykgielo --password-stdin
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d --force-recreate app mysql redis nginx horizon scheduler
             docker compose -f docker-compose.prod.yml exec -T app php artisan migrate --force
