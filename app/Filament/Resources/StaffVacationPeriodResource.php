@@ -117,7 +117,8 @@ class StaffVacationPeriodResource extends Resource
                         ->label('Zatwierdzony')
                         ->default(false)
                         ->helperText('Czy ten urlop został zatwierdzony przez managera?')
-                        ->required(),
+                        ->visible(fn () => auth()->user()?->hasAnyRole(['admin', 'super-admin']) ?? false)
+                        ->required(fn () => auth()->user()?->hasAnyRole(['admin', 'super-admin']) ?? false),
                 ]),
         ]);
     }
