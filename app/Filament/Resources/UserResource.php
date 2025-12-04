@@ -2,11 +2,13 @@
 
 namespace App\Filament\Resources;
 
+use App\Events\AdminCreatedUser;
 use App\Filament\Resources\UserResource\Pages;
 use App\Models\User;
 use BackedEnum;
 use Filament\Actions;
 use Filament\Forms;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -210,8 +212,57 @@ class UserResource extends Resource
                     ->falseLabel('Niezweryfikowane'),
             ])
             ->recordActions([
+                Actions\Action::make('resend_password_setup')
+                    ->label('Wyślij email z hasłem')
+                    ->icon('heroicon-o-envelope')
+                    ->color('info')
+                    ->visible(fn (User $record): bool => $record->password === null)
+                    ->requiresConfirmation()
+                    ->modalHeading('Wysłać email z linkiem do ustawienia hasła?')
+                    ->modalDescription(fn (User $record): string => "Użytkownik {$record->email} otrzyma nowy link ważny 30 minut. ".
+                        'Poprzedni link (jeśli istniał) zostanie unieważniony.'
+                    )
+                    ->modalSubmitActionLabel('Wyślij email')
+                    ->action(function (User $record) {
+                        try {
+                            // Generate new token (invalidates old one)
+                            $token = $record->initiatePasswordSetup();
+
+                            // Send email via event (same flow as user creation)
+                            event(new AdminCreatedUser($record));
+
+                            \Log::info('Password setup email resent by admin', [
+                                'admin_id' => auth()->id(),
+                                'admin_email' => auth()->user()->email,
+                                'target_user_id' => $record->id,
+                                'target_user_email' => $record->email,
+                                'token_preview' => substr($token, 0, 8).'...',
+                            ]);
+
+                            Notification::make()
+                                ->success()
+                                ->title('Email wysłany')
+                                ->body("Link do ustawienia hasła został wysłany na adres {$record->email}")
+                                ->send();
+
+                        } catch (\Exception $e) {
+                            \Log::error('Failed to resend password setup email', [
+                                'admin_id' => auth()->id(),
+                                'target_user_id' => $record->id,
+                                'error' => $e->getMessage(),
+                            ]);
+
+                            Notification::make()
+                                ->danger()
+                                ->title('Błąd wysyłki')
+                                ->body('Nie udało się wysłać emaila. Sprawdź logi systemowe.')
+                                ->send();
+                        }
+                    }),
+
                 Actions\EditAction::make()
                     ->label('Edytuj'),
+
                 Actions\DeleteAction::make()
                     ->label('Usuń'),
             ])

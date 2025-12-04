@@ -50,6 +50,28 @@ class UserObserver
     }
 
     /**
+     * Handle the User "deleting" event.
+     *
+     * Runs BEFORE user deletion to clean up sensitive tokens.
+     */
+    public function deleting(User $user): void
+    {
+        // Clear all password/email/deletion tokens before user is deleted
+        $user->update([
+            'password_setup_token' => null,
+            'password_setup_expires_at' => null,
+            'pending_email_token' => null,
+            'pending_email_expires_at' => null,
+            'deletion_token' => null,
+        ]);
+
+        \Log::info('User tokens cleared before deletion', [
+            'user_id' => $user->id,
+            'user' => $user->email,
+        ]);
+    }
+
+    /**
      * Handle the User "deleted" event.
      *
      * Clears all sessions when user is deleted.

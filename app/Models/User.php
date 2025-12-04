@@ -632,7 +632,7 @@ class User extends Authenticatable implements FilamentUser, HasName
     // =========================================================================
 
     /**
-     * Initiate password setup for admin-created user (generates 24h token).
+     * Initiate password setup for admin-created user (generates 30-minute token).
      *
      * @return string The password setup token
      */
@@ -640,12 +640,54 @@ class User extends Authenticatable implements FilamentUser, HasName
     {
         $token = Str::random(64);
 
-        $this->update([
-            'password_setup_token' => $token,
-            'password_setup_expires_at' => now()->addMinutes(30),
+        \Log::info('[PASSWORD_SETUP] Token generation started', [
+            'user_id' => $this->id,
+            'email' => $this->email,
+            'token_length' => strlen($token),
+            'expires_at' => now()->addMinutes(30)->toIso8601String(),
         ]);
 
-        return $token;
+        try {
+            $updated = $this->update([
+                'password_setup_token' => $token,
+                'password_setup_expires_at' => now()->addMinutes(30),
+            ]);
+
+            if (! $updated) {
+                \Log::error('[PASSWORD_SETUP] Update failed (returned false)', [
+                    'user_id' => $this->id,
+                    'email' => $this->email,
+                ]);
+                throw new \RuntimeException('Failed to save password setup token');
+            }
+
+            // Verify token was actually saved
+            $this->refresh();
+            if ($this->password_setup_token !== $token) {
+                \Log::critical('[PASSWORD_SETUP] Token mismatch after save!', [
+                    'user_id' => $this->id,
+                    'expected' => $token,
+                    'actual' => $this->password_setup_token,
+                ]);
+                throw new \RuntimeException('Token verification failed after save');
+            }
+
+            \Log::info('[PASSWORD_SETUP] Token saved successfully', [
+                'user_id' => $this->id,
+                'email' => $this->email,
+                'token_preview' => substr($token, 0, 8).'...',
+            ]);
+
+            return $token;
+        } catch (\Exception $e) {
+            \Log::error('[PASSWORD_SETUP] Exception during token generation', [
+                'user_id' => $this->id,
+                'email' => $this->email,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            throw $e;
+        }
     }
 
     /**
