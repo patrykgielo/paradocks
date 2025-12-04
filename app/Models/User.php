@@ -196,7 +196,36 @@ class User extends Authenticatable implements FilamentUser, HasName
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->hasAnyRole(['super-admin', 'admin', 'staff']);
+        // Layer 1: Role-based access control
+        if (! $this->hasAnyRole(['super-admin', 'admin', 'staff'])) {
+            \Log::warning('Unauthorized panel access attempt', [
+                'user' => $this->email,
+                'roles' => $this->roles->pluck('name'),
+                'ip' => request()->ip(),
+            ]);
+
+            return false;
+        }
+
+        // Layer 2: Session integrity check (prevents session fixation attacks)
+        $sessionUserId = auth()->id();
+        if ($sessionUserId && $sessionUserId !== $this->id) {
+            \Log::critical('Session fixation attack detected', [
+                'session_user_id' => $sessionUserId,
+                'current_user_id' => $this->id,
+                'user' => $this->email,
+                'ip' => request()->ip(),
+            ]);
+
+            // Force logout on session mismatch
+            auth()->logout();
+            request()->session()->invalidate();
+            request()->session()->regenerateToken();
+
+            return false;
+        }
+
+        return true;
     }
 
     // Helper methods for role checking
