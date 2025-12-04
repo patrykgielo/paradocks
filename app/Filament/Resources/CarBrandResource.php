@@ -135,4 +135,12 @@ class CarBrandResource extends Resource
             'edit' => Pages\EditCarBrand::route('/{record}/edit'),
         ];
     }
+
+    /**
+     * Restrict access to admins and super-admins only.
+     */
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->hasAnyRole(['admin', 'super-admin']) ?? false;
+    }
 }

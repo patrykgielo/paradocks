@@ -132,4 +132,12 @@ class VehicleTypeResource extends Resource
     {
         return false; // Types are seeded, not created manually
     }
+
+    /**
+     * Restrict access to admins and super-admins only.
+     */
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->hasAnyRole(['admin', 'super-admin']) ?? false;
+    }
 }

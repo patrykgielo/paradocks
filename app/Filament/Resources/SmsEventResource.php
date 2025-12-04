@@ -98,4 +98,12 @@ class SmsEventResource extends Resource
             'view' => Pages\ViewSmsEvent::route('/{record}'),
         ];
     }
+
+    /**
+     * Restrict access to admins and super-admins only.
+     */
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->hasAnyRole(['admin', 'super-admin']) ?? false;
+    }
 }

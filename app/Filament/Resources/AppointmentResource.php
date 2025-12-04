@@ -343,4 +343,12 @@ class AppointmentResource extends Resource
             'edit' => Pages\EditAppointment::route('/{record}/edit'),
         ];
     }
+
+    /**
+     * Allow staff, admin, and super-admin to view appointments.
+     */
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->hasAnyRole(['admin', 'super-admin', 'staff']) ?? false;
+    }
 }

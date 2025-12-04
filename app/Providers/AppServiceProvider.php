@@ -26,6 +26,7 @@ use App\Notifications\AppointmentRescheduledNotification;
 use App\Notifications\PasswordResetNotification;
 use App\Notifications\UserRegisteredNotification;
 use App\Observers\AppointmentObserver;
+use App\Observers\UserObserver;
 use App\Services\Email\EmailGatewayInterface;
 use App\Services\Email\EmailService;
 use App\Services\Email\SmtpMailer;
@@ -34,6 +35,7 @@ use App\Services\Sms\SmsApiGateway;
 use App\Services\Sms\SmsGatewayInterface;
 use App\Services\Sms\SmsService;
 use App\Support\Settings\SettingsManager;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
@@ -69,6 +71,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Appointment::observe(AppointmentObserver::class);
+        User::observe(UserObserver::class);
 
         // Override mail configuration with database settings
         $this->configureMailFromDatabase();
@@ -175,6 +178,18 @@ class AppServiceProvider extends ServiceProvider
             $event->appointment->customer->notify(
                 new AppointmentFollowUpNotification($event->appointment)
             );
+        });
+
+        // ========== SECURITY: SESSION REGENERATION ==========
+
+        // Force session regeneration on EVERY login (prevents session fixation attacks)
+        Event::listen(Login::class, function (Login $event) {
+            request()->session()->regenerate();
+            \Log::info('Session regenerated after login', [
+                'user' => $event->user->email,
+                'guard' => $event->guard,
+                'ip' => request()->ip(),
+            ]);
         });
 
         // ========== SMS NOTIFICATIONS ==========

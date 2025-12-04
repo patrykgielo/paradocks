@@ -196,7 +196,36 @@ class User extends Authenticatable implements FilamentUser, HasName
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->hasAnyRole(['super-admin', 'admin', 'staff']);
+        // Layer 1: Role-based access control
+        if (! $this->hasAnyRole(['super-admin', 'admin', 'staff'])) {
+            \Log::warning('Unauthorized panel access attempt', [
+                'user' => $this->email,
+                'roles' => $this->roles->pluck('name'),
+                'ip' => request()->ip(),
+            ]);
+
+            return false;
+        }
+
+        // Layer 2: Session integrity check (prevents session fixation attacks)
+        $sessionUserId = auth()->id();
+        if ($sessionUserId && $sessionUserId !== $this->id) {
+            \Log::critical('Session fixation attack detected', [
+                'session_user_id' => $sessionUserId,
+                'current_user_id' => $this->id,
+                'user' => $this->email,
+                'ip' => request()->ip(),
+            ]);
+
+            // Force logout on session mismatch
+            auth()->logout();
+            request()->session()->invalidate();
+            request()->session()->regenerateToken();
+
+            return false;
+        }
+
+        return true;
     }
 
     // Helper methods for role checking
@@ -603,7 +632,7 @@ class User extends Authenticatable implements FilamentUser, HasName
     // =========================================================================
 
     /**
-     * Initiate password setup for admin-created user (generates 24h token).
+     * Initiate password setup for admin-created user (generates 30-minute token).
      *
      * @return string The password setup token
      */
@@ -611,12 +640,54 @@ class User extends Authenticatable implements FilamentUser, HasName
     {
         $token = Str::random(64);
 
-        $this->update([
-            'password_setup_token' => $token,
-            'password_setup_expires_at' => now()->addHours(24),
+        \Log::info('[PASSWORD_SETUP] Token generation started', [
+            'user_id' => $this->id,
+            'email' => $this->email,
+            'token_length' => strlen($token),
+            'expires_at' => now()->addMinutes(30)->toIso8601String(),
         ]);
 
-        return $token;
+        try {
+            $updated = $this->update([
+                'password_setup_token' => $token,
+                'password_setup_expires_at' => now()->addMinutes(30),
+            ]);
+
+            if (! $updated) {
+                \Log::error('[PASSWORD_SETUP] Update failed (returned false)', [
+                    'user_id' => $this->id,
+                    'email' => $this->email,
+                ]);
+                throw new \RuntimeException('Failed to save password setup token');
+            }
+
+            // Verify token was actually saved
+            $this->refresh();
+            if ($this->password_setup_token !== $token) {
+                \Log::critical('[PASSWORD_SETUP] Token mismatch after save!', [
+                    'user_id' => $this->id,
+                    'expected' => $token,
+                    'actual' => $this->password_setup_token,
+                ]);
+                throw new \RuntimeException('Token verification failed after save');
+            }
+
+            \Log::info('[PASSWORD_SETUP] Token saved successfully', [
+                'user_id' => $this->id,
+                'email' => $this->email,
+                'token_preview' => substr($token, 0, 8).'...',
+            ]);
+
+            return $token;
+        } catch (\Exception $e) {
+            \Log::error('[PASSWORD_SETUP] Exception during token generation', [
+                'user_id' => $this->id,
+                'email' => $this->email,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            throw $e;
+        }
     }
 
     /**
