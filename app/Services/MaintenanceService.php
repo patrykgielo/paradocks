@@ -80,21 +80,22 @@ class MaintenanceService
             return true; // No maintenance active
         }
 
-        // Pre-launch mode: NO bypass allowed
-        if ($type === MaintenanceType::PRELAUNCH) {
-            return false;
-        }
-
-        // Check role-based bypass
+        // ALWAYS allow super-admin and admin to bypass (even in PRELAUNCH)
         if ($user->hasAnyRole(['super-admin', 'admin'])) {
-            Log::info('Maintenance bypass granted', [
+            Log::info('Maintenance bypass granted (admin override)', [
                 'user_id' => $user->id,
                 'email' => $user->email,
+                'role' => $user->roles->pluck('name'),
                 'type' => $type->value,
                 'method' => 'role-based',
             ]);
 
             return true;
+        }
+
+        // Pre-launch mode: NO bypass for regular users
+        if ($type === MaintenanceType::PRELAUNCH) {
+            return false;
         }
 
         return false;

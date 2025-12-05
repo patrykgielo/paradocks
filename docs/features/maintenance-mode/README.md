@@ -26,7 +26,7 @@ Professional maintenance mode system for Laravel 12 + Filament application with 
 This maintenance mode system provides:
 
 - **4 Maintenance Types**: Deployment, Pre-launch, Scheduled, Emergency
-- **Multiple Bypass Methods**: Role-based, secret token, NO bypass (pre-launch)
+- **Multiple Bypass Methods**: Admin override (all types), secret token (non-prelaunch)
 - **Redis State Storage**: Survives container restarts
 - **Nginx-Level Optimization**: Zero PHP overhead for pre-launch mode
 - **Filament Admin UI**: Toggle maintenance with visual status indicators
@@ -290,18 +290,40 @@ $status = $service->getStatus();
 
 ## Bypass Methods
 
-### 1. Role-Based Bypass (Admin Users)
+### Bypass Priority (Checked in Order)
 
-Users with `super-admin` or `admin` roles can bypass **deployment, scheduled, and emergency** modes automatically.
+1. **Admin Override** (HIGHEST PRIORITY)
+   - Checks: User has `super-admin` or `admin` role
+   - Result: Always bypass (applies to ALL maintenance types including PRELAUNCH)
+   - Log: "Maintenance bypass granted (admin override)"
+   - Why: Admins need access to manage system during maintenance
+
+2. **Maintenance Type Check**
+   - PRELAUNCH: Block all non-admins (no secret token bypass)
+   - DEPLOYMENT/SCHEDULED/EMERGENCY: Allow secret token bypass
+
+3. **Secret Token** (if applicable)
+   - Token provided via query param or session
+   - Only works for non-PRELAUNCH modes
+
+### 1. Role-Based Bypass (Admins)
+
+**Administrators (super-admin, admin) can ALWAYS bypass ALL maintenance types, including PRELAUNCH.**
 
 ```php
 // CheckMaintenanceMode middleware
 if ($service->canBypass(Auth::user())) {
-    return $next($request); // Allow access
+    return $next($request); // Admin always allowed
 }
 ```
 
-**NOT applicable to PRELAUNCH mode** - zero bypass allowed.
+**Why admins have access:**
+- Monitor deployment progress
+- Respond to critical issues
+- Manage system configuration
+- Disable maintenance mode if needed
+
+**Non-admin users** (customer, staff, guest) are blocked during ALL maintenance types.
 
 ### 2. Secret Token Bypass
 
@@ -312,6 +334,8 @@ https://yourdomain.com?maintenance_token=paradocks-xxxxx...
 ```
 
 Token is stored in session for subsequent requests.
+
+**NOT applicable to PRELAUNCH mode** - only admins can bypass.
 
 **How to get token**:
 - CLI: `php artisan maintenance:status`
@@ -329,14 +353,6 @@ Click "Regenerate Secret Token" button
 # Programmatic
 $newToken = $service->regenerateSecretToken(user: Auth::user());
 ```
-
-### 3. NO Bypass (Pre-launch Only)
-
-When `PRELAUNCH` mode is active:
-- ❌ No role-based bypass
-- ❌ No secret token
-- ❌ Everyone sees the coming soon page
-- ✅ Only way to access: Disable maintenance mode
 
 ---
 
@@ -463,16 +479,25 @@ docker compose restart app nginx
 
 ### Can't access admin panel during maintenance
 
-**PRELAUNCH mode blocks everyone** (including admins). Disable via CLI:
+**Admins (super-admin, admin) can ALWAYS access admin panel** during any maintenance mode, including PRELAUNCH.
+
+If admin access is not working, check:
+
+1. **User has correct role**:
 ```bash
-docker compose exec app php artisan maintenance:disable --force
+docker compose exec app php artisan tinker
+$user = User::where('email', 'admin@paradocks.com')->first();
+$user->roles->pluck('name'); // Should show 'super-admin' or 'admin'
 ```
 
-**Check middleware registration** (`bootstrap/app.php`):
+2. **Middleware is registered** (bootstrap/app.php):
 ```php
-$middleware->web(append: [
-    \App\Http\Middleware\CheckMaintenanceMode::class,
-]);
+$middleware->prepend(\App\Http\Middleware\CheckMaintenanceMode::class);
+```
+
+3. **Clear OPcache**:
+```bash
+docker compose restart app horizon queue scheduler
 ```
 
 ### Secret token not working
