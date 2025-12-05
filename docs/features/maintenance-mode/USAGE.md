@@ -52,17 +52,23 @@ docker compose exec app php artisan maintenance:disable
 
 #### 1. Role-Based Bypass (Admins)
 
-Users with `super-admin` or `admin` roles can bypass maintenance mode (except PRELAUNCH).
+**Administrators (super-admin, admin) can ALWAYS bypass maintenance mode, including PRELAUNCH.**
 
 **Example:**
 ```php
 // Admin logs in → authenticated
 // Visits /admin → middleware checks Auth::user()
-// User has 'super-admin' role → bypass granted
+// User has 'super-admin' role → bypass granted (even in PRELAUNCH)
 // Access to admin panel allowed
 ```
 
-**Important:** PRELAUNCH mode blocks everyone, even admins!
+**Why admins always have access:**
+- Monitor deployment progress
+- Respond to critical issues
+- Manage system configuration
+- Disable maintenance mode if needed
+
+**Non-admin users** (customer, staff, guest) are blocked during ALL maintenance types and redirected to home page showing maintenance template.
 
 #### 2. Secret Token Bypass
 
@@ -87,10 +93,10 @@ docker compose exec app php artisan maintenance:enable --type=deployment
 
 | Type | Duration | Bypass Allowed | Use Case |
 |------|----------|----------------|----------|
-| **PRELAUNCH** | 1 hour | ❌ No (complete lockdown) | Before official launch |
-| **DEPLOYMENT** | 5 minutes | ✅ Yes (admins + token) | Code deployments |
-| **SCHEDULED** | 5 minutes | ✅ Yes (admins + token) | Planned maintenance |
-| **EMERGENCY** | 2 minutes | ✅ Yes (admins + token) | Critical fixes |
+| **PRELAUNCH** | 1 hour | ✅ Admins only | Before official launch |
+| **DEPLOYMENT** | 5 minutes | ✅ Admins + token | Code deployments |
+| **SCHEDULED** | 5 minutes | ✅ Admins + token | Planned maintenance |
+| **EMERGENCY** | 2 minutes | ✅ Admins + token | Critical fixes |
 
 ## Maintenance Templates
 
