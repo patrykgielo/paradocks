@@ -225,7 +225,11 @@ cd /var/www/paradocks
 4. **Database backup** - Automatic timestamped backup
 5. **Pull Docker image** - From GHCR: `ghcr.io/patrykgielo/paradocks:$VERSION`
 6. **Restart services** - App, Horizon, Scheduler containers
-7. **Run migrations** - `php artisan migrate --force`
+7. **Run migrations** - `php artisan migrate --force` (~15s downtime)
+   - **Note:** Migrations handle BOTH schema changes AND reference data updates (email/SMS templates)
+   - Schema migrations: create/alter tables
+   - Data migrations: seed email templates (30), SMS templates (14)
+   - Idempotent: tracked in migrations table, safe to run multiple times
 8. **Rebuild caches** - Config, routes, views, Filament
 9. **Verify deployment** - Check containers, logs, health
 10. **Disable maintenance mode** - MaintenanceService disabled

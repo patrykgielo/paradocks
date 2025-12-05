@@ -43,6 +43,7 @@ readonly COMPOSE_FILE="docker-compose.prod.yml"
 readonly HEALTH_CHECK_TIMEOUT=300  # 5 minutes
 readonly HEALTH_CHECK_INTERVAL=5   # 5 seconds
 readonly MIGRATION_TIMEOUT=60      # 1 minute
+readonly SEEDER_TIMEOUT=120        # 2 minutes (allows first deployment buffer)
 
 ################################################################################
 # Helper Functions
@@ -259,7 +260,7 @@ run_migrations() {
         exit_with_error "Migration failed or timed out" 4
     fi
 
-    log_success "Migrations completed successfully"
+    log_success "Migrations completed successfully (schema + data migrations)"
 }
 
 ################################################################################
@@ -299,16 +300,32 @@ verify_deployment() {
         exit_with_error "App container is not running" 5
     fi
 
-    # Check health endpoint
-    local app_url
-    app_url=$(grep "^APP_URL=" .env | cut -d '=' -f2- | tr -d '"' || echo "http://localhost")
+    # Check health endpoint (with Nginx restart failsafe)
+    log_info "Checking health endpoint..."
 
     if command -v curl >/dev/null 2>&1; then
-        if ! curl -sf "${app_url}/up" >/dev/null; then
-            log_warning "Health endpoint check failed, but container is running"
+        # First attempt (relies on DNS resolver)
+        if ! curl -sf "http://localhost/up" >/dev/null 2>&1; then
+            log_warning "Health endpoint failed - possible Nginx IP cache (failsafe engaging)"
+            log_info "Restarting Nginx to clear cached upstream IP..."
+
+            # Restart Nginx (failsafe for edge cases where DNS resolver doesn't work)
+            if ! docker compose -f "$COMPOSE_FILE" restart nginx; then
+                exit_with_error "Failed to restart Nginx during health check recovery" 5
+            fi
+            sleep 3  # Wait for Nginx to fully restart
+
+            # Retry health check after Nginx restart
+            if ! curl -sf "http://localhost/up" >/dev/null 2>&1; then
+                exit_with_error "Health endpoint FAILED after Nginx restart - deployment aborted" 5
+            fi
+
+            log_success "Health endpoint recovered (Nginx restart failsafe worked)"
         else
-            log_success "Health endpoint check passed"
+            log_success "Health endpoint passed (DNS resolver working, no Nginx restart needed)"
         fi
+    else
+        log_warning "curl not available - skipping health endpoint check"
     fi
 
     log_success "Deployment verification passed"

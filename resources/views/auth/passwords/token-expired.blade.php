@@ -11,7 +11,7 @@
                     <div class="alert alert-warning" role="alert">
                         <h4 class="alert-heading">Link do ustawienia hasła wygasł</h4>
                         <p>
-                            Link, którego użyłeś, wygasł lub jest nieprawidłowy. Linki do ustawienia hasła są ważne przez 24 godziny ze względów bezpieczeństwa.
+                            Link, którego użyłeś, wygasł lub jest nieprawidłowy. Linki do ustawienia hasła są ważne przez 30 minut ze względów bezpieczeństwa.
                         </p>
                         <hr>
                         <p class="mb-0">

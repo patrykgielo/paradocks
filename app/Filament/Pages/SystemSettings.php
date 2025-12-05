@@ -59,6 +59,15 @@ class SystemSettings extends Page implements HasForms
     protected static ?string $permission = 'manage settings';
 
     /**
+     * Restrict access to admins and super-admins only.
+     * Overrides permission-based authorization for stricter control.
+     */
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->hasAnyRole(['admin', 'super-admin']) ?? false;
+    }
+
+    /**
      * Form state data.
      *
      * @var array<string, mixed>|null

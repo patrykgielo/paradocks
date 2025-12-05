@@ -100,8 +100,8 @@ class RolePermissionSeeder extends Seeder
             'edit appointments',
             'manage availability',
             'view availability',
-            'view email logs',
-            'view email events',
+            // REMOVED: 'view email logs' - staff should not access email logs
+            // REMOVED: 'view email events' - staff should not access email events
         ]);
 
         // Customer - can only view and book appointments

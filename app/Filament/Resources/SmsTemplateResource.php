@@ -353,4 +353,12 @@ class SmsTemplateResource extends Resource
 
         return new HtmlString($html);
     }
+
+    /**
+     * Restrict access to admins and super-admins only.
+     */
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->hasAnyRole(['admin', 'super-admin']) ?? false;
+    }
 }

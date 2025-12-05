@@ -10,6 +10,78 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - (empty - ready for next changes)
 
+## [0.3.3] - 2025-12-04
+
+### Added
+- **Role-Based Access Control (RBAC) Phase 2** - Complete staff role restrictions
+  - SystemSettings page: Added `canAccess()` method for role-based override
+  - Vacation form: Hidden `is_approved` toggle from staff users (admin-only)
+  - Documentation: New comprehensive RBAC guide (docs/features/role-based-access/README.md)
+
+### Fixed
+- **Security:** Staff role permissions cleanup
+  - Removed `view email logs` permission from Staff role (EmailSendResource now admin-only)
+  - Removed `view email events` permission from Staff role (EmailEventResource now admin-only)
+  - Removed `manage settings` permission from Staff role (SystemSettings now admin-only)
+  - Manual permission revocation applied on production (December 4, 2025)
+- **UX:** Staff can no longer see or toggle vacation approval status
+  - Approval toggle now uses `->visible()` and `->required()` with role checks
+  - Staff vacations default to `is_approved = false` (pending)
+  - Only admin/super-admin can approve vacations
+
+### Changed
+- **Staff Role Access** - Reduced from partial restrictions to complete isolation
+  - Phase 1 (v0.3.3-alpha): 21 Filament Resources with `canViewAny()` authorization
+  - Phase 2 (v0.3.3): Additional restrictions (System Settings, Email resources, approval toggle)
+  - Staff now limited to ONLY: Appointments + Own Vacation Periods
+  - Staff cannot access: System Settings, Email Logs, Email Events, User Management, Services, CMS, SMS, etc.
+
+### Technical Details
+- **Commits:** ad2d9fc (Phase 1), d557008 (Phase 2)
+- **Files Modified:** 24 files total
+  - Phase 1: 21 Filament Resources (~180 lines)
+  - Phase 2: 3 files (SystemSettings, StaffVacationPeriodResource, RolePermissionSeeder)
+- **Post-Deployment Action:** Manual permission revocation via tinker (one-time, production)
+- **Security Pattern:** Role-based + permission-based authorization with null-safe operators
+
+## [0.3.2] - 2025-12-03
+
+### Fixed
+- GitGuardian false positive security alerts in documentation
+  - Replaced example SMTP credentials (smtp.gmail.com → smtp.example.com)
+  - Obfuscated example email addresses and passwords in docs
+  - No actual secrets were exposed - all were documentation examples
+
+### Added
+- .gitguardian.yaml configuration to ignore false positives in docs and tests
+
+## [0.3.1] - 2025-12-03
+
+### Changed
+- **BREAKING (Internal):** Converted email/SMS seeders to data migrations (Laravel best practice)
+  - EmailTemplateSeeder → database/migrations/2025_12_02_224732_seed_email_templates.php (30 templates)
+  - SmsTemplateSeeder → database/migrations/2025_12_02_225216_seed_sms_templates.php (14 templates)
+  - Seeders now development/testing ONLY, data migrations for production
+  - Production deployments: `php artisan migrate --force` (automatic, tracked, idempotent)
+- Removed DeploySeederCommand (over-engineered, no longer needed)
+- Updated DatabaseSeeder to call only dev/test seeders (Settings, Roles, Vehicle Types, Services)
+- Simplified deployment workflow (removed manual seeder execution step)
+
+### Added
+- Comprehensive data migrations pattern guide (docs/guides/data-migrations.md)
+- Data migration template section in FEATURE_TEMPLATE.md
+
+### Fixed
+- v0.3.0 deployment issue: email templates now properly seeded in production via migrations
+- Missing 12 email templates will be added automatically on deployment (18→30)
+- SMS templates will be seeded for the first time (0→14)
+
+### Documentation
+- Updated quick-start.md with data migrations pattern
+- Updated CLAUDE.md deployment instructions
+- Updated ci-cd-deployment.md runbook (removed seeder step)
+- Updated FEATURE_TEMPLATE.md with seeder vs data migration guidance
+
 ## [0.3.0] - 2025-12-02
 
 ### Added

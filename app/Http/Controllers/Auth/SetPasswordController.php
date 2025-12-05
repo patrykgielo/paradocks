@@ -11,11 +11,37 @@ class SetPasswordController extends Controller
 {
     public function show(string $token)
     {
+        \Log::info('[PASSWORD_SETUP] Setup page accessed', [
+            'token_preview' => substr($token, 0, 8).'...',
+            'ip' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+        ]);
+
         $user = User::where('password_setup_token', $token)->first();
 
-        if (! $user || $user->password_setup_expires_at?->isPast()) {
+        if (! $user) {
+            \Log::warning('[PASSWORD_SETUP] Token not found in database', [
+                'token_preview' => substr($token, 0, 8).'...',
+            ]);
+
             return view('auth.passwords.token-expired');
         }
+
+        if ($user->password_setup_expires_at?->isPast()) {
+            \Log::warning('[PASSWORD_SETUP] Token expired', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'expired_at' => $user->password_setup_expires_at->toIso8601String(),
+                'now' => now()->toIso8601String(),
+            ]);
+
+            return view('auth.passwords.token-expired');
+        }
+
+        \Log::info('[PASSWORD_SETUP] Token valid, showing setup form', [
+            'user_id' => $user->id,
+            'email' => $user->email,
+        ]);
 
         return view('auth.passwords.setup', ['token' => $token, 'email' => $user->email]);
     }

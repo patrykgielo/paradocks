@@ -144,6 +144,36 @@ Complete content management system with 4 content types, Filament admin panel, a
 
 ---
 
+### Role-Based Access Control (RBAC)
+**Status:** ✅ Production Ready | **Docs:** [`features/role-based-access/`](./features/role-based-access/)
+
+Complete role-based authorization system for Filament admin panel with granular permissions.
+
+- **[Full Documentation](./features/role-based-access/README.md)** - Roles, permissions, authorization patterns
+
+**Roles:**
+- **super-admin** - Full system access
+- **admin** - Full admin panel access
+- **staff** - Limited to Appointments + Own Vacations
+- **customer** - No admin panel access
+
+**Key Features:**
+- Spatie Laravel Permission integration
+- Resource-level authorization (`canViewAny()`)
+- Record ownership checks (staff see only own data)
+- Query scoping for data isolation
+- Field-level visibility control
+- Permission-based + role-based authorization
+
+**Staff Restrictions (Phase 2):**
+- ✅ Cannot access System Settings
+- ✅ Cannot view Email Logs/Events
+- ✅ Cannot see approval toggle in vacation form
+- ✅ Can only manage own pending vacations
+- ✅ Cannot create vacations for other employees
+
+---
+
 ## 🏗️ Architecture
 
 - **[Project Map](./project_map.md)** - Complete system overview, domain model, relationships

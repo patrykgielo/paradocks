@@ -36,6 +36,11 @@ class CheckMaintenanceMode
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Skip health check endpoint
+        if ($request->is('up')) {
+            return $next($request);
+        }
+
         // Skip if maintenance mode is not active
         if (! $this->maintenanceService->isActive()) {
             return $next($request);
@@ -84,23 +89,29 @@ class CheckMaintenanceMode
      */
     private function maintenanceResponse(MaintenanceType $type, Request $request): Response
     {
-        $config = $this->maintenanceService->getConfig();
+        // If already on home page, show maintenance template directly
+        if ($request->is('/')) {
+            $config = $this->maintenanceService->getConfig();
 
-        // Determine view template based on type
-        $view = match ($type) {
-            MaintenanceType::PRELAUNCH => 'errors.maintenance-prelaunch',
-            default => 'errors.maintenance-deployment',
-        };
+            // Determine view template based on type
+            $view = match ($type) {
+                MaintenanceType::PRELAUNCH => 'errors.maintenance-prelaunch',
+                default => 'errors.maintenance-deployment',
+            };
 
-        // Prepare data for view
-        $data = [
-            'type' => $type,
-            'config' => $config,
-            'retry_after' => $type->retryAfter(),
-        ];
+            // Prepare data for view
+            $data = [
+                'type' => $type,
+                'config' => $config,
+                'retry_after' => $type->retryAfter(),
+            ];
 
-        // Return 503 Service Unavailable
-        return response()->view($view, $data, 503)
-            ->header('Retry-After', (string) $type->retryAfter());
+            // Return 503 Service Unavailable
+            return response()->view($view, $data, 503)
+                ->header('Retry-After', (string) $type->retryAfter());
+        }
+
+        // Redirect all other URLs to home page
+        return redirect('/');
     }
 }

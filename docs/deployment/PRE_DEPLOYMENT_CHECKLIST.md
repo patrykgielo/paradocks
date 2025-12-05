@@ -343,32 +343,56 @@ paradocks-scheduler-prod Up
 - If unhealthy: `docker compose -f docker-compose.prod.yml logs <service_name>`
 - Common issues: Database password mismatch, .env syntax errors
 
-### 4.2 Run Database Migrations (5 min)
+### 4.2 Run Database Migrations & Seeders (5-10 min)
 
 - [ ] Run migrations:
   ```bash
   docker compose -f docker-compose.prod.yml exec app php artisan migrate --force
   ```
-- [ ] Expected: "Migration table created successfully" + "Migrated: ..." for each migration
 
-**⚠️ CRITICAL:** Always run seeders in this EXACT order:
+- [ ] Run production-safe seeders (automatic detection):
+  ```bash
+  docker compose -f docker-compose.prod.yml exec app php artisan deploy:seed
+  ```
 
-- [ ] Seed vehicle types:
-  ```bash
-  docker compose -f docker-compose.prod.yml exec app php artisan db:seed --class=VehicleTypeSeeder
-  ```
-- [ ] Seed roles & permissions:
-  ```bash
-  docker compose -f docker-compose.prod.yml exec app php artisan db:seed --class=RolePermissionSeeder
-  ```
-- [ ] Seed email templates:
-  ```bash
-  docker compose -f docker-compose.prod.yml exec app php artisan db:seed --class=EmailTemplateSeeder
-  ```
-- [ ] Seed system settings:
-  ```bash
-  docker compose -f docker-compose.prod.yml exec app php artisan db:seed --class=SettingSeeder
-  ```
+**Expected Output (First Deployment):**
+```
+🌱 Deploy Seeder - Smart Seeder Execution
+
+🔍 Detecting deployment context...
+   ✓ First deployment detected (Settings table empty)
+
+📋 Execution Plan:
+   Context: First Deployment
+   Seeders to run: 6
+
+   1. SettingSeeder
+   2. RolePermissionSeeder
+   3. VehicleTypeSeeder
+   4. ServiceSeeder
+   5. EmailTemplateSeeder
+   6. SmsTemplateSeeder
+
+🚀 Executing seeders...
+   Running: SettingSeeder...
+   ✓ SettingSeeder completed (1234ms)
+   [... other seeders ...]
+✅ All seeders completed successfully
+   Executed: 6/6
+   Total time: 8688ms
+```
+
+**Troubleshooting Seeder Failures:**
+```bash
+# Check specific seeder error
+docker compose -f docker-compose.prod.yml logs app | grep -A 20 "deploy:seed"
+
+# Run in dry-run mode (preview without execution)
+docker compose -f docker-compose.prod.yml exec app php artisan deploy:seed --dry-run
+
+# Force all seeders (override detection)
+docker compose -f docker-compose.prod.yml exec app php artisan deploy:seed --force-all
+```
 
 **Verification:**
 ```bash
