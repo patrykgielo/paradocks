@@ -8,6 +8,7 @@ Professional maintenance mode system for Laravel 12 + Filament application with 
 - [Architecture](#architecture)
 - [Quick Start](#quick-start)
 - [Maintenance Types](#maintenance-types)
+- [Request Flow](#request-flow)
 - [Usage](#usage)
   - [Filament Admin Panel](#filament-admin-panel)
   - [CLI Commands](#cli-commands)
@@ -16,6 +17,7 @@ Professional maintenance mode system for Laravel 12 + Filament application with 
 - [Docker Integration](#docker-integration)
 - [Files & Components](#files--components)
 - [Troubleshooting](#troubleshooting)
+- [Related Documentation](#related-documentation)
 
 ---
 
@@ -707,17 +709,70 @@ docker compose exec app php artisan maintenance:status --history
 
 ---
 
+## Request Flow
+
+### How Maintenance Mode Works (v0.3.4+)
+
+**Middleware Priority:** `CheckMaintenanceMode` is **prepended globally** (first middleware in stack).
+
+```
+HTTP Request
+    ↓
+CheckMaintenanceMode (FIRST - before auth, before Filament)
+    ↓
+    ├─ Is /up health endpoint? → ✅ Bypass (200 OK)
+    ↓
+    ├─ Is maintenance active?
+    │   ↓
+    │   ├─ Already on / → 503 + maintenance template
+    │   ├─ Can bypass (admin/token)? → ✅ Continue to app
+    │   └─ Otherwise → 302 Redirect to /
+    ↓
+Auth Middleware
+    ↓
+Filament Middleware
+    ↓
+Application
+```
+
+### Redirect Behavior
+
+**All unauthorized requests redirect to home page (`/`) which displays maintenance template:**
+
+```bash
+# Examples:
+GET /strona/o-nas → 302 → /
+GET /admin → 302 → /
+GET /admin/login → 302 → /
+GET /api/users → 302 → /
+
+# Home page shows maintenance template:
+GET / → 503 Service Unavailable (with branded template)
+
+# Health check bypasses:
+GET /up → 200 OK
+```
+
+**Why redirect instead of direct 503?**
+- Single source of truth for maintenance template (home page)
+- Easier caching and CDN integration
+- Better UX (users always see same URL)
+- Admins can bypass and access panel normally
+
+---
+
 ## Related Documentation
 
+- [Usage Guide](./USAGE.md) - Detailed user guide with examples
 - [Project Map](../../project_map.md) - System topology
 - [Database Schema](../../architecture/database-schema.md) - Tables and relationships
 - [Quick Start Guide](../../guides/quick-start.md) - Setup instructions
 
 ---
 
-**Last Updated**: 2025-11-28
-**Version**: 1.1.0
+**Last Updated**: 2025-12-05
+**Version**: 1.2.0
 **Changelog**:
-- Added OPcache troubleshooting section
-- Added 6 real-world scenario examples
-- Enhanced troubleshooting documentation
+- v1.2.0 (2025-12-05): Fixed middleware priority (global prepend), redirect logic, template loading
+- v1.1.0 (2025-11-28): Added OPcache troubleshooting, scenario examples
+- v1.0.0 (2025-11-19): Initial release
