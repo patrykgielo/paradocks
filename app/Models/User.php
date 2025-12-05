@@ -196,6 +196,21 @@ class User extends Authenticatable implements FilamentUser, HasName
 
     public function canAccessPanel(Panel $panel): bool
     {
+        // Layer 0: Maintenance mode check (BEFORE role check)
+        $maintenanceService = app(\App\Services\MaintenanceService::class);
+        if ($maintenanceService->isActive()) {
+            // During maintenance: only super-admin and admin can access
+            if (! $this->hasAnyRole(['super-admin', 'admin'])) {
+                \Log::info('Panel access denied during maintenance', [
+                    'user' => $this->email,
+                    'roles' => $this->roles->pluck('name'),
+                    'maintenance_type' => $maintenanceService->getType()->value,
+                ]);
+
+                return false;
+            }
+        }
+
         // Layer 1: Role-based access control
         if (! $this->hasAnyRole(['super-admin', 'admin', 'staff'])) {
             \Log::warning('Unauthorized panel access attempt', [
