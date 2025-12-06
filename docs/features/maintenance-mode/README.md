@@ -70,29 +70,6 @@ Request → CheckMaintenanceMode middleware
           Return 503 (maintenance-deployment or maintenance-prelaunch view)
 ```
 
-### Pre-launch Nginx Optimization
-
-For `PRELAUNCH` mode, a file trigger is created at `storage/framework/maintenance.mode`.
-
-Nginx checks this file and serves static HTML (`public/maintenance-prelaunch.html`) with ZERO PHP processing:
-
-```nginx
-set $maintenance_mode 0;
-if (-f /var/www/storage/framework/maintenance.mode) {
-    set $maintenance_mode 1;
-}
-if ($maintenance_mode = 1) {
-    return 503;
-}
-
-error_page 503 @maintenance;
-location @maintenance {
-    root /var/www/public;
-    try_files /maintenance-prelaunch.html =503;
-    internal;
-}
-```
-
 ---
 
 ## Quick Start
@@ -139,7 +116,7 @@ docker compose exec app php artisan maintenance:disable
 ### 2. PRELAUNCH (3600s retry)
 - **Use Case**: Before application launch (complete lockdown)
 - **Bypass**: ❌ NO bypass (not even admins!)
-- **View**: `errors/maintenance-prelaunch.blade.php` (or static HTML via Nginx)
+- **View**: `errors/maintenance-prelaunch.blade.php`
 - **Message**: "Coming soon! We're preparing something special"
 - **Extra Config**: `launch_date`, `image_url`
 
@@ -358,38 +335,6 @@ $newToken = $service->regenerateSecretToken(user: Auth::user());
 
 ## Docker Integration
 
-### Nginx Configuration
-
-Pre-launch mode uses Nginx-level checks for zero PHP overhead.
-
-**File**: `docker/nginx/app.conf`
-
-```nginx
-# Maintenance Mode - Pre-launch (Nginx-level check)
-set $maintenance_mode 0;
-if (-f /var/www/storage/framework/maintenance.mode) {
-    set $maintenance_mode 1;
-}
-# Bypass for health checks
-if ($request_uri = /up) {
-    set $maintenance_mode 0;
-}
-# Bypass for admin panel (middleware handles bypass logic)
-if ($request_uri ~* ^/admin) {
-    set $maintenance_mode 0;
-}
-if ($maintenance_mode = 1) {
-    return 503;
-}
-
-error_page 503 @maintenance;
-location @maintenance {
-    root /var/www/public;
-    try_files /maintenance-prelaunch.html =503;
-    internal;
-}
-```
-
 ### Health Check Endpoint
 
 Laravel 11+ includes `/up` health endpoint by default (`bootstrap/app.php`).
@@ -435,7 +380,6 @@ healthcheck:
 |------|---------|
 | `resources/views/errors/maintenance-deployment.blade.php` | Deployment/scheduled/emergency error page |
 | `resources/views/errors/maintenance-prelaunch.blade.php` | Pre-launch Blade template |
-| `public/maintenance-prelaunch.html` | Static HTML for Nginx (CDN Tailwind) |
 
 ### CLI Commands
 
@@ -511,19 +455,6 @@ docker compose exec app php artisan maintenance:status # Copy current token
 **Check token in Redis**:
 ```bash
 docker compose exec redis redis-cli GET maintenance:secret_token
-```
-
-### Static HTML not showing for pre-launch
-
-**Check file exists**:
-```bash
-docker compose exec app ls -la storage/framework/maintenance.mode
-docker compose exec nginx ls -la /var/www/public/maintenance-prelaunch.html
-```
-
-**Reload Nginx**:
-```bash
-docker compose exec nginx nginx -s reload
 ```
 
 ### Code changes not applying (OPcache)
