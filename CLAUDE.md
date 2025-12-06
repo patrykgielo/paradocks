@@ -426,7 +426,6 @@ Professional maintenance mode system with Redis-based state management, multiple
 - **State Storage**: Redis (`maintenance:mode`, `maintenance:config`, `maintenance:enabled_at`, `maintenance:secret_token`)
 - **Bypass Methods**: Role-based (admin, super-admin via `/admin` exemption), secret token
 - **Admin Access (PR #40)**: `/admin` routes exempted from middleware, Filament handles authorization
-- **Nginx Optimization**: Pre-launch mode uses file trigger + static HTML (zero PHP overhead)
 - **Filament UI**: `/admin/system/maintenance-mode` - Enable/disable with visual status indicators
 - **Audit Trail**: All events logged to `maintenance_events` table with user, IP, metadata
 
@@ -487,8 +486,7 @@ $service->enable(MaintenanceType::DEPLOYMENT, Auth::user(), ['message' => 'Deplo
 - **Admin panel**: `/admin` routes always reach Filament, `User::canAccessPanel()` blocks non-admins
 - **Admin refresh**: Admins can refresh `/admin` without losing access (PR #40 fix)
 - **DEPLOYMENT mode**: Admins can access panel, secret token generated for others
-- **Redis keys persist** across container restarts (not file-based like Laravel's default)
-- **Nginx serves static HTML** for pre-launch (no PHP processing)
+- **Redis keys persist** across container restarts
 - **Health endpoint** `/up` bypasses maintenance for Docker healthchecks
 
 **See:** [Maintenance Mode Documentation](app/docs/features/maintenance-mode/README.md)

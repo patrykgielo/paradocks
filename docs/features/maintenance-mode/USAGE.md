@@ -268,14 +268,6 @@ Maintenance state stored in **Redis**:
 
 **Persistence:** Redis data persists across container restarts.
 
-### File Trigger (Nginx)
-
-**File:** `storage/framework/maintenance.mode`
-
-**Purpose:** Nginx checks file existence for pre-launch mode to serve static HTML without PHP processing.
-
-**Content:** `"prelaunch"` (lowercase string)
-
 ## Best Practices
 
 1. **Always test on staging first**
