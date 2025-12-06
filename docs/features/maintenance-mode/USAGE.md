@@ -36,20 +36,19 @@ docker compose exec app php artisan maintenance:disable
 ### Request Flow
 
 1. **User visits any URL** (e.g., `/strona/o-nas`, `/admin`, `/api/users`)
-2. **CheckMaintenanceMode middleware executes** (first in stack, before auth)
+2. **CheckMaintenanceMode middleware executes** (in web middleware group, AFTER session/auth)
 3. **Middleware checks (in order):**
    - Is this the health endpoint (`/up`)? → **Bypass** (always 200 OK)
    - Is maintenance mode NOT active? → **Bypass** (continue to app)
-   - Is this `/admin` or `/admin/*`? → **Bypass** (let Filament handle auth)
-   - Is this the home page (`/`)? → **Show 503** with maintenance template
+   - Is this an authentication route (`/login`, `/admin/login`, etc.)? → **Bypass** (allow login process)
+   - Is authenticated user admin/super-admin? → **Bypass** (role-based, checks Auth::user())
    - Has valid secret token (query or session)? → **Bypass**
-   - Is authenticated user admin/super-admin? → **Bypass**
-   - Otherwise → **Redirect 302** to `/`
+   - Otherwise → **Block** with 503 or redirect to `/`
 4. **Response:**
    - **If on `/up`**: Always bypass (200 OK for Docker healthchecks)
-   - **If on `/admin` or `/admin/*`**: Pass through to Filament (handles auth + authorization)
+   - **If on authentication route**: Allow access (needed for login)
+   - **If authenticated admin**: Continue to application (role-based bypass)
    - **If already on `/`**: Return 503 with maintenance template
-   - **If user can bypass**: Continue to application
    - **Otherwise**: Redirect 302 to `/` (which shows maintenance page)
 
 ### Bypass Methods
@@ -58,29 +57,36 @@ docker compose exec app php artisan maintenance:disable
 
 **Administrators (super-admin, admin) can ALWAYS bypass maintenance mode, including PRELAUNCH.**
 
-**Implementation (as of PR #40):**
-- `/admin` routes are **exempted** from maintenance middleware blocking
-- Middleware allows ALL `/admin/*` requests to pass through to Filament
-- Filament's `User::canAccessPanel()` handles authorization
-- During maintenance: only super-admin and admin can access panel
-- Non-admins (staff, customer) are blocked by Filament, not middleware
+**Implementation:**
+- Middleware runs in web group (AFTER session/auth middleware)
+- `Auth::user()` is available for role-based bypass checks
+- Authentication routes (`/admin/login`, `/login`, etc.) are always accessible
+- After login, authenticated admin users bypass maintenance automatically
+- Role check uses `MaintenanceService::canBypass()` which verifies super-admin/admin roles
 
 **Example Flow:**
 ```php
-// 1. Admin visits /admin during maintenance
-// 2. CheckMaintenanceMode middleware exempts /admin routes → allows request
-// 3. Filament authenticates user via session
-// 4. Filament calls User::canAccessPanel()
-// 5. canAccessPanel() checks: maintenance active + user has admin role → true
-// 6. Admin accesses panel ✅
+// 1. Admin visits /admin/login during maintenance
+// 2. CheckMaintenanceMode checks isAuthenticationRoute() → true
+// 3. Login page shows ✅
+
+// 4. Admin submits credentials → authentication succeeds
+// 5. Browser redirects to GET /admin
+// 6. CheckMaintenanceMode runs (AFTER StartSession middleware)
+// 7. Auth::user() returns authenticated admin user
+// 8. canUserBypassMaintenance() calls MaintenanceService::canBypass($user)
+// 9. Service checks: user has super-admin/admin role → true
+// 10. Admin accesses panel ✅
 
 // Non-admin flow:
-// 1. Staff/customer visits /admin during maintenance
-// 2. Middleware exempts /admin → allows request
-// 3. Filament authenticates user
-// 4. Filament calls User::canAccessPanel()
-// 5. canAccessPanel() checks: maintenance active + user NOT admin → false
-// 6. Filament blocks access ❌
+// 1. Customer visits /login during maintenance
+// 2. Login page shows ✅
+// 3. Customer submits credentials → authentication succeeds
+// 4. Browser redirects to /
+// 5. CheckMaintenanceMode runs
+// 6. Auth::user() returns customer user
+// 7. canUserBypassMaintenance() checks roles → customer NOT admin → false
+// 8. Blocked with 503 ❌
 ```
 
 **Why admins always have access:**
@@ -248,15 +254,16 @@ public function retryAfter(): int
 ### Middleware Stack
 
 ```
-Request → CheckMaintenanceMode → Auth → Filament → Application
-          ↑
-          First middleware (prepend)
+Request → StartSession → Auth → CheckMaintenanceMode → Filament → Application
+                                 ↑
+                                 Web middleware group (append)
 ```
 
-**Why first?**
-- Blocks requests before authentication
-- Prevents Filament redirects
-- Ensures all routes are protected
+**Why in web group (AFTER session/auth)?**
+- Session is loaded before maintenance check
+- `Auth::user()` is available for role-based bypass
+- Prevents session loss and redirect loops
+- Allows admin login to work correctly during maintenance
 
 ### State Storage
 
