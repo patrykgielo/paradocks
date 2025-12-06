@@ -449,26 +449,26 @@ docker compose exec app php artisan maintenance:disable --force
 - `resources/views/errors/maintenance-*.blade.php` - Custom error pages
 - `docker/nginx/app.conf` - Nginx pre-launch file check
 
-**Admin Access (PR #40)**:
+**Admin Access During Maintenance**:
 ```php
-// /admin routes ALWAYS exempted from middleware blocking
-// Middleware allows ALL /admin/* requests → Filament handles auth
+// Middleware runs in web group (AFTER session/auth)
+// Auth::user() is available for role-based bypass
 
-// CheckMaintenanceMode.php (lines 55-59):
-if ($request->is('admin') || $request->is('admin/*')) {
-    return $next($request); // Bypass maintenance check
+// CheckMaintenanceMode.php flow:
+// 1. Allow authentication routes (/admin/login, /login)
+if ($this->isAuthenticationRoute($request)) {
+    return $next($request); // Login page accessible
 }
 
-// Filament then calls User::canAccessPanel():
-public function canAccessPanel(Panel $panel): bool
-{
-    if ($maintenanceService->isActive()) {
-        // During maintenance: only super-admin and admin can access
-        if (! $this->hasAnyRole(['super-admin', 'admin'])) {
-            return false; // Staff/customers blocked by Filament
-        }
-    }
-    return true;
+// 2. Check authenticated user roles
+$user = Auth::user(); // Session loaded, user available
+if ($this->maintenanceService->canBypass($user)) {
+    return $next($request); // Admin bypass via roles
+}
+
+// MaintenanceService::canBypass():
+if ($user->hasAnyRole(['super-admin', 'admin'])) {
+    return true; // Admin/super-admin always bypass
 }
 ```
 
@@ -483,8 +483,9 @@ $service->enable(MaintenanceType::DEPLOYMENT, Auth::user(), ['message' => 'Deplo
 ```
 
 **Important Notes**:
-- **Admin panel**: `/admin` routes always reach Filament, `User::canAccessPanel()` blocks non-admins
-- **Admin refresh**: Admins can refresh `/admin` without losing access (PR #40 fix)
+- **Middleware order**: CheckMaintenanceMode runs in web group (AFTER session/auth middleware)
+- **Admin login**: Authentication routes always accessible, admin bypass works after login
+- **Session persistence**: Middleware runs after StartSession, preventing session loss
 - **DEPLOYMENT mode**: Admins can access panel, secret token generated for others
 - **Redis keys persist** across container restarts
 - **Health endpoint** `/up` bypasses maintenance for Docker healthchecks
