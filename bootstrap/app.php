@@ -22,8 +22,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'api/webhooks/*',
         ]);
 
-        // Add maintenance mode check globally (runs BEFORE all other middleware including Filament)
-        $middleware->prepend(\App\Http\Middleware\CheckMaintenanceMode::class);
+        // Add maintenance mode check to web middleware group
+        // Runs AFTER session/auth middleware, allowing Auth::user() to work
+        $middleware->web(append: [
+            \App\Http\Middleware\CheckMaintenanceMode::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

@@ -24,6 +24,9 @@ use Symfony\Component\HttpFoundation\Response;
  * Secret Token Bypass:
  * - Pass token via query parameter: ?maintenance_token=paradocks-xxxxx
  * - Token stored in session for subsequent requests
+ *
+ * IMPORTANT: This middleware runs in the web middleware group (AFTER session/auth),
+ * allowing Auth::user() to access the authenticated user for role-based bypass checks.
  */
 class CheckMaintenanceMode
 {
@@ -36,12 +39,12 @@ class CheckMaintenanceMode
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Skip health check endpoint
+        // 1. Skip health check endpoint (Docker healthcheck)
         if ($request->is('up')) {
             return $next($request);
         }
 
-        // Skip if maintenance mode is not active
+        // 2. Skip if maintenance mode is not active
         if (! $this->maintenanceService->isActive()) {
             return $next($request);
         }
@@ -52,42 +55,92 @@ class CheckMaintenanceMode
             return $next($request);
         }
 
-        // ALWAYS allow /admin routes to proceed to Filament
-        // Filament's User::canAccessPanel() handles authorization during maintenance
-        if ($request->is('admin') || $request->is('admin/*')) {
+        // 3. Allow authentication routes (unauthenticated access needed for login)
+        if ($this->isAuthenticationRoute($request)) {
             return $next($request);
         }
 
-        // Check for secret token bypass (query parameter)
-        if ($request->has('maintenance_token')) {
-            $token = $request->query('maintenance_token');
-            if ($this->maintenanceService->checkSecretToken($token)) {
-                // Store token in session for subsequent requests
-                session(['maintenance_bypass_token' => $token]);
-
-                return $next($request);
-            }
-        }
-
-        // Check for secret token bypass (session)
-        if (session()->has('maintenance_bypass_token')) {
-            $token = session('maintenance_bypass_token');
-            if ($this->maintenanceService->checkSecretToken($token)) {
-                return $next($request);
-            } else {
-                // Token no longer valid, remove from session
-                session()->forget('maintenance_bypass_token');
-            }
-        }
-
-        // Check user-based bypass (role-based for authenticated users)
-        $user = Auth::user();
-        if ($this->maintenanceService->canBypass($user)) {
+        // 4. Check authenticated user bypass (role-based)
+        // Auth::user() is now available because middleware runs AFTER StartSession
+        if ($this->canUserBypassMaintenance($request, $type)) {
             return $next($request);
         }
 
-        // No bypass allowed - return maintenance page
+        // 5. Check secret token bypass (query parameter or session)
+        if ($this->hasValidSecretToken($request)) {
+            return $next($request);
+        }
+
+        // 6. Block everyone else - return maintenance page
         return $this->maintenanceResponse($type, $request);
+    }
+
+    /**
+     * Check if the route is an authentication route that should always be accessible.
+     */
+    private function isAuthenticationRoute(Request $request): bool
+    {
+        $authRoutes = [
+            'login',
+            'admin/login',
+            'register',
+            'password/reset',
+            'password/email',
+            'password/confirm',
+            'email/verify/*',
+            'two-factor-challenge',
+        ];
+
+        foreach ($authRoutes as $route) {
+            if ($request->is($route)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if the authenticated user can bypass maintenance mode based on their role.
+     */
+    private function canUserBypassMaintenance(Request $request, MaintenanceType $type): bool
+    {
+        $user = Auth::user();
+
+        if (! $user) {
+            return false; // No authenticated user
+        }
+
+        // Use MaintenanceService's existing canBypass logic
+        // This checks user roles (super-admin, admin) based on maintenance type
+        return $this->maintenanceService->canBypass($user);
+    }
+
+    /**
+     * Check if the request has a valid secret token for bypass.
+     */
+    private function hasValidSecretToken(Request $request): bool
+    {
+        // Check query parameter first, then session
+        $token = $request->query('maintenance_token')
+            ?? session('maintenance_bypass_token');
+
+        if (! $token) {
+            return false;
+        }
+
+        // Validate token against stored secret
+        if ($this->maintenanceService->checkSecretToken($token)) {
+            // Store in session for subsequent requests
+            session(['maintenance_bypass_token' => $token]);
+
+            return true;
+        }
+
+        // Token invalid - remove from session
+        session()->forget('maintenance_bypass_token');
+
+        return false;
     }
 
     /**
@@ -117,7 +170,7 @@ class CheckMaintenanceMode
                 ->header('Retry-After', (string) $type->retryAfter());
         }
 
-        // Redirect all other URLs to home page
+        // Redirect all other URLs to home page (which shows maintenance template)
         return redirect('/');
     }
 }
