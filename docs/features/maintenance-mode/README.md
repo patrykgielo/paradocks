@@ -749,13 +749,19 @@ CheckMaintenanceMode (FIRST - before auth, before Filament)
     ↓
     ├─ Is maintenance active?
     │   ↓
+    │   ├─ Is /admin or /admin/*? → ✅ Bypass (let Filament handle auth) [PR #40]
     │   ├─ Already on / → 503 + maintenance template
     │   ├─ Can bypass (admin/token)? → ✅ Continue to app
     │   └─ Otherwise → 302 Redirect to /
     ↓
 Auth Middleware
     ↓
-Filament Middleware
+Filament Middleware (for /admin routes)
+    ↓
+    ├─ User::canAccessPanel() checks maintenance + role
+    │   ↓
+    │   ├─ Admin/super-admin? → ✅ Access granted
+    │   └─ Staff/customer? → ❌ Blocked by Filament
     ↓
 Application
 ```
@@ -764,12 +770,16 @@ Application
 
 **All unauthorized requests redirect to home page (`/`) which displays maintenance template:**
 
+**Note:** `/admin` routes are exempted from middleware blocking (as of PR #40). Filament handles authorization via `User::canAccessPanel()`.
+
 ```bash
 # Examples:
 GET /strona/o-nas → 302 → /
-GET /admin → 302 → /
-GET /admin/login → 302 → /
 GET /api/users → 302 → /
+
+# Admin routes exempted (Filament handles auth):
+GET /admin → Filament auth flow (redirects to /admin/login if not authenticated)
+GET /admin/login → Filament auth flow
 
 # Home page shows maintenance template:
 GET / → 503 Service Unavailable (with branded template)
