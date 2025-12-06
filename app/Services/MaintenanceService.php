@@ -138,11 +138,6 @@ class MaintenanceService
             Cache::store('redis')->put(self::CACHE_KEY_SECRET_TOKEN, $secretToken);
         }
 
-        // Create file trigger for pre-launch (Nginx check)
-        if ($type === MaintenanceType::PRELAUNCH) {
-            $this->createPrelaunchFile();
-        }
-
         // Log event to database
         $this->logEvent(
             action: 'enabled',
@@ -180,9 +175,6 @@ class MaintenanceService
         Cache::store('redis')->forget(self::CACHE_KEY_CONFIG);
         Cache::store('redis')->forget(self::CACHE_KEY_ENABLED_AT);
         Cache::store('redis')->forget(self::CACHE_KEY_SECRET_TOKEN);
-
-        // Remove file trigger (if exists)
-        $this->removePrelaunchFile();
 
         // Log event
         $this->logEvent(
@@ -276,41 +268,5 @@ class MaintenanceService
     private function generateSecretToken(): string
     {
         return 'paradocks-'.Str::random(32);
-    }
-
-    /**
-     * Create file trigger for pre-launch mode (Nginx check).
-     */
-    private function createPrelaunchFile(): void
-    {
-        $filePath = storage_path('framework/maintenance.mode');
-
-        try {
-            file_put_contents($filePath, 'prelaunch');
-        } catch (\Exception $e) {
-            Log::error('Failed to create pre-launch file', [
-                'path' => $filePath,
-                'error' => $e->getMessage(),
-            ]);
-        }
-    }
-
-    /**
-     * Remove file trigger for pre-launch mode.
-     */
-    private function removePrelaunchFile(): void
-    {
-        $filePath = storage_path('framework/maintenance.mode');
-
-        if (file_exists($filePath)) {
-            try {
-                unlink($filePath);
-            } catch (\Exception $e) {
-                Log::error('Failed to remove pre-launch file', [
-                    'path' => $filePath,
-                    'error' => $e->getMessage(),
-                ]);
-            }
-        }
     }
 }
