@@ -424,8 +424,8 @@ Professional maintenance mode system with Redis-based state management, multiple
 
 - **Types**: Deployment (60s), Pre-launch (3600s), Scheduled (300s), Emergency (120s)
 - **State Storage**: Redis (`maintenance:mode`, `maintenance:config`, `maintenance:enabled_at`, `maintenance:secret_token`)
-- **Bypass Methods**: Role-based (admin, super-admin), secret token, NO bypass (pre-launch)
-- **Nginx Optimization**: Pre-launch mode uses file trigger + static HTML (zero PHP overhead)
+- **Bypass Methods**: Role-based (admin, super-admin via `/admin` exemption), secret token
+- **Admin Access (PR #40)**: `/admin` routes exempted from middleware, Filament handles authorization
 - **Filament UI**: `/admin/system/maintenance-mode` - Enable/disable with visual status indicators
 - **Audit Trail**: All events logged to `maintenance_events` table with user, IP, metadata
 
@@ -449,13 +449,31 @@ docker compose exec app php artisan maintenance:disable --force
 - `resources/views/errors/maintenance-*.blade.php` - Custom error pages
 - `docker/nginx/app.conf` - Nginx pre-launch file check
 
-**Bypass Examples**:
+**Admin Access (PR #40)**:
 ```php
-// Role-based bypass (automatic for admins)
-if (Auth::user()->hasAnyRole(['super-admin', 'admin'])) {
-    // Access granted
+// /admin routes ALWAYS exempted from middleware blocking
+// Middleware allows ALL /admin/* requests → Filament handles auth
+
+// CheckMaintenanceMode.php (lines 55-59):
+if ($request->is('admin') || $request->is('admin/*')) {
+    return $next($request); // Bypass maintenance check
 }
 
+// Filament then calls User::canAccessPanel():
+public function canAccessPanel(Panel $panel): bool
+{
+    if ($maintenanceService->isActive()) {
+        // During maintenance: only super-admin and admin can access
+        if (! $this->hasAnyRole(['super-admin', 'admin'])) {
+            return false; // Staff/customers blocked by Filament
+        }
+    }
+    return true;
+}
+```
+
+**Bypass Examples**:
+```php
 // Secret token bypass
 https://paradocks.local:8444?maintenance_token=paradocks-xxxxx...
 
@@ -465,10 +483,10 @@ $service->enable(MaintenanceType::DEPLOYMENT, Auth::user(), ['message' => 'Deplo
 ```
 
 **Important Notes**:
-- **PRELAUNCH mode**: Complete lockdown, NO bypass allowed (not even admins!)
-- **Deployment mode**: Admins can bypass, secret token generated
-- **Redis keys persist** across container restarts (not file-based like Laravel's default)
-- **Nginx serves static HTML** for pre-launch (no PHP processing)
+- **Admin panel**: `/admin` routes always reach Filament, `User::canAccessPanel()` blocks non-admins
+- **Admin refresh**: Admins can refresh `/admin` without losing access (PR #40 fix)
+- **DEPLOYMENT mode**: Admins can access panel, secret token generated for others
+- **Redis keys persist** across container restarts
 - **Health endpoint** `/up` bypasses maintenance for Docker healthchecks
 
 **See:** [Maintenance Mode Documentation](app/docs/features/maintenance-mode/README.md)

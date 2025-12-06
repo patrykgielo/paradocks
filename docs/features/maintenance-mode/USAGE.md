@@ -37,14 +37,18 @@ docker compose exec app php artisan maintenance:disable
 
 1. **User visits any URL** (e.g., `/strona/o-nas`, `/admin`, `/api/users`)
 2. **CheckMaintenanceMode middleware executes** (first in stack, before auth)
-3. **Middleware checks:**
-   - Is maintenance mode active?
-   - Is this the home page (`/`)?
-   - Is this the health endpoint (`/up`)?
-   - Can user bypass (role-based or secret token)?
+3. **Middleware checks (in order):**
+   - Is this the health endpoint (`/up`)? → **Bypass** (always 200 OK)
+   - Is maintenance mode NOT active? → **Bypass** (continue to app)
+   - Is this `/admin` or `/admin/*`? → **Bypass** (let Filament handle auth)
+   - Is this the home page (`/`)? → **Show 503** with maintenance template
+   - Has valid secret token (query or session)? → **Bypass**
+   - Is authenticated user admin/super-admin? → **Bypass**
+   - Otherwise → **Redirect 302** to `/`
 4. **Response:**
+   - **If on `/up`**: Always bypass (200 OK for Docker healthchecks)
+   - **If on `/admin` or `/admin/*`**: Pass through to Filament (handles auth + authorization)
    - **If already on `/`**: Return 503 with maintenance template
-   - **If on `/up`**: Always bypass (200 OK for health checks)
    - **If user can bypass**: Continue to application
    - **Otherwise**: Redirect 302 to `/` (which shows maintenance page)
 
@@ -54,12 +58,29 @@ docker compose exec app php artisan maintenance:disable
 
 **Administrators (super-admin, admin) can ALWAYS bypass maintenance mode, including PRELAUNCH.**
 
-**Example:**
+**Implementation (as of PR #40):**
+- `/admin` routes are **exempted** from maintenance middleware blocking
+- Middleware allows ALL `/admin/*` requests to pass through to Filament
+- Filament's `User::canAccessPanel()` handles authorization
+- During maintenance: only super-admin and admin can access panel
+- Non-admins (staff, customer) are blocked by Filament, not middleware
+
+**Example Flow:**
 ```php
-// Admin logs in → authenticated
-// Visits /admin → middleware checks Auth::user()
-// User has 'super-admin' role → bypass granted (even in PRELAUNCH)
-// Access to admin panel allowed
+// 1. Admin visits /admin during maintenance
+// 2. CheckMaintenanceMode middleware exempts /admin routes → allows request
+// 3. Filament authenticates user via session
+// 4. Filament calls User::canAccessPanel()
+// 5. canAccessPanel() checks: maintenance active + user has admin role → true
+// 6. Admin accesses panel ✅
+
+// Non-admin flow:
+// 1. Staff/customer visits /admin during maintenance
+// 2. Middleware exempts /admin → allows request
+// 3. Filament authenticates user
+// 4. Filament calls User::canAccessPanel()
+// 5. canAccessPanel() checks: maintenance active + user NOT admin → false
+// 6. Filament blocks access ❌
 ```
 
 **Why admins always have access:**
@@ -246,14 +267,6 @@ Maintenance state stored in **Redis**:
 - `maintenance:secret_token` - Bypass token
 
 **Persistence:** Redis data persists across container restarts.
-
-### File Trigger (Nginx)
-
-**File:** `storage/framework/maintenance.mode`
-
-**Purpose:** Nginx checks file existence for pre-launch mode to serve static HTML without PHP processing.
-
-**Content:** `"prelaunch"` (lowercase string)
 
 ## Best Practices
 
