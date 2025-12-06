@@ -52,6 +52,12 @@ class CheckMaintenanceMode
             return $next($request);
         }
 
+        // ALWAYS allow /admin routes to proceed to Filament
+        // Filament's User::canAccessPanel() handles authorization during maintenance
+        if ($request->is('admin') || $request->is('admin/*')) {
+            return $next($request);
+        }
+
         // Check for secret token bypass (query parameter)
         if ($request->has('maintenance_token')) {
             $token = $request->query('maintenance_token');
