@@ -38,7 +38,7 @@
 
                 <!-- Main Heading -->
                 <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white text-center mb-4">
-                    Wkrótce Startujemy!
+                    Data startu
                 </h1>
 
                 <!-- Subheading -->
