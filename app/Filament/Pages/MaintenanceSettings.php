@@ -8,6 +8,9 @@ use App\Enums\MaintenanceType;
 use App\Services\MaintenanceService;
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -15,7 +18,6 @@ use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Auth;
@@ -83,13 +85,31 @@ class MaintenanceSettings extends Page implements HasForms
 
         // Pre-fill form with current config if active
         if ($this->isActive && $this->currentType) {
-            $this->form->fill([
+            $formData = [
                 'type' => $this->currentType->value,
                 'message' => $this->currentConfig['message'] ?? null,
                 'estimated_duration' => $this->currentConfig['estimated_duration'] ?? null,
                 'launch_date' => $this->currentConfig['launch_date'] ?? null,
                 'image_url' => $this->currentConfig['image_url'] ?? null,
-            ]);
+            ];
+
+            // Add pre-launch specific fields if type is PRELAUNCH
+            if ($this->currentType === MaintenanceType::PRELAUNCH) {
+                $formData = array_merge($formData, [
+                    'page_title' => $this->currentConfig['page_title'] ?? null,
+                    'main_heading' => $this->currentConfig['main_heading'] ?? null,
+                    'tagline' => $this->currentConfig['tagline'] ?? null,
+                    'launch_date_label' => $this->currentConfig['launch_date_label'] ?? null,
+                    'description_part1' => $this->currentConfig['description_part1'] ?? null,
+                    'description_part2' => $this->currentConfig['description_part2'] ?? null,
+                    'contact_heading' => $this->currentConfig['contact_heading'] ?? null,
+                    'copyright_text' => $this->currentConfig['copyright_text'] ?? null,
+                    'html_lang' => $this->currentConfig['html_lang'] ?? 'pl',
+                    'background_image' => $this->currentConfig['background_image'] ?? null,
+                ]);
+            }
+
+            $this->form->fill($formData);
         } else {
             $this->form->fill([
                 'type' => MaintenanceType::DEPLOYMENT->value,
@@ -97,6 +117,17 @@ class MaintenanceSettings extends Page implements HasForms
                 'estimated_duration' => null,
                 'launch_date' => null,
                 'image_url' => null,
+                // Pre-launch defaults (not shown until type changes)
+                'page_title' => null,
+                'main_heading' => null,
+                'tagline' => null,
+                'launch_date_label' => null,
+                'description_part1' => null,
+                'description_part2' => null,
+                'contact_heading' => null,
+                'copyright_text' => null,
+                'html_lang' => 'pl',
+                'background_image' => null,
             ]);
         }
     }
@@ -131,29 +162,95 @@ class MaintenanceSettings extends Page implements HasForms
                             ->helperText('Leave empty for default message')
                             ->columnSpanFull(),
 
-                        Grid::make(2)
-                            ->schema([
-                                TextInput::make('estimated_duration')
-                                    ->label('Estimated Duration')
-                                    ->placeholder('e.g., 15 minutes, 1 hour')
-                                    ->helperText('Display estimated downtime (DEPLOYMENT/SCHEDULED/EMERGENCY only)')
-                                    ->visible(fn ($get) => $get('type') !== MaintenanceType::PRELAUNCH->value),
-
-                                TextInput::make('launch_date')
-                                    ->label('Launch Date')
-                                    ->placeholder('e.g., 2025-12-01')
-                                    ->helperText('Display expected launch date (PRELAUNCH only)')
-                                    ->visible(fn ($get) => $get('type') === MaintenanceType::PRELAUNCH->value),
-                            ]),
-
-                        TextInput::make('image_url')
-                            ->label('Custom Image URL')
-                            ->url()
-                            ->placeholder('https://example.com/image.jpg')
-                            ->helperText('Optional custom image for pre-launch page')
-                            ->visible(fn ($get) => $get('type') === MaintenanceType::PRELAUNCH->value)
+                        TextInput::make('estimated_duration')
+                            ->label('Estimated Duration')
+                            ->placeholder('e.g., 15 minutes, 1 hour')
+                            ->helperText('Display estimated downtime (DEPLOYMENT/SCHEDULED/EMERGENCY only)')
+                            ->visible(fn ($get) => $get('type') !== MaintenanceType::PRELAUNCH->value)
                             ->columnSpanFull(),
                     ]),
+
+                Section::make('Pre-Launch Page Content')
+                    ->description('Customize all text content for pre-launch page. Leave empty to use default values from Settings.')
+                    ->visible(fn ($get) => $get('type') === MaintenanceType::PRELAUNCH->value)
+                    ->collapsible()
+                    ->schema([
+                        TextInput::make('page_title')
+                            ->label('Tytuł strony (HTML <title>)')
+                            ->placeholder('Domyślnie: Wkrótce startujemy - Paradocks')
+                            ->maxLength(60)
+                            ->helperText('Wyświetlany w zakładce przeglądarki (SEO: max 60 znaków)'),
+
+                        TextInput::make('main_heading')
+                            ->label('Główny nagłówek (H1)')
+                            ->placeholder('Domyślnie: Wkrótce Ruszamy!')
+                            ->maxLength(100),
+
+                        Textarea::make('tagline')
+                            ->label('Podtytuł / Tagline')
+                            ->placeholder('Domyślnie: Paradocks polega na tym, że to my przyjeżdżamy do Ciebie...')
+                            ->rows(2)
+                            ->maxLength(200)
+                            ->columnSpanFull(),
+
+                        TextInput::make('launch_date_label')
+                            ->label('Etykieta daty startu')
+                            ->placeholder('Domyślnie: Data startu')
+                            ->maxLength(50),
+
+                        DatePicker::make('launch_date')
+                            ->label('Data startu (wartość)')
+                            ->displayFormat('d.m.Y')
+                            ->helperText('Data rozpoczęcia działalności'),
+
+                        Textarea::make('description_part1')
+                            ->label('Opis - część 1')
+                            ->placeholder('Domyślnie: Wprowadzamy autorski system rezerwacji...')
+                            ->rows(2)
+                            ->maxLength(300)
+                            ->columnSpanFull(),
+
+                        Textarea::make('description_part2')
+                            ->label('Opis - część 2')
+                            ->placeholder('Domyślnie: Świadczymy usługi we wskazanej przez Ciebie lokalizacji...')
+                            ->rows(2)
+                            ->maxLength(300)
+                            ->columnSpanFull(),
+
+                        TextInput::make('contact_heading')
+                            ->label('Nagłówek sekcji kontaktowej')
+                            ->placeholder('Domyślnie: Masz pytania?')
+                            ->maxLength(100),
+
+                        TextInput::make('copyright_text')
+                            ->label('Tekst copyright (stopka)')
+                            ->placeholder('Domyślnie: Paradocks. Wszelkie prawa zastrzeżone.')
+                            ->maxLength(100),
+
+                        Select::make('html_lang')
+                            ->label('Język strony (HTML lang)')
+                            ->options([
+                                'pl' => 'Polski (pl)',
+                                'en' => 'English (en)',
+                            ])
+                            ->default('pl'),
+
+                        FileUpload::make('background_image')
+                            ->label('Tło strony (Background Image)')
+                            ->image()
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                            ->directory('maintenance/backgrounds')
+                            ->maxSize(5120)
+                            ->imagePreviewHeight('200px')
+                            ->helperText('Dozwolone: JPG, PNG, WebP (max 5MB)')
+                            ->columnSpanFull(),
+
+                        Placeholder::make('contact_info')
+                            ->label('Email i telefon')
+                            ->content('⚙️ Zarządzane w Ustawieniach systemowych → Kontakt')
+                            ->columnSpanFull(),
+                    ])
+                    ->columns(2),
             ])
             ->statePath('data');
     }
@@ -225,12 +322,25 @@ class MaintenanceSettings extends Page implements HasForms
 
             // Add type-specific config
             if ($type === MaintenanceType::PRELAUNCH) {
+                // Existing launch_date and image_url fields
                 if (! empty($data['launch_date'])) {
                     $config['launch_date'] = $data['launch_date'];
                 }
                 if (! empty($data['image_url'])) {
                     $config['image_url'] = $data['image_url'];
                 }
+
+                // NEW: Add all pre-launch content fields
+                $config['page_title'] = $data['page_title'] ?? null;
+                $config['main_heading'] = $data['main_heading'] ?? null;
+                $config['tagline'] = $data['tagline'] ?? null;
+                $config['launch_date_label'] = $data['launch_date_label'] ?? null;
+                $config['description_part1'] = $data['description_part1'] ?? null;
+                $config['description_part2'] = $data['description_part2'] ?? null;
+                $config['contact_heading'] = $data['contact_heading'] ?? null;
+                $config['copyright_text'] = $data['copyright_text'] ?? null;
+                $config['html_lang'] = $data['html_lang'] ?? 'pl';
+                $config['background_image'] = $data['background_image'] ?? null;
             } else {
                 if (! empty($data['estimated_duration'])) {
                     $config['estimated_duration'] = $data['estimated_duration'];
