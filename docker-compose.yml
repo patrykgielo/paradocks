@@ -3,6 +3,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        # Local development: Use opcache-dev.ini (validate_timestamps=On)
+        # Production CI/CD: Will use default (production) for performance
+        OPCACHE_MODE: dev
     container_name: paradocks-app
     restart: unless-stopped
     working_dir: /var/www/

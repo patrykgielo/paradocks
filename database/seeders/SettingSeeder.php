@@ -31,6 +31,7 @@ class SettingSeeder extends Seeder
         $this->seedMarketingSettings();
         $this->seedEmailSettings();
         $this->seedSmsSettings();
+        $this->seedPrelaunchSettings();
     }
 
     /**
@@ -78,6 +79,8 @@ class SettingSeeder extends Seeder
             'address_line' => ['ul. Marszałkowska 1'],
             'city' => ['Warszawa'],
             'postal_code' => ['00-001'],
+            'logo_path' => ['/images/logo.svg'],
+            'logo_alt' => ['Paradocks - Mobilne Myjnie Parowe'],
         ];
 
         $this->seedGroup('contact', $settings);
@@ -165,6 +168,25 @@ class SettingSeeder extends Seeder
         ];
 
         $this->seedGroup('sms', $settings);
+    }
+
+    /**
+     * Seed pre-launch page default content settings.
+     */
+    private function seedPrelaunchSettings(): void
+    {
+        $settings = [
+            'page_title' => ['Wkrótce startujemy - Paradocks'],
+            'heading' => ['Wkrótce Ruszamy!'],
+            'tagline' => ['Paradocks polega na tym, że to my przyjeżdżamy do Ciebie, a nie Ty do Nas!'],
+            'date_label' => ['Data startu'],
+            'description_1' => ['Wprowadzamy autorski system rezerwacji mobilnych usług mycia pojazdów oraz detailingu.'],
+            'description_2' => ['Świadczymy usługi we wskazanej przez Ciebie lokalizacji.'],
+            'contact_heading' => ['Masz pytania?'],
+            'copyright_text' => ['Paradocks. Wszelkie prawa zastrzeżone.'],
+        ];
+
+        $this->seedGroup('prelaunch', $settings);
     }
 
     /**

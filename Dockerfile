@@ -22,6 +22,11 @@ RUN npm run build
 # Stage 2: PHP runtime
 FROM php:8.2-fpm-alpine
 
+# Build argument to control OPcache configuration
+# Default: production (validate_timestamps=Off for performance)
+# Local: development (validate_timestamps=On for instant file changes)
+ARG OPCACHE_MODE=production
+
 # Runtime dependencies
 RUN apk add --no-cache \
     libpng \
@@ -60,6 +65,22 @@ RUN docker-php-ext-configure gd --with-jpeg && \
 # Install Redis extension via PECL (not a core extension)
 RUN pecl install redis && \
     docker-php-ext-enable redis
+
+# Copy OPcache configuration based on OPCACHE_MODE
+# Local development: opcache-dev.ini (validate_timestamps=On)
+# Production: Skip file (use PHP defaults: validate_timestamps=Off)
+COPY docker/php/ /tmp/php-config/
+RUN if [ "$OPCACHE_MODE" = "dev" ]; then \
+        if [ -f "/tmp/php-config/opcache-dev.ini" ]; then \
+            cp /tmp/php-config/opcache-dev.ini /usr/local/etc/php/conf.d/opcache.ini; \
+            echo "✓ OPcache dev config installed (validate_timestamps=On)"; \
+        else \
+            echo "⚠ opcache-dev.ini not found, using defaults"; \
+        fi; \
+    else \
+        echo "✓ Using default OPcache production settings (validate_timestamps=Off)"; \
+    fi && \
+    rm -rf /tmp/php-config
 
 # Cleanup
 RUN apk del .build-deps

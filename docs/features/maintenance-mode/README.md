@@ -118,7 +118,62 @@ docker compose exec app php artisan maintenance:disable
 - **Bypass**: ❌ NO bypass (not even admins!)
 - **View**: `errors/maintenance-prelaunch.blade.php`
 - **Message**: "Coming soon! We're preparing something special"
-- **Extra Config**: `launch_date`, `image_url`
+- **Extra Config**: 10 configurable fields (see Pre-Launch Page Configuration below)
+
+#### Pre-Launch Page Configuration
+
+The PRELAUNCH mode includes a fully configurable landing page with 10 customizable fields available in the Filament admin panel at `/admin/maintenance-settings`:
+
+| Field | Type | Description | Default Source |
+|-------|------|-------------|----------------|
+| `page_title` | TextInput | HTML `<title>` tag (SEO, browser tab) | Settings: `prelaunch.page_title` |
+| `main_heading` | TextInput | Main H1 heading | Settings: `prelaunch.heading` |
+| `tagline` | Textarea | Subtitle/tagline text | Settings: `prelaunch.tagline` |
+| `launch_date_label` | TextInput | Label for launch date section | Settings: `prelaunch.date_label` |
+| `launch_date` | DatePicker | Actual launch date (formatted as d.m.Y) | Required field |
+| `description_part1` | Textarea | First description paragraph | Settings: `prelaunch.description_1` |
+| `description_part2` | Textarea | Second description paragraph | Settings: `prelaunch.description_2` |
+| `contact_heading` | TextInput | Contact section heading | Settings: `prelaunch.contact_heading` |
+| `copyright_text` | TextInput | Footer copyright text | Settings: `prelaunch.copyright_text` |
+| `html_lang` | Select | HTML lang attribute (pl/en) | Defaults to `pl` |
+| `background_image` | FileUpload | Custom background image (max 5MB) | Defaults to `/images/maintenance-background.png` |
+
+**Contact Information** (managed in System Settings → Contact):
+- Email: `contact.email`
+- Phone: `contact.phone`
+- Logo: `contact.logo_path`, `contact.logo_alt`
+
+**Fallback Chain**:
+1. **Redis Config** (custom values from admin panel)
+2. **Settings Defaults** (configurable in System Settings)
+3. **Hardcoded Fallback** (emergency defaults in Blade template)
+
+**Example: Enabling with Custom Config**
+```php
+$service->enable(
+    type: MaintenanceType::PRELAUNCH,
+    user: Auth::user(),
+    config: [
+        'launch_date' => '2026-01-10',
+        'page_title' => 'Custom Page Title',
+        'main_heading' => 'Niestandardowy Nagłówek!',
+        'tagline' => 'Custom tagline text',
+        'html_lang' => 'en',
+        'background_image' => 'maintenance/backgrounds/custom-bg.jpg', // FileUpload path
+    ]
+);
+```
+
+**Files**:
+- Template: `resources/views/errors/maintenance-prelaunch.blade.php`
+- Form: `app/Filament/Pages/MaintenanceSettings.php` (Section: "Pre-Launch Page Content")
+- Settings Seeder: `database/seeders/SettingSeeder.php::seedPrelaunchSettings()`
+- Migration: `database/migrations/2025_12_06_142446_add_prelaunch_settings.php`
+
+**Security & Operations**:
+- [FileUpload Security Pattern](../../security/patterns/file-upload-security.md) - Image upload security controls (SVG blocking, MIME validation)
+- [Rollback Procedures](../../deployment/known-issues.md#issue-13-pre-launch-configuration-corruption) - Emergency recovery if configuration corrupted
+- [Troubleshooting](../../guides/troubleshooting.md#filament-form-issues) - Common FileUpload type errors
 
 ### 3. SCHEDULED (300s retry)
 - **Use Case**: Planned maintenance windows

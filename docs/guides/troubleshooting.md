@@ -1,8 +1,19 @@
 # Troubleshooting Guide
 
-**Last Updated:** November 2025
+**Last Updated:** December 2025
 
 This guide provides solutions to common issues across all parts of the application. For feature-specific troubleshooting, see the links at the bottom.
+
+## Table of Contents
+
+- [Build & Assets Issues](#build--assets-issues)
+- [Database & Migration Issues](#database--migration-issues)
+- [Queue & Jobs Issues](#queue--jobs-issues)
+- [Cache & OPcache Issues](#cache--opcache-issues)
+- [Filament Form Issues](#filament-form-issues) ⭐ NEW
+- [Performance Issues](#performance-issues)
+- [Docker Issues](#docker-issues)
+- [Google Maps Issues](#google-maps-issues)
 
 ## Quick Diagnostics
 
@@ -333,6 +344,174 @@ Common issues:
 - ArgumentCountError in Filament page (Livewire constructor injection)
 - Settings not saving (cache not cleared)
 - Form validation fails (schema mismatch)
+
+## Cache & OPcache Issues
+
+### Blade Template Changes Not Showing
+
+**Symptoms:**
+- Manually edited Blade templates don't update in browser
+- `php artisan view:clear` doesn't fix the issue
+- Old HTML/CSS still renders despite file changes
+
+**Root Cause:**
+PHP OPcache caches compiled bytecode in memory. Even when Laravel recompiles Blade templates (storage/framework/views/), PHP-FPM serves old bytecode from OPcache memory.
+
+**Cache Layers:**
+```
+1. Application Cache (database) ← php artisan cache:clear
+2. Compiled Blade Views (storage/) ← php artisan view:clear
+3. PHP OPcache (bytecode memory) ← Container restart OR dev config
+```
+
+**Solution (Local Development - v0.3.1+):**
+
+This project includes **opcache-dev.ini** for local development:
+
+```bash
+# Verify dev config is active
+docker compose exec app php -i | grep -A 5 opcache.validate_timestamps
+# Should show: opcache.validate_timestamps => On => On
+```
+
+**If dev config is active:** Code changes apply immediately (no restart needed!)
+
+**If dev config is NOT active (production-like environment):**
+```bash
+# Restart containers to clear OPcache memory
+docker compose restart app horizon queue scheduler
+
+# Then clear Laravel caches
+docker compose exec app php artisan optimize:clear
+docker compose exec app php artisan filament:optimize-clear
+```
+
+### Cache Clearing Cheat Sheet
+
+| Command | Clears | When to Use | OPcache? |
+|---------|--------|-------------|----------|
+| `php artisan view:clear` | Compiled Blade templates | After editing Blade files | ❌ No |
+| `php artisan cache:clear` | Application cache | After data structure changes | ❌ No |
+| `php artisan config:clear` | Config cache | After `.env` changes | ❌ No |
+| `php artisan route:clear` | Route cache | After modifying routes | ❌ No |
+| `php artisan optimize:clear` | All Laravel caches (nuclear option) | When unsure what to clear | ❌ No |
+| `docker compose restart app` | **PHP-FPM OPcache memory** | **Code changes not showing** | ✅ Yes |
+
+**Nuclear Option (clears everything):**
+```bash
+docker compose exec app php artisan optimize:clear
+docker compose exec app php artisan filament:optimize-clear
+docker compose restart app horizon queue scheduler
+```
+
+### Local vs Production OPcache Configuration
+
+**Local Development (v0.3.1+):**
+- File: `docker/php/opcache-dev.ini`
+- Setting: `opcache.validate_timestamps=On`
+- Behavior: PHP checks file changes on every request
+- Result: Code changes apply immediately ✅
+- Performance: Slightly slower (acceptable for dev)
+
+**Production:**
+- File: Default PHP OPcache settings
+- Setting: `opcache.validate_timestamps=Off`
+- Behavior: PHP never checks files (uses cached bytecode)
+- Result: Maximum performance ✅
+- Deployment: Container restart required after code deploy
+
+**How It Works:**
+```dockerfile
+# Dockerfile uses build argument
+ARG OPCACHE_MODE=production  # Default
+
+# docker-compose.yml (local dev only)
+build:
+  args:
+    OPCACHE_MODE: dev  # ← Uses opcache-dev.ini
+
+# Production CI/CD
+# (no ARG passed) → Uses default production settings
+```
+
+**Files:**
+- `docker/php/opcache-dev.ini` - Dev config (validate_timestamps=On)
+- `Dockerfile` - Conditional config copy
+- `docker-compose.yml` - Passes OPCACHE_MODE=dev for local
+
+**See:** [CLAUDE.md - OPcache Troubleshooting](../../CLAUDE.md#opcache--code-changes-not-applying)
+
+## Filament Form Issues
+
+### FileUpload Type Errors
+
+**Symptoms:**
+- Admin panel crashes with TypeError: `Filament\Forms\Components\FileUpload::imagePreviewHeight(): Argument #1 ($height) must be of type Closure|string|null, int given`
+- Form fails to load with 500 Internal Server Error
+- Error appears when visiting Filament admin pages with FileUpload components
+
+**Root Cause:**
+
+Filament v4.2+ requires **string values with CSS units** for visual properties like `imagePreviewHeight()` and `imagePreviewWidth()`. PHP's strict typing (`declare(strict_types=1)`) prevents automatic int-to-string coercion.
+
+This is an API design decision:
+- **Numeric properties** (file size, max length) accept `int`: `->maxSize(5120)`
+- **CSS properties** (heights, widths) require `string`: `->imagePreviewHeight('200px')`
+
+**Common Mistakes:**
+
+```php
+// ❌ WRONG - Integer causes TypeError
+FileUpload::make('background_image')
+    ->imagePreviewHeight(200)
+    ->imagePreviewWidth(300)
+
+// ✅ CORRECT - String with CSS units
+FileUpload::make('background_image')
+    ->imagePreviewHeight('200px')
+    ->imagePreviewWidth('300px')
+```
+
+**Solution:**
+
+1. **Fix the type error:**
+   ```php
+   // Change integer to string with units
+   ->imagePreviewHeight(200)      // ❌ TypeError
+   ->imagePreviewHeight('200px')  // ✅ Fixed
+   ```
+
+2. **Restart containers to clear OPcache:**
+   ```bash
+   docker compose restart app nginx
+   ```
+
+3. **Verify the fix:**
+   ```bash
+   # Check Laravel logs for errors
+   docker compose exec app tail storage/logs/laravel.log
+
+   # Visit admin page to confirm it loads
+   curl -k https://paradocks.local:8444/admin/maintenance-settings
+   ```
+
+**Prevention:**
+
+- Always check Filament v4 API documentation for parameter types
+- Use string literals for all CSS-related properties (heights, widths, colors)
+- Test admin pages immediately after adding new form fields
+- Enable PHPStan static analysis to catch type mismatches before runtime:
+  ```bash
+  ./vendor/bin/phpstan analyse app/Filament/
+  ```
+
+**Related Files:**
+- `app/Filament/Pages/MaintenanceSettings.php:245` - Correct implementation example
+- Filament Docs: https://filamentphp.com/docs/4.x/forms/fields/file-upload#customizing-the-image-preview-height
+
+**See Also:**
+- [OPcache Issues](#cache--opcache-issues) - If changes don't apply after fix
+- [Filament Optimization](#filament-optimization) - Form performance tips
 
 ## Performance Issues
 
