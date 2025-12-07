@@ -678,11 +678,375 @@ And manual iptables rules. Not applicable to production (different network setup
 
 ---
 
-**Document Version:** 1.0
-**Last Updated:** 2025-11-30
+**Document Version:** 1.1
+**Last Updated:** 2025-12-06
 **Maintained By:** Development Team
 
 **Update Policy:**
 - Add new issues as discovered
 - Move to "Historical Issues" when permanently resolved
 - Update Quick Fix Reference with new solutions
+
+---
+
+## Issue #13: Pre-Launch Configuration Corruption
+
+**Category:** Maintenance Mode
+**Severity:** HIGH
+**Affected Versions:** v0.3.0+
+**First Reported:** 2025-12-06
+
+### Problem
+
+Maintenance mode pre-launch page configuration stored in Redis can become corrupted or inconsistent, causing:
+- Maintenance page returns 500 error
+- Background image not displaying (file deleted but Redis still references it)
+- Form fields not saving correctly
+- Invalid JSON in Redis cache
+
+**Root Causes:**
+1. Uploaded background image deleted from storage but Redis config still references path
+2. Manual Redis key modification without validation
+3. FileUpload component fails but Redis config partially updated
+4. Redis persistence disabled and data lost on restart
+
+### Detection
+
+**Symptoms:**
+```bash
+# Check maintenance page - returns 500 error
+curl -k https://paradocks.local:8444/
+
+# Check Redis config structure
+docker compose exec redis redis-cli GET maintenance:config
+# Output: Invalid JSON or missing required fields
+```
+
+**Verification:**
+```bash
+# Check if background image file exists
+docker compose exec app ls -la storage/app/public/maintenance/backgrounds/
+
+# Check Redis keys
+docker compose exec redis redis-cli KEYS "maintenance:*"
+
+# Validate Redis JSON
+docker compose exec redis redis-cli GET maintenance:config | jq .
+# If error: "parse error: Invalid JSON"
+```
+
+### Quick Fix (5 minutes)
+
+**Scenario 1: Background Image Missing**
+
+```bash
+# 1. Clear corrupted Redis config
+docker compose exec redis redis-cli DEL maintenance:config
+
+# 2. Re-seed default settings (provides fallback values)
+docker compose exec app php artisan db:seed --class=SettingSeeder
+
+# 3. Disable and re-enable maintenance mode
+docker compose exec app php artisan maintenance:disable --force
+docker compose exec app php artisan maintenance:enable --type=prelaunch --message="Coming soon!"
+
+# 4. Verify page loads
+curl -k https://paradocks.local:8444/
+```
+
+**Scenario 2: Invalid JSON in Redis**
+
+```bash
+# 1. Backup current config (for investigation)
+docker compose exec redis redis-cli GET maintenance:config > /tmp/corrupt-config.json
+
+# 2. Clear all maintenance keys
+docker compose exec redis redis-cli DEL maintenance:mode
+docker compose exec redis redis-cli DEL maintenance:config
+docker compose exec redis redis-cli DEL maintenance:enabled_at
+docker compose exec redis redis-cli DEL maintenance:secret_token
+
+# 3. Restart containers (clear OPcache)
+docker compose restart app
+
+# 4. Re-enable from admin panel
+# Visit: https://paradocks.local:8444/admin/maintenance-settings
+```
+
+**Scenario 3: Form Fields Not Saving**
+
+```bash
+# 1. Check Filament cache
+docker compose exec app php artisan filament:optimize-clear
+
+# 2. Clear application cache
+docker compose exec app php artisan cache:clear
+
+# 3. Restart app container (clear OPcache)
+docker compose restart app
+
+# 4. Test form save again
+```
+
+### Rollback Procedures
+
+**Rollback #1: Quick Rollback to Pre-FileUpload Version (1 minute)**
+
+Use when: FileUpload feature causing production issues, need immediate revert
+
+```bash
+# 1. Identify current commit
+git log -1 --oneline
+# Output: 68cfeab Merge branch 'develop' into staging
+
+# 2. Revert to last stable version (before FileUpload)
+git reset --hard 9e0252e
+
+# 3. Force push to staging
+git push origin staging --force
+
+# 4. Restart containers
+docker compose restart app nginx
+
+# 5. Verify admin panel loads
+curl -k https://paradocks.local:8444/admin/maintenance-settings
+```
+
+**What Gets Reverted:**
+- ✅ FileUpload field removed from admin form
+- ✅ Pre-launch page configuration fields removed
+- ✅ Uploaded background images remain in storage (but not used)
+- ⚠️ Redis config persists (but ignored by old code)
+
+**Data Impact:**
+- Uploaded images NOT deleted (safe to keep for future rollback)
+- Settings table retains prelaunch group (safe, not queried by old code)
+- Maintenance events preserved (audit trail intact)
+
+---
+
+**Rollback #2: Selective Rollback - Keep Maintenance Mode, Remove FileUpload (10 minutes)**
+
+Use when: FileUpload problematic but want to keep other maintenance mode features
+
+```bash
+# 1. Create hotfix branch
+git checkout -b hotfix/remove-fileupload staging
+
+# 2. Revert only MaintenanceSettings.php changes
+git show 947b4fd:app/Filament/Pages/MaintenanceSettings.php > /tmp/old-settings.php
+cp /tmp/old-settings.php app/Filament/Pages/MaintenanceSettings.php
+
+# 3. Commit selective revert
+git add app/Filament/Pages/MaintenanceSettings.php
+git commit -m "revert(maintenance): remove FileUpload field, keep PRELAUNCH settings"
+
+# 4. Merge to staging
+git checkout staging
+git merge --no-ff hotfix/remove-fileupload
+
+# 5. Push and deploy
+git push origin staging
+
+# 6. Restart containers
+docker compose restart app
+```
+
+**What Gets Reverted:**
+- ✅ FileUpload field removed
+- ✅ Pre-launch page still works (uses default settings)
+- ✅ All other maintenance features intact
+
+**What Stays:**
+- ✅ Settings seeder (provides defaults)
+- ✅ Pre-launch text customization via Settings
+- ✅ Migration applied (harmless, provides fallback data)
+
+---
+
+**Rollback #3: Full Rollback with Backup Restore (5 minutes)**
+
+Use when: Need to revert entire maintenance mode implementation + restore previous data
+
+**Prerequisites:**
+- Backup created with `scripts/backup-maintenance.sh` (see below)
+
+```bash
+# 1. Run backup script (if not already done)
+./scripts/backup-maintenance.sh
+# Output: ✅ Backup complete: .backups/maintenance-20251206_153045
+
+# 2. Git reset to pre-maintenance version
+git reset --hard 878fc5e
+
+# 3. Rebuild containers
+docker compose down
+docker compose up -d --build
+
+# 4. Run migrations fresh
+docker compose exec app php artisan migrate:fresh --seed
+
+# 5. Restore uploaded images (if needed)
+docker cp .backups/maintenance-20251206_153045/images.tar.gz paradocks-app:/tmp/
+docker compose exec app tar -xzf /tmp/images.tar.gz -C /var/www/
+
+# 6. Restore Redis data (if needed)
+docker cp .backups/maintenance-20251206_153045/redis.rdb paradocks-redis:/data/dump.rdb
+docker compose restart redis
+
+# 7. Verify application
+curl -k https://paradocks.local:8444/
+```
+
+**Data Impact:**
+- ⚠️ All maintenance mode data lost (unless backup restored)
+- ⚠️ Database reset to fresh state (seeders re-run)
+- ✅ Backup allows full recovery if needed
+
+---
+
+### Backup Script
+
+**Create:** `scripts/backup-maintenance.sh`
+
+```bash
+#!/bin/bash
+# Maintenance Mode Configuration Backup Script
+# Version: 1.0
+# Last Updated: 2025-12-06
+
+set -e  # Exit on error
+
+timestamp=$(date +%Y%m%d_%H%M%S)
+backup_dir=".backups/maintenance-${timestamp}"
+
+echo "🔄 Starting maintenance mode backup..."
+mkdir -p "$backup_dir"
+
+# 1. Backup uploaded images
+echo "📁 Backing up uploaded images..."
+if docker compose exec app test -d storage/app/public/maintenance/backgrounds; then
+    docker compose exec app tar -czf /tmp/imgs.tar.gz storage/app/public/maintenance/backgrounds/ 2>/dev/null || true
+    docker cp paradocks-app:/tmp/imgs.tar.gz "$backup_dir/images.tar.gz"
+    echo "   ✅ Images backed up"
+else
+    echo "   ℹ️  No images directory found (skipping)"
+fi
+
+# 2. Backup Redis maintenance keys
+echo "💾 Backing up Redis data..."
+docker compose exec redis redis-cli BGSAVE > /dev/null
+sleep 2
+docker cp paradocks-redis:/data/dump.rdb "$backup_dir/redis.rdb"
+echo "   ✅ Redis backed up"
+
+# 3. Backup Settings table
+echo "🗄️  Backing up Settings table..."
+docker compose exec mysql mysqldump -u paradocks -ppassword paradocks settings > "$backup_dir/settings.sql" 2>/dev/null
+echo "   ✅ Settings backed up"
+
+# 4. Backup current git state
+echo "🔖 Recording git state..."
+git log -1 --oneline > "$backup_dir/git-commit.txt"
+git status > "$backup_dir/git-status.txt"
+echo "   ✅ Git state recorded"
+
+# 5. Create backup manifest
+cat > "$backup_dir/MANIFEST.txt" <<EOF
+Maintenance Mode Backup
+=======================
+Backup Date: $(date)
+Git Commit: $(git log -1 --oneline)
+Docker Compose Status:
+$(docker compose ps)
+
+Backup Contents:
+- images.tar.gz: Uploaded background images
+- redis.rdb: Redis persistence file (maintenance:* keys)
+- settings.sql: MySQL settings table dump
+- git-commit.txt: Current git commit
+- git-status.txt: Git working tree status
+
+Restore Instructions:
+1. Images: docker cp ${backup_dir}/images.tar.gz paradocks-app:/tmp/ && docker compose exec app tar -xzf /tmp/images.tar.gz
+2. Redis: docker cp ${backup_dir}/redis.rdb paradocks-redis:/data/dump.rdb && docker compose restart redis
+3. Settings: docker compose exec mysql mysql -u paradocks -ppassword paradocks < ${backup_dir}/settings.sql
+EOF
+
+echo ""
+echo "✅ Backup complete: $backup_dir"
+echo "📄 Manifest: $backup_dir/MANIFEST.txt"
+echo ""
+echo "To restore:"
+echo "  Images:   docker cp $backup_dir/images.tar.gz paradocks-app:/tmp/ && docker compose exec app tar -xzf /tmp/images.tar.gz"
+echo "  Redis:    docker cp $backup_dir/redis.rdb paradocks-redis:/data/dump.rdb && docker compose restart redis"
+echo "  Settings: docker compose exec mysql mysql -u paradocks -ppassword paradocks < $backup_dir/settings.sql"
+```
+
+**Make executable:**
+```bash
+chmod +x scripts/backup-maintenance.sh
+```
+
+**Usage:**
+```bash
+# Run before risky operations
+./scripts/backup-maintenance.sh
+
+# Output shows backup location:
+# ✅ Backup complete: .backups/maintenance-20251206_153045
+```
+
+---
+
+### Prevention
+
+**Pre-Deployment Checklist:**
+
+```bash
+# 1. Verify Settings seeded
+docker compose exec app php artisan tinker --execute="
+\$settings = app(\App\Support\Settings\SettingsManager::class);
+var_export(\$settings->group('prelaunch'));
+"
+
+# 2. Verify Redis persistence enabled
+docker compose exec redis redis-cli CONFIG GET save
+# Output should show: "save" "3600 1 300 100 60 10000"
+
+# 3. Verify storage directory writable
+docker compose exec app ls -la storage/app/public/
+# Output should show: drwxrwxr-x (775 permissions)
+
+# 4. Test upload functionality
+# Visit: https://paradocks.local:8444/admin/maintenance-settings
+# Upload test image, verify it saves
+
+# 5. Test fallback chain
+docker compose exec redis redis-cli DEL maintenance:config
+# Visit maintenance page - should show Settings defaults, not error
+```
+
+**Monitoring:**
+
+```bash
+# Cron job to check Redis persistence (every hour)
+0 * * * * docker compose exec redis redis-cli LASTSAVE >> /var/log/redis-backup.log
+
+# Alert if background image file missing
+0 0 * * * find storage/app/public/maintenance/backgrounds/ -type f -mtime -1 || echo "ALERT: No recent uploads" | mail -s "Maintenance backup check" admin@paradocks.pl
+```
+
+### Related Issues
+
+- [Issue #11: Permission Denied (storage/framework/views)](#issue-11-permission-denied-storageframeworkviews) - Storage permissions
+- [Issue #5: Redis Authentication Failed](#issue-5-redis-authentication-failed) - Redis connection
+- [OPcache Code Changes Not Applying](#opcache-code-changes-not-applying) - Container restart
+
+### Resolution History
+
+| Date | Version | Status | Notes |
+|------|---------|--------|-------|
+| 2025-12-06 | v0.3.0 | ACTIVE | Initial documentation after FileUpload implementation |
+
+---

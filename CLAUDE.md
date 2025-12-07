@@ -490,7 +490,10 @@ $service->enable(MaintenanceType::DEPLOYMENT, Auth::user(), ['message' => 'Deplo
 - **Redis keys persist** across container restarts
 - **Health endpoint** `/up` bypasses maintenance for Docker healthchecks
 
-**See:** [Maintenance Mode Documentation](app/docs/features/maintenance-mode/README.md)
+**See:**
+- [Maintenance Mode Documentation](app/docs/features/maintenance-mode/README.md)
+- [FileUpload Security Pattern](app/docs/security/patterns/file-upload-security.md) - Image upload security controls
+- [Rollback Procedures](app/docs/deployment/known-issues.md#issue-13-pre-launch-configuration-corruption) - Emergency recovery
 
 ## Security Audits
 
@@ -957,8 +960,36 @@ docker compose restart app
 
 **Cause:** PHP OPcache in Docker containers caches bytecode. `php artisan optimize:clear` only clears **CLI** OPcache, not **PHP-FPM workers** (web server).
 
+**Local Development Solution (v0.3.1+):**
+
+This project now includes **opcache-dev.ini** for local development with `validate_timestamps=On`, which checks for file changes on every request. Code changes apply immediately without container restarts!
+
+**Configuration:**
+```dockerfile
+# Dockerfile - Conditional OPcache config
+ARG OPCACHE_MODE=production  # Default production
+
+# Local dev (docker-compose.yml):
+OPCACHE_MODE: dev  # Uses opcache-dev.ini (validate_timestamps=On)
+
+# Production CI/CD:
+# (no ARG passed) → Uses default production settings (validate_timestamps=Off)
+```
+
+**Files:**
+- `docker/php/opcache-dev.ini` - Local development config (validate_timestamps=On)
+- `Dockerfile` - Conditional config copy based on OPCACHE_MODE arg
+- `docker-compose.yml` - Passes OPCACHE_MODE=dev for local environment
+
+**When container restart IS needed:**
+- Production-like builds without dev config
+- After changing Filament Resources, Livewire components, or Actions (if not using dev config)
+- After Composer updates (composer.json changes)
+- After modifying .env file
+
+**Container Restart Procedure (if needed):**
 ```bash
-# Solution: Restart containers to clear PHP-FPM OPcache
+# Restart containers to clear PHP-FPM OPcache
 docker compose restart app horizon queue scheduler
 
 # Verify containers restarted (check "STATUS" for recent timestamp)
@@ -969,13 +1000,7 @@ docker compose exec app php artisan optimize:clear
 docker compose exec app php artisan filament:optimize-clear
 ```
 
-**When to restart containers:**
-- After changing Filament Resources, Livewire components, or Actions
-- After Composer updates (composer.json changes)
-- When code changes don't appear in browser
-- After modifying .env file
-
-**See:** [Troubleshooting Guide](app/docs/guides/troubleshooting.md)
+**See:** [Troubleshooting Guide - Cache & OPcache Issues](app/docs/guides/troubleshooting.md#cache--opcache-issues)
 
 ## Testing
 
