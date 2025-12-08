@@ -10,6 +10,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - (empty - ready for next changes)
 
+## [0.5.3] - 2025-12-08
+
+### Fixed
+- **CRITICAL:** Admin login during maintenance mode regression
+  - Admin could access `/admin/login` but got redirected to maintenance page after successful login
+  - Root cause: `/admin/*` routes not whitelisted in `CheckMaintenanceMode` middleware
+  - Solution: Added `'admin/*'` to authentication routes whitelist
+  - Filament provides authentication for admin panel (unauthenticated users redirected to login)
+  - Aligns with PR #40 intent: admins should access panel during maintenance mode
+  - Tested: `/admin/login` → login → `/admin` panel accessible ✅
+
+### Technical Details
+- **Commits:** 1d2b22b
+- **Files Modified:** `app/Http/Middleware/CheckMaintenanceMode.php` (1 line added)
+- **Impact:** Admin can now fully access panel during maintenance mode
+- **Risk Level:** LOW (Filament handles authentication)
+
 ## [0.5.2] - 2025-12-07
 
 ### Fixed
