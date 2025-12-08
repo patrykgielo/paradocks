@@ -13,6 +13,7 @@
         "laravel/horizon": "^5.39",
         "laravel/tinker": "^2.10.1",
         "laravel/ui": "^4.6",
+        "mews/purifier": "*",
         "predis/predis": "^3.2",
         "smsapi/php-client": "^3.0",
         "spatie/laravel-permission": "^6.21"
@@ -32,7 +33,10 @@
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
-        }
+        },
+        "files": [
+            "app/helpers.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {

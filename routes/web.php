@@ -11,6 +11,7 @@ use App\Http\Controllers\PortfolioController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PromotionController;
+use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\UserAddressController;
 use App\Http\Controllers\UserVehicleController;
 use Illuminate\Support\Facades\Cache;
@@ -57,6 +58,12 @@ Route::get('/strona/{slug}', [PageController::class, 'show'])->name('page.show')
 Route::get('/aktualnosci/{slug}', [PostController::class, 'show'])->name('post.show');
 Route::get('/promocje/{slug}', [PromotionController::class, 'show'])->name('promotion.show');
 Route::get('/portfolio/{slug}', [PortfolioController::class, 'show'])->name('portfolio.show');
+
+// Service Pages routes (P0: SEO-friendly Polish URLs with rate limiting)
+Route::middleware('throttle:60,1')->group(function () {
+    Route::get('/uslugi', [ServiceController::class, 'index'])->name('services.index');
+    Route::get('/uslugi/{service:slug}', [ServiceController::class, 'show'])->name('service.show');
+});
 
 // Authentication routes
 Auth::routes();

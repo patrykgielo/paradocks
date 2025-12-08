@@ -43,3 +43,5 @@ docker/ssl/*.csr
 backups/
 *.sql
 *.sql.gz
+.backups/
+cookies.txt
