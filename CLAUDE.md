@@ -370,6 +370,76 @@ Complete content management system with 4 content types, Filament admin panel, a
 
 **See:** [CMS System Documentation](app/docs/features/cms-system/README.md)
 
+### Service Pages
+
+Dedicated SEO-friendly pages for each service with full CMS functionality and Schema.org structured data.
+
+- **Architecture:** Extended Service model with CMS fields, ServiceController with Schema.org generation
+- **URLs:**
+  - Service listing: `/uslugi` (index page)
+  - Single service: `/uslugi/{slug}` (e.g., `/uslugi/mycie-podstawowe`)
+- **Content System:** Hybrid approach - RichEditor (body) + Builder blocks (content)
+- **Publishing Workflow:** draft (NULL), scheduled (future date), published (past date)
+- **SEO Features:**
+  - Schema.org Service + BreadcrumbList JSON-LD markup
+  - OpenGraph tags for social sharing
+  - Meta title/description with fallbacks
+  - Featured images for visual search
+  - Polish URLs for local SEO
+
+**Database Fields (Added to services table)**:
+- `slug` (string, unique) - SEO-friendly URL identifier
+- `excerpt` (text) - Short summary for cards/SEO
+- `body` (text) - Main content (RichEditor, 90% of content)
+- `content` (json) - Builder blocks (gallery, video, CTA, 10% of content)
+- `meta_title`, `meta_description`, `featured_image` - SEO fields
+- `published_at` (timestamp) - Publishing workflow control
+- `price_from` (decimal) - "Od X PLN" pricing display
+- `area_served` (string) - Local SEO (e.g., "Poznań")
+
+**Filament Admin (4 Sections)**:
+1. Podstawowe Informacje - Name, slug (auto-generated), excerpt, duration, price, active, sort order
+2. Treść Strony - RichEditor for main content (collapsed by default)
+3. Zaawansowane Bloki - Builder with 7 block types (image, gallery, video, CTA, columns, quote)
+4. SEO i Publikacja - Featured image, meta fields, published_at (collapsed by default)
+
+**Frontend Features**:
+- Service index page (`/uslugi`) - Grid of published services
+- Single service page with hero, main content, builder blocks, related services, booking CTA
+- Breadcrumb navigation (HTML + Schema.org)
+- XSS protection via HTMLPurifier (`clean()` function)
+
+**Homepage Integration**:
+- Clickable service cards (image + heading link to service page)
+- "Zobacz Szczegóły" button with eye icon (all users)
+- "Zarezerwuj Termin" button (authenticated users only)
+- Semantic HTML (`<article>` tags) for better SEO
+- Group hover effects for visual feedback
+
+**Schema.org Implementation**:
+- Service markup (`@type: Service`) with provider, offers, pricing, area served
+- BreadcrumbList markup for navigation
+- JSON-LD generation in controller (not Blade) to avoid nested `@if` issues
+- Validation: [Google Rich Results Test](https://search.google.com/test/rich-results)
+
+**Integration with Booking**:
+- Service page CTA → Booking wizard with pre-selected service
+- Homepage cards → Service page → Booking (SEO-friendly journey)
+- Route model binding by slug (not numeric IDs)
+
+**Key Files**:
+- `app/Models/Service.php` - Extended model with CMS fields, scopes, accessors
+- `app/Http/Controllers/ServiceController.php` - Public show(), Schema.org generation
+- `app/Filament/Resources/ServiceResource.php` - Admin CRUD with 4 sections
+- `resources/views/services/show.blade.php` - Single service page
+- `resources/views/services/index.blade.php` - Service listing
+- `resources/views/home.blade.php` - Homepage with clickable cards
+- `database/migrations/2025_12_06_add_cms_fields_to_services.php` - Migration
+
+**Backwards Compatibility**: All existing service fields unchanged (`id`, `name`, `description`, `duration_minutes`, `price`, `is_active`, `sort_order`). New fields are nullable.
+
+**See:** [Service Pages Documentation](app/docs/features/service-pages/README.md)
+
 ### Customer Profile & Settings
 
 Complete user profile management system with sidebar navigation and 5 dedicated subpages.
