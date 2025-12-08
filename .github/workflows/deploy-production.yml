@@ -50,13 +50,27 @@ jobs:
             echo "📥 Updating nginx config from repo..."
             curl -o docker/nginx/app.prod.conf https://raw.githubusercontent.com/patrykgielo/paradocks/main/docker/nginx/app.prod.conf
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            echo "📥 Pulling latest Docker images..."
             docker compose -f docker-compose.prod.yml pull
+
+            echo "🔄 Recreating containers (clears OPcache and applies new code)..."
             docker compose -f docker-compose.prod.yml up -d --force-recreate app mysql redis nginx horizon scheduler
+
             echo "⏳ Waiting for MySQL to be ready..."
             until docker compose -f docker-compose.prod.yml exec -T mysql mysqladmin ping -h localhost --silent; do
               echo "MySQL not ready yet, waiting 2s..."
               sleep 2
             done
             echo "✅ MySQL is ready!"
+
+            echo "🗄️  Running database migrations..."
             docker compose -f docker-compose.prod.yml exec -T app php artisan migrate --force
-            echo "✅ Deployment completed at $(date)"
+
+            echo "🧹 Clearing Laravel/Filament cache..."
+            docker compose -f docker-compose.prod.yml exec -T app php artisan optimize:clear
+            docker compose -f docker-compose.prod.yml exec -T app php artisan filament:optimize-clear
+
+            echo "✅ Deployment completed successfully at $(date)"
+            echo "📊 Container status:"
+            docker compose -f docker-compose.prod.yml ps

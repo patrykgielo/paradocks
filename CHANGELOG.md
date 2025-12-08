@@ -20,12 +20,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Filament provides authentication for admin panel (unauthenticated users redirected to login)
   - Aligns with PR #40 intent: admins should access panel during maintenance mode
   - Tested: `/admin/login` → login → `/admin` panel accessible ✅
+- **CRITICAL:** Deployment workflow not clearing OPcache
+  - Containers were not restarted after pulling new Docker images
+  - New code was deployed but old bytecode served from OPcache memory
+  - Solution: Added explicit container recreation and Laravel cache clearing to deployment workflow
+  - Impact: Future deployments will automatically apply code changes without manual intervention
 
 ### Technical Details
-- **Commits:** 1d2b22b
-- **Files Modified:** `app/Http/Middleware/CheckMaintenanceMode.php` (1 line added)
-- **Impact:** Admin can now fully access panel during maintenance mode
-- **Risk Level:** LOW (Filament handles authentication)
+- **Commits:** 1d2b22b (middleware fix), TBD (workflow fix)
+- **Files Modified:**
+  - `app/Http/Middleware/CheckMaintenanceMode.php` (1 line added)
+  - `.github/workflows/deploy-production.yml` (added cache clearing steps)
+- **Impact:** Admin can now fully access panel during maintenance mode + automatic cache clearing on deployment
+- **Risk Level:** LOW (Filament handles authentication, workflow improvement is low-risk)
 
 ## [0.5.2] - 2025-12-07
 
