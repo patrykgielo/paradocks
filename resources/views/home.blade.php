@@ -74,14 +74,16 @@
                      showDetails: false
                  }">
                 @foreach($services as $service)
-                    <div class="service-card"
+                    <article class="service-card group"
                          x-data="serviceCard()"
                          @mouseenter="hover = true"
                          @mouseleave="hover = false"
                          :class="{ 'scale-105': hover }">
 
-                        <!-- Service Image Placeholder -->
-                        <div class="relative h-48 bg-gradient-to-br from-primary-100 to-primary-200 overflow-hidden">
+                        <!-- Service Image Placeholder (Clickable) -->
+                        <a href="{{ route('service.show', $service) }}"
+                           class="block relative h-48 bg-gradient-to-br from-primary-100 to-primary-200 overflow-hidden"
+                           aria-label="Zobacz szczegóły: {{ $service->name }}">
                             <div class="absolute inset-0 flex items-center justify-center">
                                 <svg class="w-20 h-20 text-primary-600 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
@@ -90,7 +92,7 @@
 
                             <!-- Quick view badge -->
                             <div class="absolute top-4 right-4">
-                                <button @click="toggleDetails()"
+                                <button @click.prevent.stop="toggleDetails()"
                                         class="bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white transition-all"
                                         :aria-expanded="expanded"
                                         aria-label="Pokaż szczegóły usługi">
@@ -99,10 +101,16 @@
                                     </svg>
                                 </button>
                             </div>
-                        </div>
+                        </a>
 
                         <div class="p-6">
-                            <h3 class="text-xl font-bold text-gray-900 mb-3">{{ $service->name }}</h3>
+                            <!-- Clickable heading -->
+                            <a href="{{ route('service.show', $service) }}"
+                               class="block hover:text-primary-600 transition-colors">
+                                <h3 class="text-xl font-bold text-gray-900 mb-3 group-hover:text-primary-600">
+                                    {{ $service->name }}
+                                </h3>
+                            </a>
 
                             <!-- Service details with expand/collapse -->
                             <div x-show="!expanded">
@@ -126,21 +134,27 @@
                                 </div>
                             </div>
 
-                            @auth
-                                <a href="{{ route('booking.create', $service) }}"
-                                   class="btn btn-primary w-full"
-                                   aria-label="Zarezerwuj {{ $service->name }}">
-                                    Zarezerwuj Termin
+                            <!-- Action buttons -->
+                            <div class="space-y-2">
+                                <a href="{{ route('service.show', $service) }}"
+                                   class="btn btn-secondary w-full flex items-center justify-center gap-2"
+                                   aria-label="Zobacz szczegóły: {{ $service->name }}">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                    Zobacz Szczegóły
                                 </a>
-                            @else
-                                <a href="{{ route('login') }}"
-                                   class="btn btn-secondary w-full"
-                                   aria-label="Zaloguj się, aby zarezerwować {{ $service->name }}">
-                                    Zaloguj się, aby zarezerwować
-                                </a>
-                            @endauth
+                                @auth
+                                    <a href="{{ route('booking.create', $service) }}"
+                                       class="btn btn-primary w-full"
+                                       aria-label="Zarezerwuj {{ $service->name }}">
+                                        Zarezerwuj Termin
+                                    </a>
+                                @endauth
+                            </div>
                         </div>
-                    </div>
+                    </article>
                 @endforeach
             </div>
         @endif

@@ -6,6 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'Laravel') }} - System Rezerwacji</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @stack('head')
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
     @php($contact = app(\App\Support\Settings\SettingsManager::class)->contactInformation())
