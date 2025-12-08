@@ -144,4 +144,12 @@ class Service extends Model
 
         return ! empty($parts) ? implode(', ', $parts) : '0 min';
     }
+
+    /**
+     * Alias for formatted_duration (used in Blade templates)
+     */
+    public function getDurationDisplayAttribute(): string
+    {
+        return $this->formatted_duration;
+    }
 }
