@@ -229,7 +229,11 @@ class ServiceResource extends Resource
                                             ->label('URL YouTube lub Vimeo')
                                             ->url()
                                             ->required()
-                                            ->helperText('np. https://www.youtube.com/watch?v=...'),
+                                            ->regex('%^https://(www\.youtube\.com/embed/|player\.vimeo\.com/video/)%')
+                                            ->helperText('Tylko YouTube embed (https://www.youtube.com/embed/...) lub Vimeo player (https://player.vimeo.com/video/...)')
+                                            ->validationMessages([
+                                                'regex' => 'URL musi być w formacie YouTube embed lub Vimeo player. Użyj "Udostępnij" → "Embed" aby uzyskać poprawny link.',
+                                            ]),
 
                                         Forms\Components\TextInput::make('caption')
                                             ->label('Podpis')

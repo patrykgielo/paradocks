@@ -135,15 +135,31 @@
 
                 @elseif($block['type'] === 'video')
                     <div class="mb-8">
-                        <div class="aspect-w-16 aspect-h-9">
-                            <iframe src="{{ $block['data']['url'] }}"
-                                    frameborder="0"
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                    allowfullscreen
-                                    class="w-full h-96 rounded-lg"></iframe>
-                        </div>
-                        @if(!empty($block['data']['caption']))
-                            <p class="text-sm text-gray-600 text-center mt-2">{{ $block['data']['caption'] }}</p>
+                        @php
+                            $videoUrl = $block['data']['url'] ?? '';
+                            // Security: Only allow YouTube embed and Vimeo player URLs
+                            $isValidVideo = preg_match('%^https://(www\.youtube\.com/embed/|player\.vimeo\.com/video/)%', $videoUrl);
+                        @endphp
+
+                        @if($isValidVideo)
+                            <div class="aspect-w-16 aspect-h-9">
+                                <iframe src="{{ $videoUrl }}"
+                                        frameborder="0"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        allowfullscreen
+                                        class="w-full h-96 rounded-lg"></iframe>
+                            </div>
+                            @if(!empty($block['data']['caption']))
+                                <p class="text-sm text-gray-600 text-center mt-2">{{ $block['data']['caption'] }}</p>
+                            @endif
+                        @else
+                            <div class="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+                                <svg class="w-12 h-12 text-red-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                </svg>
+                                <p class="text-red-700 font-semibold">Nieprawidłowy URL wideo</p>
+                                <p class="text-red-600 text-sm mt-2">Dozwolone tylko linki z YouTube (embed) i Vimeo (player)</p>
+                            </div>
                         @endif
                     </div>
 

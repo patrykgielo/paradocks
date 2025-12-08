@@ -59,9 +59,11 @@ Route::get('/aktualnosci/{slug}', [PostController::class, 'show'])->name('post.s
 Route::get('/promocje/{slug}', [PromotionController::class, 'show'])->name('promotion.show');
 Route::get('/portfolio/{slug}', [PortfolioController::class, 'show'])->name('portfolio.show');
 
-// Service Pages routes (P0: SEO-friendly Polish URLs)
-Route::get('/uslugi', [ServiceController::class, 'index'])->name('services.index');
-Route::get('/uslugi/{service:slug}', [ServiceController::class, 'show'])->name('service.show');
+// Service Pages routes (P0: SEO-friendly Polish URLs with rate limiting)
+Route::middleware('throttle:60,1')->group(function () {
+    Route::get('/uslugi', [ServiceController::class, 'index'])->name('services.index');
+    Route::get('/uslugi/{service:slug}', [ServiceController::class, 'show'])->name('service.show');
+});
 
 // Authentication routes
 Auth::routes();
