@@ -83,6 +83,7 @@ class CheckMaintenanceMode
         $authRoutes = [
             'login',
             'admin/login',
+            'admin/*',  // Allow all admin panel routes (Filament handles auth)
             'register',
             'password/reset',
             'password/email',
