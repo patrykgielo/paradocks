@@ -164,6 +164,42 @@ docker compose down
 
 **See:** [Docker Guide](app/docs/guides/docker.md)
 
+## Docker User Model ⚠️ CRITICAL
+
+**Container User:** `laravel:laravel` (UID 1000, GID 1000)
+**NOT www-data!** This is a common mistake that causes restart loops.
+
+### Common Mistake That Causes Production Outages:
+
+```bash
+# ❌ WRONG - Causes container restart loop (v0.6.1 incident)!
+chown -R www-data:www-data /var/www/storage
+
+# ✅ CORRECT - Files already owned by laravel user
+echo "Storage owned by $(id -un):$(id -gn)"
+```
+
+### Why This Matters:
+
+- v0.6.1 deployment: 2-hour production outage due to user mismatch
+- Dockerfile `USER laravel` but entrypoint tried `chown www-data` (doesn't exist!)
+- Result: Container exits with code 1 → infinite restart loop → 502 Bad Gateway
+
+### Verification Commands:
+
+```bash
+# Check user inside container
+docker compose exec app whoami  # Should return: laravel
+
+# Check file ownership
+docker compose exec app ls -l /var/www/storage  # Should show: laravel laravel
+
+# Verify UID/GID
+docker compose exec app id  # Should show: uid=1000(laravel) gid=1000(laravel)
+```
+
+**See:** [ADR-013: Docker User Model](app/docs/decisions/ADR-013-docker-user-model.md)
+
 ## Filament Admin Panel
 
 **URL:** https://paradocks.local:8444/admin

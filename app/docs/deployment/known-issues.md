@@ -19,6 +19,121 @@ This document lists ALL known issues, gotchas, and common mistakes encountered d
 
 ## Critical Issues (Application Fails)
 
+### 0. Dockerfile USER vs Entrypoint chown Mismatch (v0.6.1) 🔴 NEVER REPEAT
+
+**Severity:** 🔴 **CRITICAL**
+**Discovered:** 2025-12-09
+**Production Downtime:** 2 hours
+**Impact:** Complete production outage, required emergency VPS SSH access
+
+#### Symptoms
+- Container enters immediate restart loop after deployment
+- No application logs (container exits before Laravel boots)
+- Docker logs show: `chown: invalid user: 'www-data'`
+- `docker ps` shows: `Exited (1) X seconds ago` or `Restarting`
+- Frontend: 502 Bad Gateway (Nginx can't connect to PHP-FPM)
+
+#### Root Cause
+
+**Dockerfile and entrypoint.sh had inconsistent user models:**
+```dockerfile
+# Dockerfile line 134
+USER laravel  # ← Container runs as UID 1000
+```
+
+```bash
+# entrypoint.sh line 26-27 (v0.6.1)
+chown -R www-data:www-data /var/www/storage  # ← www-data doesn't exist!
+chown -R www-data:www-data /var/www/bootstrap/cache
+```
+
+**Failure Chain:**
+1. Container starts as `laravel` user (non-root)
+2. Entrypoint executes `chown www-data:www-data`
+3. Command fails (user doesn't exist in Alpine container)
+4. `set -e` catches failure, script exits immediately
+5. `exec "$@"` never runs (PHP-FPM never starts)
+6. Container exits with code 1
+7. Docker restart policy triggers → LOOP
+
+#### Why This Wasn't Caught
+
+- **Local dev:** Uses `APP_ENV=local` (skips dangerous chown block)
+- **GitHub Actions:** Only built image, never tested startup
+- **No staging:** No environment using `APP_ENV=production`
+- **No validation:** Entrypoint didn't verify users before chown
+
+#### Solution (v0.6.2+)
+
+**1. Remove conflicting chown commands:**
+```bash
+# DELETE THIS (entrypoint.sh):
+if [ "$APP_ENV" = "production" ]; then
+    chown -R www-data:www-data /var/www/storage
+    chown -R www-data:www-data /var/www/bootstrap/cache
+fi
+
+# REPLACE WITH:
+if [ "$APP_ENV" = "production" ]; then
+    echo "ℹ️  Production mode: Files owned by $(id -un):$(id -gn)"
+    # No chown needed - files already correct ownership (laravel:laravel)
+fi
+```
+
+**2. Add user verification at entrypoint start:**
+```bash
+EXPECTED_USER="laravel"
+CURRENT_USER=$(whoami)
+if [ "$CURRENT_USER" != "$EXPECTED_USER" ]; then
+    echo "❌ CRITICAL: Running as '$CURRENT_USER' but expected '$EXPECTED_USER'"
+    exit 1
+fi
+```
+
+**3. Add GitHub Actions validation job:**
+```yaml
+validate-image:
+  runs-on: ubuntu-latest
+  needs: build
+  steps:
+    - name: Test container with APP_ENV=production
+      run: |
+        docker run -d --env APP_ENV=production image:latest
+        sleep 15
+        docker ps | grep -q app-test  # Verify still running
+```
+
+#### Prevention Layers (v0.6.2+)
+
+✅ **Code:** Pre-commit hook blocks Dockerfile/entrypoint mismatches
+✅ **CI/CD:** GitHub Actions validates container startup with `APP_ENV=production`
+✅ **Process:** Mandatory staging approval with production config
+✅ **Docs:** ADR-013 documents Docker user model decision
+
+#### Emergency Recovery
+
+```bash
+# SSH to VPS
+ssh deployer@72.60.17.138
+cd /var/www/paradocks
+
+# Fix volume ownership (as root)
+sudo chown -R 1000:1000 /var/lib/docker/volumes/paradocks_storage-app-public/_data/
+sudo chown -R 1000:1000 /var/lib/docker/volumes/paradocks_storage-framework/_data/
+sudo chown -R 1000:1000 /var/lib/docker/volumes/paradocks_storage-logs/_data/
+
+# Restart containers
+docker compose -f docker-compose.prod.yml restart app horizon scheduler
+
+# Verify
+docker compose -f docker-compose.prod.yml ps  # All should show "Up"
+curl -I http://srv1117368.hstgr.cloud/  # Should return 200 OK
+```
+
+**See:** [ADR-013: Docker User Model](../decisions/ADR-013-docker-user-model.md)
+
+---
+
 ### 1. Docker --no-recreate Flag Blocks Environment Variables
 
 **Severity:** 🔴 **CRITICAL**

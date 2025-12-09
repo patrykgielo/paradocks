@@ -112,7 +112,20 @@ RUN cp -r /var/www/public /tmp/public
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Simple user
+# CRITICAL DOCKER USER MODEL DECISION (ADR-013)
+#
+# Container runs as 'laravel:laravel' (UID 1000, GID 1000), NOT www-data!
+#
+# Rationale:
+# - UID 1000 matches typical developer's primary user (dev/prod parity)
+# - Consistent ownership in dev, staging, and production environments
+# - Non-root for security (reduces attack surface, best practice)
+# - Simplifies permission management (no chown needed in entrypoint)
+#
+# IMPORTANT: Do NOT try to chown files to www-data in entrypoint.sh!
+# Attempting to chown to non-existent user causes restart loops (v0.6.1 incident).
+#
+# See: app/docs/decisions/ADR-013-docker-user-model.md
 RUN addgroup -g 1000 laravel && \
     adduser -D -u 1000 -G laravel laravel && \
     chown -R laravel:laravel /var/www && \
