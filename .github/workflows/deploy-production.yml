@@ -71,6 +71,13 @@ jobs:
             docker compose -f docker-compose.prod.yml exec -T app php artisan optimize:clear
             docker compose -f docker-compose.prod.yml exec -T app php artisan filament:optimize-clear
 
+            echo "🔗 Creating storage symlink..."
+            docker compose -f docker-compose.prod.yml exec -T app php artisan storage:link
+
+            echo "📂 Verifying storage structure..."
+            docker compose -f docker-compose.prod.yml exec -T app ls -la public/storage || echo "⚠️  Symlink not found"
+            docker compose -f docker-compose.prod.yml exec -T app ls -la storage/app/public || echo "⚠️  Storage directory not found"
+
             echo "✅ Deployment completed successfully at $(date)"
             echo "📊 Container status:"
             docker compose -f docker-compose.prod.yml ps

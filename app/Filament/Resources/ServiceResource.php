@@ -173,10 +173,17 @@ class ServiceResource extends Resource
                                     ->schema([
                                         Forms\Components\FileUpload::make('image')
                                             ->label('Zdjęcie')
-                                            ->image()
-                                            ->required()
+                                            ->disk('public')
                                             ->directory('services/images')
-                                            ->maxSize(5120),
+                                            ->visibility('public')
+                                            ->image()
+                                            ->imageEditor()
+                                            ->required()
+                                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                                            ->maxSize(2048)
+                                            ->imageResizeMode('cover')
+                                            ->imageResizeTargetWidth('1920')
+                                            ->imageResizeTargetHeight('1080'),
 
                                         Forms\Components\TextInput::make('alt')
                                             ->label('Tekst alternatywny (ALT)')
@@ -203,13 +210,19 @@ class ServiceResource extends Resource
                                     ->schema([
                                         Forms\Components\FileUpload::make('images')
                                             ->label('Zdjęcia')
+                                            ->disk('public')
+                                            ->directory('services/galleries')
+                                            ->visibility('public')
                                             ->image()
                                             ->multiple()
                                             ->required()
-                                            ->directory('services/galleries')
-                                            ->maxSize(5120)
+                                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                                            ->maxSize(2048)
                                             ->maxFiles(20)
-                                            ->reorderable(),
+                                            ->reorderable()
+                                            ->imageResizeMode('cover')
+                                            ->imageResizeTargetWidth('1920')
+                                            ->imageResizeTargetHeight('1080'),
 
                                         Forms\Components\Select::make('columns')
                                             ->label('Liczba kolumn')
@@ -355,9 +368,16 @@ class ServiceResource extends Resource
                     ->schema([
                         Forms\Components\FileUpload::make('featured_image')
                             ->label('Zdjęcie wyróżniające')
-                            ->image()
+                            ->disk('public')
                             ->directory('services/featured')
-                            ->maxSize(5120)
+                            ->visibility('public')
+                            ->image()
+                            ->imageEditor()
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                            ->maxSize(2048)
+                            ->imageResizeMode('cover')
+                            ->imageResizeTargetWidth('1920')
+                            ->imageResizeTargetHeight('1080')
                             ->imagePreviewHeight('200'),
 
                         Forms\Components\TextInput::make('meta_title')

@@ -6,6 +6,10 @@ services:
     working_dir: /var/www
     volumes:
       - app_public:/var/www/public
+      - storage-app-public:/var/www/storage/app/public
+      - storage-app-private:/var/www/storage/app/private
+      - storage-framework:/var/www/storage/framework
+      - storage-logs:/var/www/storage/logs
     networks:
       - paradocks-prod
     environment:
@@ -56,6 +60,7 @@ services:
     volumes:
       - ./docker/nginx/app.prod.conf:/etc/nginx/conf.d/default.conf:ro
       - app_public:/var/www/public:ro
+      - storage-app-public:/var/www/storage/app/public:ro
     networks:
       - paradocks-prod
     depends_on:
@@ -127,5 +132,9 @@ networks:
 
 volumes:
   app_public:
+  storage-app-public:
+  storage-app-private:
+  storage-framework:
+  storage-logs:
   mysql_data:
   redis_data:
