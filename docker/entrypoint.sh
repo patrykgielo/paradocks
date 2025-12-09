@@ -23,10 +23,13 @@ mkdir -p /var/www/storage/logs
 # In local development, skip chown because files are owned by host user
 if [ "$APP_ENV" = "production" ]; then
     echo "🔒 Setting production permissions..."
-    chown -R www-data:www-data /var/www/storage
-    chown -R www-data:www-data /var/www/bootstrap/cache
-    chmod -R 775 /var/www/storage
-    chmod -R 775 /var/www/bootstrap/cache
+    # Try to change ownership, but don't fail if it's not possible
+    # (volumes may already exist with host user ownership)
+    chown -R www-data:www-data /var/www/storage 2>/dev/null || echo "⚠️  Could not change storage ownership (may be owned by host), continuing..."
+    chown -R www-data:www-data /var/www/bootstrap/cache 2>/dev/null || echo "⚠️  Could not change cache ownership, continuing..."
+    # Set permissions (this should work even if ownership change failed)
+    chmod -R 775 /var/www/storage 2>/dev/null || echo "⚠️  Could not set storage permissions"
+    chmod -R 775 /var/www/bootstrap/cache 2>/dev/null || echo "⚠️  Could not set cache permissions"
 else
     echo "🔓 Skipping permission changes in development (files owned by host user)"
 fi
