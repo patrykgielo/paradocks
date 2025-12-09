@@ -10,6 +10,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - (empty - ready for next changes)
 
+## [0.6.1] - 2025-12-09
+
+### Fixed
+- **CRITICAL:** File uploads disappearing after Docker container restarts
+  - Uploaded images via Filament FileUpload were lost on container restart/recreation
+  - Frontend showed 404 errors for uploaded files (e.g., `/storage/services/images/*.jpg`)
+  - Root causes:
+    1. `docker-compose.prod.yml` only mounted `/var/www/public` (storage was ephemeral)
+    2. `.env.production` had `FILESYSTEM_DISK=local` instead of `public`
+    3. Missing `php artisan storage:link` in deployment workflow
+    4. FileUpload components lacked explicit `->disk('public')` configuration
+  - Solution:
+    - Added 4 named Docker volumes: `storage-app-public`, `storage-app-private`, `storage-framework`, `storage-logs`
+    - Created `docker/entrypoint.sh` to create directories, set permissions, and run `storage:link` on container start
+    - Changed `FILESYSTEM_DISK=local` → `FILESYSTEM_DISK=public` in `.env.production`
+    - Added explicit `->disk('public')` to all Filament FileUpload components
+    - Added security validations: `->acceptedFileTypes()`, `->maxSize(2048)`, image optimization
+  - Impact: Files now persist across deployments and container restarts
+  - Architecture: Local storage with Docker named volumes (migration path to S3 available)
+
+- **CRITICAL:** CI/CD Docker cache preventing entrypoint updates
+  - GitHub Actions workflow used cached Docker layers, preventing new `entrypoint.sh` from being applied
+  - `.env.production` was not being updated on VPS during deployments
+  - Solution:
+    - Added `--no-cache` flag to Docker build step
+    - Added `--pull` flag to ensure fresh base images
+    - Added step to download `.env.production` from repo during deployment
+    - Added `docker image prune` to clean old images before pulling new ones
+    - Added verification steps to check storage structure and configuration
+  - Impact: All code/configuration changes now guaranteed to apply on deployment
+
+### Technical Details
+- **Commits:** 9a52032 (storage fix), 5f248f1 (CI/CD fix)
+- **Files Modified:**
+  - `docker-compose.prod.yml` - Added 4 named volumes, mounted in app/nginx services
+  - `docker/entrypoint.sh` - NEW FILE - Creates directories, sets permissions (production only), runs storage:link
+  - `app/Filament/Resources/ServiceResource.php` - Added `->disk('public')` + security validations to 3 FileUpload components
+  - `.env.production` - Changed `FILESYSTEM_DISK=local` → `FILESYSTEM_DISK=public`
+  - `.github/workflows/deploy-production.yml` - Added `--no-cache`, `.env` update, image cleanup, enhanced verification
+- **Testing:** Local Docker environment verified - storage directories created, symlink exists, containers running stable
+- **Security:** Added MIME validation, file size limits (2MB), image optimization, hash-based filenames
+- **Risk Level:** MEDIUM (requires full Docker rebuild, but thoroughly tested locally)
+
 ## [0.5.3] - 2025-12-08
 
 ### Fixed
