@@ -3,10 +3,27 @@ set -e
 
 echo "🚀 Starting Laravel entrypoint..."
 
-# Wait for database
+# SELF-VALIDATION
+echo "🔍 Validating container configuration..."
+EXPECTED_USER="laravel"
+CURRENT_USER=$(whoami)
+if [ "$CURRENT_USER" != "$EXPECTED_USER" ]; then
+    echo "❌ CRITICAL: Running as '$CURRENT_USER' but expected '$EXPECTED_USER'"
+    exit 1
+fi
+echo "✅ Container user: $CURRENT_USER"
+
+# Wait for database with timeout
+MAX_WAIT=60
+WAIT_COUNT=0
 while ! nc -z paradocks-mysql 3306; do
-    echo "⏳ Waiting for database..."
-    sleep 1
+    if [ $WAIT_COUNT -ge $MAX_WAIT ]; then
+        echo "❌ Database timeout after ${MAX_WAIT}s"
+        exit 1
+    fi
+    echo "⏳ Waiting for database... ($WAIT_COUNT/$MAX_WAIT)"
+    sleep 2
+    WAIT_COUNT=$((WAIT_COUNT + 2))
 done
 echo "✅ Database ready!"
 
@@ -19,16 +36,13 @@ mkdir -p /var/www/storage/app/public/avatars
 mkdir -p /var/www/storage/framework/{cache,sessions,views}
 mkdir -p /var/www/storage/logs
 
-# Set proper permissions (only in production where volumes aren't mounted from host)
-# In local development, skip chown because files are owned by host user
+# Production vs Development mode
 if [ "$APP_ENV" = "production" ]; then
-    echo "🔒 Setting production permissions..."
-    chown -R www-data:www-data /var/www/storage
-    chown -R www-data:www-data /var/www/bootstrap/cache
-    chmod -R 775 /var/www/storage
-    chmod -R 775 /var/www/bootstrap/cache
+    echo "ℹ️  Production mode: Files owned by $(id -un):$(id -gn)"
+    # No chown needed - files already have correct ownership (laravel:laravel)
+    # Docker volumes created with correct UID/GID (1000:1000)
 else
-    echo "🔓 Skipping permission changes in development (files owned by host user)"
+    echo "🔓 Development mode: Files owned by host user"
 fi
 
 # Create storage symlink if it doesn't exist
@@ -42,7 +56,10 @@ fi
 # Production optimizations
 if [ "$APP_ENV" = "production" ]; then
     echo "🗄️ Running migrations..."
-    php artisan migrate --force
+    php artisan migrate --force || {
+        echo "⚠️  Migrations failed - container will start anyway"
+        echo "   Check logs: docker compose -f docker-compose.prod.yml logs app"
+    }
 
     echo "🧹 Optimizing application..."
     php artisan config:cache
