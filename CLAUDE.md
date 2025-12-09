@@ -164,6 +164,35 @@ docker compose down
 
 **See:** [Docker Guide](app/docs/guides/docker.md)
 
+## SSL/HTTPS Configuration ✅ PRODUCTION
+
+**Production URL:** https://srv1117368.hstgr.cloud (HTTP auto-redirects to HTTPS)
+**SSL Certificate:** Let's Encrypt (expires 2026-03-09, auto-renews at 60 days)
+**Renewal:** Automated via systemd timer (runs twice daily)
+
+### Certificate Management
+
+```bash
+# Check certificate status
+ssh root@72.60.17.138 "certbot certificates"
+
+# Check renewal timer
+ssh root@72.60.17.138 "systemctl status snap.certbot.renew.timer"
+
+# Manual renewal (if needed)
+ssh root@72.60.17.138 "certbot renew --cert-name srv1117368.hstgr.cloud"
+```
+
+### SSL Features
+- **TLS**: 1.2, 1.3 (modern browsers only)
+- **HTTP/2**: Enabled
+- **HSTS**: Enabled (1 year, includeSubDomains)
+- **Security Headers**: X-Frame-Options, X-Content-Type-Options, X-XSS-Protection
+
+**See:** [ADR-014: SSL/HTTPS Configuration](app/docs/deployment/ADR-014-ssl-https-configuration.md)
+
+---
+
 ## Docker User Model ⚠️ CRITICAL
 
 **Container User:** `laravel:laravel` (UID 1000, GID 1000)

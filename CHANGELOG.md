@@ -10,6 +10,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - (empty - ready for next changes)
 
+## [0.6.3] - 2025-12-09
+
+### Added
+- **SSL/HTTPS Support** - Production now runs on HTTPS with Let's Encrypt
+  - Implemented SSL/HTTPS with Let's Encrypt certificate (expires 2026-03-09)
+  - Configured Nginx with TLS 1.2 + 1.3, HTTP/2, security headers
+  - Added automatic certificate renewal (systemd timer, webroot authenticator)
+  - HTTP traffic automatically redirects to HTTPS (301 permanent)
+  - Security headers: HSTS (1 year), X-Frame-Options, X-Content-Type-Options, X-XSS-Protection
+  - Fixed Filament file upload preview (ERR_CONNECTION_REFUSED on storage images)
+  - Documentation: ADR-014 SSL/HTTPS Configuration
+
+### Fixed
+- Filament admin panel file uploads now work correctly via HTTPS
+- Storage images accessible through HTTPS URLs
+
+### Technical Details
+- **Commits:** 18b97b8 (SSL implementation), 47ecf15 (documentation)
+- **Files Modified:**
+  - `docker/nginx/app.prod.conf` - Added HTTPS server block, SSL config, HTTP redirect
+  - `docker-compose.prod.yml` - Added port 443, mounted SSL certificate volumes
+  - `app/docs/deployment/ADR-014-ssl-https-configuration.md` - Complete SSL documentation
+  - `CLAUDE.md` - Added SSL/HTTPS Configuration section
+- **Production Configuration:**
+  - Port 443 exposed with SSL/TLS 1.2 + 1.3
+  - Mozilla Intermediate cipher suite
+  - Auto-renewal: webroot method (no downtime)
+  - Renewal hook: restarts Nginx after certificate renewal
+  - Next renewal: 2026-01-08 (60 days before expiry)
+
+## [0.6.2] - 2025-12-09
+
+### Fixed
+- **CRITICAL:** Docker container restart loop (2-hour production outage)
+  - Entrypoint script tried `chown www-data:www-data` but user doesn't exist in Alpine Linux
+  - Container would fail immediately with exit code 1, triggering infinite restart loop
+  - Production showed 502 Bad Gateway (Nginx couldn't connect to PHP-FPM)
+  - Root cause: Dockerfile has `USER laravel` but entrypoint tried chown to non-existent www-data
+  - Solution:
+    - Removed dangerous `chown www-data:www-data` commands from entrypoint.sh
+    - Added self-validation to verify container runs as expected user (laravel)
+    - Added database wait timeout (60s max) to prevent infinite waiting
+    - Added graceful failure for migrations (container continues even if migrations fail)
+    - Changed production mode to informational message only (no chown operations)
+  - Documentation: ADR-013 Docker User Model
+
+### Technical Details
+- **Commits:** 694d03d (entrypoint fix), emergency VPS fixes
+- **Files Modified:**
+  - `docker/entrypoint.sh` - Complete rewrite of permission handling
+  - `Dockerfile` - Added comprehensive comments explaining user model
+  - `app/docs/decisions/ADR-013-docker-user-model.md` - NEW FILE
+  - `app/docs/deployment/known-issues.md` - Added Issue #0 (v0.6.1 incident)
+  - `CLAUDE.md` - Added Docker User Model warning section
+- **Emergency Recovery:** VPS volume ownership changed to 1000:1000 (laravel user)
+- **Prevention:** Code-level fixes prevent future user model mismatches
+
 ## [0.6.1] - 2025-12-09
 
 ### Fixed
