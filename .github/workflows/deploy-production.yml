@@ -26,6 +26,8 @@ jobs:
       - name: Build image
         run: |
           docker build \
+            --no-cache \
+            --pull \
             --tag ghcr.io/patrykgielo/paradocks:latest \
             .
 
@@ -49,7 +51,12 @@ jobs:
             curl -o docker-compose.prod.yml https://raw.githubusercontent.com/patrykgielo/paradocks/main/docker-compose.prod.yml
             echo "📥 Updating nginx config from repo..."
             curl -o docker/nginx/app.prod.conf https://raw.githubusercontent.com/patrykgielo/paradocks/main/docker/nginx/app.prod.conf
+            echo "📥 Updating .env.production from repo..."
+            curl -o .env.production https://raw.githubusercontent.com/patrykgielo/paradocks/main/.env.production
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            echo "🧹 Cleaning old Docker images to avoid cache issues..."
+            docker image prune -af --filter "until=24h" || echo "⚠️  Image cleanup skipped (non-critical)"
 
             echo "📥 Pulling latest Docker images..."
             docker compose -f docker-compose.prod.yml pull
@@ -70,6 +77,19 @@ jobs:
             echo "🧹 Clearing Laravel/Filament cache..."
             docker compose -f docker-compose.prod.yml exec -T app php artisan optimize:clear
             docker compose -f docker-compose.prod.yml exec -T app php artisan filament:optimize-clear
+
+            echo "🔗 Creating storage symlink..."
+            docker compose -f docker-compose.prod.yml exec -T app php artisan storage:link
+
+            echo "📂 Verifying storage structure..."
+            docker compose -f docker-compose.prod.yml exec -T app ls -la public/storage || echo "⚠️  Symlink not found"
+            docker compose -f docker-compose.prod.yml exec -T app ls -la storage/app/public || echo "⚠️  Storage directory not found"
+
+            echo "🔍 Verifying storage subdirectories created by entrypoint..."
+            docker compose -f docker-compose.prod.yml exec -T app ls -la storage/app/public/services/ || echo "⚠️  Services storage directories not found"
+
+            echo "🔍 Verifying FILESYSTEM_DISK configuration..."
+            docker compose -f docker-compose.prod.yml exec -T app grep "^FILESYSTEM_DISK=" .env.production || echo "⚠️  FILESYSTEM_DISK not found in .env.production"
 
             echo "✅ Deployment completed successfully at $(date)"
             echo "📊 Container status:"
