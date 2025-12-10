@@ -10,6 +10,217 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - (empty - ready for next changes)
 
+## [0.7.0] - 2025-12-10
+
+### Added
+- **Multi-Step Booking Wizard** - Complete redesign of appointment booking flow with iOS design
+  - 5-step wizard: Service Selection → Date & Time → Vehicle & Location → Contact Info → Review & Confirm
+  - Session-based state management with progress saving and restoration
+  - Progress indicator with visual step completion status
+  - Backwards-compatible redirect from old booking flow
+  - Auto-skip to step 2 when service pre-selected from service pages
+
+- **Calendar Integration** - Export appointments to multiple calendar platforms
+  - Google Calendar URL generation with pre-filled event details
+  - Outlook/Office365 Calendar URL generation
+  - iCalendar (.ics) file download for Apple Calendar, Thunderbird, etc.
+  - RFC 5545 compliant iCal format with proper escaping
+  - Automatic reminders: 24 hours and 2 hours before appointment
+  - Event metadata: location (Google Maps link), service description, duration
+
+- **Booking Statistics Service** - Real-time tracking for trust signals and analytics
+  - Daily, weekly, monthly, and total booking counters per service
+  - View count tracking (today, week)
+  - Automated stats reset via Artisan commands (daily/weekly/monthly)
+  - Integration with trust badges on service cards
+  - BookingStatsService with increment/decrement/reset methods
+
+- **iOS-Style Booking Components** - 4 new reusable booking wizard components
+  - calendar.blade.php - Flatpickr-based date picker with availability indicators
+  - time-grid.blade.php - Touch-friendly time slot selection grid
+  - bottom-sheet.blade.php - Mobile-optimized action sheet for confirmations
+  - progress-indicator.blade.php - Visual wizard step tracker with animations
+
+- **iOS UI Components Library** - 10 reusable components for consistent design
+  - auth-card.blade.php - Authentication form wrapper
+  - breadcrumbs.blade.php - Navigation breadcrumb trail
+  - checkbox.blade.php - iOS-style checkbox with animations
+  - input.blade.php - iOS-style text input with validation states
+  - service-card.blade.php - Service grid card (already added in v0.6.4)
+  - service-details.blade.php - Service detail section
+  - service-hero.blade.php - Service page hero banner
+  - star-rating.blade.php - 5-star rating display
+  - hero-banner.blade.php - Homepage hero (already added in v0.6.4)
+  - footer.blade.php - Site footer (already added in v0.6.4)
+
+- **Availability Calendar API** - Real-time slot availability checking
+  - GET /booking/unavailable-dates - Returns unavailable dates for Flatpickr
+  - GET /booking/step/{step} - Wizard step rendering with validation
+  - POST /booking/step/{step} - Wizard step data submission
+  - POST /booking/save-progress - AJAX progress saving
+  - GET /booking/restore-progress - Session restoration
+  - POST /booking/confirm - Final booking confirmation with double-availability check
+
+- **Automatic Staff Assignment** - Smart staff allocation based on availability
+  - AppointmentService::findBestAvailableStaff() - Wrapper for staff selection
+  - Integration with StaffScheduleService for calendar-based availability
+  - Conflict detection with existing appointments
+  - Respects service-staff assignments (pivot table)
+
+### Changed
+- **BookingController** - Extended with 10 new methods for wizard flow
+  - showStep() - Render wizard step with session validation
+  - storeStep() - Store step data to session with Laravel validation
+  - getAvailableSlots() - AJAX endpoint for time slot availability
+  - getUnavailableDates() - AJAX endpoint for calendar date blocking
+  - saveProgress() / restoreProgress() - Session management for wizard state
+  - confirm() - Final booking creation with race condition mitigation
+  - showConfirmation() - Display booking confirmation with calendar links
+  - downloadIcal() - Generate and serve .ics file download
+  - create() - Now redirects to wizard instead of rendering old view (backwards compatible)
+
+- **Services table schema** - Added conversion optimization and tracking fields
+  - average_rating (decimal 2,1, default 0) - For star rating display
+  - total_reviews (int, default 0) - Review count for social proof
+  - is_popular (boolean, default false) - Popular badge indicator
+  - booking_count_today / booking_count_week / booking_count_month / booking_count_total
+  - view_count_today / view_count_week - Impression tracking
+  - features (JSON, nullable) - Bullet points for service USPs
+  - stats_reset_daily / stats_reset_weekly (timestamps) - Last reset tracking
+
+- **Home page** - Updated booking CTA to redirect to wizard
+  - "Zarezerwuj Termin" button now uses route('booking.step', 1)
+  - Removed references to old appointments.create route
+  - Integrated with new booking flow
+
+- **Footer component** - Updated booking links
+  - Navigation links use new booking.step route
+  - Profile links use correct route names (profile.personal not profile.personal-info)
+
+- **SettingsManager** - Added array-to-null conversion for edge cases
+  - Handles [null] values from database (converts to null)
+  - Prevents TypeError when passing arrays to htmlspecialchars()
+
+- **CLAUDE.md** - Optimized file size by 68% (1158 lines → 485 lines)
+  - Extracted detailed feature docs to app/docs/ directory
+  - Shortened feature descriptions to 1-2 lines with doc links
+  - Reduced token usage from 40k+ to <20k
+
+### Fixed
+- RegisterController redirect - Changed /home to / (route doesn't exist)
+- Service page booking - Fixed appointments.create route (now booking.step)
+- Footer navigation - Corrected profile.personal-info → profile.personal
+- Component discovery - Moved booking-wizard components to correct directory structure
+  - From: resources/views/booking-wizard/components/
+  - To: resources/views/components/booking-wizard/
+- Migration conflicts - Added Schema::hasColumn checks in booking_tracking migration
+  - Prevents "Duplicate column" errors if run multiple times
+  - Conditional column additions for idempotent migrations
+
+### Technical Details
+- **New Services:**
+  - `app/Services/CalendarService.php` (171 lines) - Calendar integration static methods
+  - `app/Services/BookingStatsService.php` (128 lines) - Stats tracking service
+
+- **New Artisan Commands:**
+  - `booking:reset-daily-stats` - Reset daily counters (scheduled daily at midnight)
+  - `booking:reset-weekly-stats` - Reset weekly counters (scheduled Mondays at midnight)
+  - `booking:reset-monthly-stats` - Reset monthly counters (scheduled 1st of month)
+
+- **New Routes:**
+  - GET /booking/step/{step} - Wizard step views
+  - POST /booking/step/{step} - Wizard step submissions
+  - POST /booking/save-progress - AJAX progress save
+  - GET /booking/restore-progress - AJAX progress restore
+  - GET /booking/unavailable-dates - Calendar availability API
+  - POST /booking/confirm - Final booking submission
+  - GET /booking/confirmation/{appointment} - Confirmation page
+  - GET /booking/ical/{appointment} - iCalendar file download
+
+- **New Migrations:**
+  - 2025_12_09_204550_add_icon_to_services_table.php - Icon field for Heroicons
+  - 2025_12_09_224312_add_conversion_fields_to_services_table.php - Rating, reviews, features
+  - 2025_12_10_004808_add_booking_tracking_to_services_table.php - Booking/view counters
+
+- **Files Created (58 total):**
+  - 5 booking wizard step views (service, datetime, vehicle-location, contact, review)
+  - 4 booking wizard components (calendar, time-grid, bottom-sheet, progress-indicator)
+  - 10 iOS UI components (auth-card, breadcrumbs, checkbox, input, footer, etc.)
+  - 1 confirmation view (booking-wizard/confirmation.blade.php)
+  - 1 wizard layout (booking-wizard/layout.blade.php)
+  - 3 Artisan commands (ResetDaily/Weekly/MonthlyBookingStats)
+  - 2 services (CalendarService, BookingStatsService)
+  - 3 database migrations
+  - 1 Tailwind config (tailwind.config.js for Tailwind 4.0)
+  - Documentation: custom-css-tailwind.md, booking-redesign-plan.md, booking-implementation-progress.md
+
+- **Code Statistics:**
+  - 58 files changed
+  - +12,137 insertions
+  - -1,345 deletions
+  - Net impact: +10,792 lines of code
+
+- **Security:**
+  - CSRF protection on all POST routes
+  - Authorization checks on appointment confirmation/download (user ownership)
+  - Input validation with Laravel Form Requests
+  - SQL injection prevention via Eloquent ORM
+  - XSS prevention with RFC 5545 escaping in CalendarService
+  - Race condition mitigation: re-check slot availability before booking confirmation
+  - Session-based state management (no client-side data exposure)
+
+- **Dependencies:**
+  - No new Composer packages (guava/calendar already exists)
+  - composer.lock updated (2578 lines) - dependency resolution changes
+  - Tailwind CSS 4.0 configuration added (tailwind.config.js)
+
+- **Performance:**
+  - Session-based wizard state (no database writes until final confirmation)
+  - Cached availability lookups via AppointmentService
+  - Lazy loading of calendar JavaScript (only on booking pages)
+  - GPU-accelerated animations (transform, opacity)
+
+- **Accessibility:**
+  - Touch targets ≥44px (iOS Human Interface Guidelines)
+  - Keyboard navigation support in time grid
+  - Screen reader labels on all form inputs
+  - High contrast ratio (WCAG AA compliant)
+  - Reduced motion support (prefers-reduced-motion media query)
+
+- **Browser Compatibility:**
+  - Modern browsers (Chrome 90+, Firefox 88+, Safari 14+, Edge 90+)
+  - Progressive enhancement (graceful degradation for older browsers)
+  - CSS Grid with fallback layouts
+  - Intersection Observer with polyfill considerations
+
+### Deployment Notes
+- **Database Migrations:** Run `php artisan migrate` (3 migrations, ~60s downtime)
+- **Asset Build:** Run `npm run build` (Tailwind 4.0 config changes)
+- **Cache Clear:** Run `php artisan optimize:clear` after deployment
+- **Cron Jobs:** Add to app/Console/Kernel.php:
+  ```php
+  $schedule->command('booking:reset-daily-stats')->daily();
+  $schedule->command('booking:reset-weekly-stats')->weekly();
+  $schedule->command('booking:reset-monthly-stats')->monthly();
+  ```
+- **Backwards Compatibility:** Old booking flow redirects to wizard (zero breaking changes)
+- **Rollback Plan:** Revert migrations with `php artisan migrate:rollback --step=3`
+
+### Breaking Changes
+- **NONE** - All changes are additive or backwards-compatible
+- Old route `/services/{service}/book` redirects to new wizard
+- Session structure expanded but transparent to users
+
+### Known Issues
+- Stats counters require cron setup (manual reset if not configured)
+- iCal file download requires authentication (no guest bookings supported)
+
+### Future Improvements
+- Rate limiting on booking endpoints (VULN-001 - Week 1)
+- Audit logging for booking events (VULN-002 - Week 1)
+- Cache unavailable dates for performance (Month 1)
+- AppointmentPolicy for cleaner authorization (Month 1)
+
 ## [0.6.4] - 2025-12-09
 
 ### Added
