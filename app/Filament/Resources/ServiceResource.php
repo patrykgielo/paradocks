@@ -404,6 +404,59 @@ class ServiceResource extends Resource
                     ])
                     ->columns(2)
                     ->collapsed(),
+
+                // Sekcja 5: Conversion Optimization
+                Section::make('Optymalizacja konwersji')
+                    ->description('Social proof, popularność i wskaźniki pilności dla zwiększenia konwersji')
+                    ->schema([
+                        Grid::make(3)
+                            ->schema([
+                                Forms\Components\TextInput::make('average_rating')
+                                    ->label('Średnia ocena')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->maxValue(5)
+                                    ->step(0.1)
+                                    ->suffix('★')
+                                    ->default(0)
+                                    ->helperText('Ocena 0-5 gwiazdek'),
+
+                                Forms\Components\TextInput::make('total_reviews')
+                                    ->label('Liczba opinii')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->default(0)
+                                    ->helperText('Całkowita liczba opinii'),
+
+                                Forms\Components\Toggle::make('is_popular')
+                                    ->label('Usługa popularna')
+                                    ->helperText('Pokaż badge "Najpopularniejsze"')
+                                    ->default(false),
+                            ]),
+
+                        Forms\Components\TextInput::make('booking_count_week')
+                            ->label('Rezerwacje w tym tygodniu')
+                            ->numeric()
+                            ->minValue(0)
+                            ->helperText('Dla wiadomości pilności: "Zarezerwowano X razy w tym tygodniu"')
+                            ->default(0),
+
+                        Forms\Components\Repeater::make('features')
+                            ->label('Co zawiera usługa')
+                            ->simple(
+                                Forms\Components\TextInput::make('feature')
+                                    ->label('Cecha')
+                                    ->required()
+                                    ->maxLength(100)
+                            )
+                            ->minItems(0)
+                            ->maxItems(4)
+                            ->helperText('3-4 punkty wyświetlane na karcie usługi z ikonami checkmark')
+                            ->columnSpanFull()
+                            ->defaultItems(0),
+                    ])
+                    ->columns(2)
+                    ->collapsed(),
             ]);
     }
 

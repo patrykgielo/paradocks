@@ -10,6 +10,83 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - (empty - ready for next changes)
 
+## [0.6.4] - 2025-12-09
+
+### Added
+- **iOS-Style Homepage Redesign** - Complete frontend overhaul with iOS design language
+  - Hero banner component with animated gradient background (Apple.com/App Store style)
+  - Service card components with Heroicon integration and gradient icon containers
+  - Footer component with 4-column responsive layout (logo, quick links, company info, legal)
+  - iOS spring animations using cubic-bezier(0.36, 0.66, 0.04, 1) timing function
+  - Scroll-triggered fade-in animations using Intersection Observer API
+  - Smooth scroll behavior with reduced motion accessibility support
+  - Trust badges section with customer rating, quality guarantee, and fast service indicators
+
+- **DaisyUI v4.x Integration** - Component library installed with custom iOS theme
+  - iOS color palette (Primary #007AFF, Success #34C759, Warning #FF9500, Error #FF3B30)
+  - Custom theme configuration matching design-system.json tokens
+  - 24px rounded cards, pill-shaped buttons, iOS-specific spacing
+
+- **Heroicons v2.6.0** - Icon system for service tiles
+  - 8 service icon mappings (sparkles, rectangle-stack, paint-brush, sun, squares-plus, swatch, beaker, shield-check)
+  - Gradient icon backgrounds with 8 color variants
+  - Icon rotation (3deg) and scale (1.1x) on hover
+
+- **Component Registry Updates** - New "marketing" category
+  - ios-hero-banner component (v1.0.0, stable)
+  - ios-service-card component (v1.0.0, stable)
+  - ios-footer component (v1.0.0, stable)
+
+### Changed
+- **Services table schema** - Added icon field for Heroicon mapping
+  - New nullable varchar(50) column for icon storage
+  - All 8 services seeded with appropriate icon values
+  - ServiceSeeder updated with icon mappings
+
+- **Homepage (home.blade.php)** - Complete rewrite using iOS components
+  - Replaced custom HTML/CSS with Blade component usage
+  - Removed 151 lines of custom markup
+  - Integrated with marketing content from SettingsManager
+  - Conditional authentication logic for CTAs
+
+### Fixed
+- Missing serviceCard() Alpine.js function causing console errors
+- Undefined CSS classes removed (.hero-gradient, .service-card, .container-custom, .trust-badge)
+- Animation performance optimized with GPU-accelerated properties (transform, opacity)
+
+### Technical Details
+- **Files Created:**
+  - `resources/views/components/ios/hero-banner.blade.php` - Hero banner component
+  - `resources/views/components/ios/service-card.blade.php` - Service card component
+  - `resources/views/components/ios/footer.blade.php` - Footer component
+  - `database/migrations/2025_12_09_204550_add_icon_to_services_table.php` - Icon field migration
+  - `tailwind.config.js` - DaisyUI configuration (Tailwind 4.0 compatibility)
+
+- **Files Modified:**
+  - `component-registry.json` - Added 3 iOS components + marketing category
+  - `database/seeders/ServiceSeeder.php` - Added icon field to all services
+  - `resources/js/app.js` - Added Alpine.js serviceCard() component + Intersection Observer
+  - `resources/css/app.css` - Added iOS animations + smooth scroll behavior
+  - `resources/views/home.blade.php` - Complete rewrite (242 lines → 91 lines)
+  - `package.json` - Added daisyui@latest dev dependency
+  - `composer.json` - Added blade-ui-kit/blade-heroicons v2.6
+
+- **Dependencies Added:**
+  - `daisyui@^4.12.23` (devDependencies)
+  - `blade-ui-kit/blade-heroicons@^2.6.0` (require)
+
+- **Design System:**
+  - 135 CSS variables from design-system.json
+  - iOS-compliant touch targets (≥44px)
+  - Mobile-first responsive grid (1 col → 2-3 desktop)
+  - Reduced motion accessibility support
+
+- **Animation Performance:**
+  - GPU-accelerated animations (60fps target)
+  - Intersection Observer for scroll-triggered effects
+  - Staggered delays (0.1s increments) for card animations
+  - Respects prefers-reduced-motion media query
+
 ## [0.6.3] - 2025-12-09
 
 ### Added
