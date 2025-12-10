@@ -30,6 +30,12 @@ class Service extends Model
         // P0 fields
         'price_from',
         'area_served',
+        // Conversion optimization fields
+        'average_rating',
+        'total_reviews',
+        'is_popular',
+        'booking_count_week',
+        'features',
     ];
 
     protected $casts = [
@@ -39,6 +45,12 @@ class Service extends Model
         'duration_minutes' => 'integer',
         'content' => 'array',
         'published_at' => 'datetime',
+        // Conversion optimization fields
+        'average_rating' => 'decimal:1',
+        'total_reviews' => 'integer',
+        'is_popular' => 'boolean',
+        'booking_count_week' => 'integer',
+        'features' => 'array',
     ];
 
     // Relationships

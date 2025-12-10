@@ -58,63 +58,38 @@
         </div>
     </nav>
 
-    <!-- Main Content -->
-    <main class="flex-1 container mx-auto px-4 py-8">
-        @if (session('success'))
-            <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 rounded">
-                {{ session('success') }}
-            </div>
-        @endif
+    <!-- Main Content (Full Width - sections control their own containers) -->
+    <main class="flex-1">
+        {{-- Flash Messages Container --}}
+        <div class="container mx-auto px-4 py-8">
+            @if (session('success'))
+                <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 rounded">
+                    {{ session('success') }}
+                </div>
+            @endif
 
-        @if (session('error'))
-            <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded">
-                {{ session('error') }}
-            </div>
-        @endif
+            @if (session('error'))
+                <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded">
+                    {{ session('error') }}
+                </div>
+            @endif
 
-        @if ($errors->any())
-            <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded">
-                <ul class="list-disc list-inside">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
+            @if ($errors->any())
+                <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded">
+                    <ul class="list-disc list-inside">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+        </div>
 
         @yield('content')
     </main>
 
-    <!-- Footer -->
-    <footer class="bg-gray-800 text-white mt-12">
-        <div class="container mx-auto px-4 py-8">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div>
-                    <h3 class="text-lg font-bold mb-4">{{ config('app.name') }}</h3>
-                    <p class="text-gray-400">System rezerwacji wizyt online</p>
-                </div>
-                <div>
-                    <h3 class="text-lg font-bold mb-4">Kontakt</h3>
-                    <p class="text-gray-400">Email: {{ $contact['email'] ?? 'kontakt@example.com' }}</p>
-                    <p class="text-gray-400">Tel: {{ $contact['phone'] ?? '+48 123 456 789' }}</p>
-                    <p class="text-gray-400">{{ $contact['address_line'] ?? 'ul. Przykładowa 1' }}</p>
-                    <p class="text-gray-400">{{ trim(($contact['postal_code'] ?? '') . ' ' . ($contact['city'] ?? '')) }}</p>
-                </div>
-                <div>
-                    <h3 class="text-lg font-bold mb-4">Linki</h3>
-                    <ul class="space-y-2 text-gray-400">
-                        <li><a href="{{ route('home') }}" class="hover:text-white">Strona główna</a></li>
-                        @auth
-                            <li><a href="{{ route('appointments.index') }}" class="hover:text-white">Moje wizyty</a></li>
-                        @endauth
-                    </ul>
-                </div>
-            </div>
-            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
-                <p>&copy; {{ date('Y') }} {{ config('app.name') }}. Wszystkie prawa zastrzeżone.</p>
-            </div>
-        </div>
-    </footer>
+    <!-- Footer (iOS Component) -->
+    <x-ios.footer />
 
     @stack('scripts')
 </body>
