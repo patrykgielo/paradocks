@@ -53,6 +53,19 @@ else
     echo "✅ Storage symlink already exists"
 fi
 
+# Copy fresh build assets from image to public volume (if newer)
+if [ -d /tmp/public/build ]; then
+    if [ ! -d /var/www/public/build ] || [ /tmp/public/build -nt /var/www/public/build ]; then
+        echo "📦 Updating frontend assets from image..."
+        cp -r /tmp/public/build /var/www/public/
+        echo "✅ Frontend assets updated"
+    else
+        echo "✅ Frontend assets already up to date"
+    fi
+else
+    echo "⚠️  No build assets found in image"
+fi
+
 # Production optimizations
 if [ "$APP_ENV" = "production" ]; then
     echo "🗄️ Running migrations..."
