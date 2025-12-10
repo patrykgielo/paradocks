@@ -1,47 +1,54 @@
-@extends('layouts.app')
+<x-ios.auth-card
+    title="Zapomniałeś hasła?"
+    subtitle="Wprowadź adres e-mail, a my wyślemy link resetujący"
+    gradient="from-indigo-600 via-blue-600 to-sky-600"
+>
+    {{-- Success Alert --}}
+    @if (session('status'))
+        <x-ios.alert
+            type="success"
+            :message="session('status')"
+            dismissible
+            class="mb-6"
+        />
+    @endif
 
-@section('content')
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">{{ __('Reset Password') }}</div>
+    <form method="POST" action="{{ route('password.email') }}" class="space-y-6">
+        @csrf
 
-                <div class="card-body">
-                    @if (session('status'))
-                        <div class="alert alert-success" role="alert">
-                            {{ session('status') }}
-                        </div>
-                    @endif
+        {{-- Email Address --}}
+        <x-ios.input
+            type="email"
+            name="email"
+            label="Adres e-mail"
+            placeholder="twoj@email.pl"
+            :value="old('email')"
+            icon="envelope"
+            helpText="Wprowadź adres e-mail powiązany z Twoim kontem"
+            required
+            autofocus
+            autocomplete="email"
+        />
 
-                    <form method="POST" action="{{ route('password.email') }}">
-                        @csrf
+        {{-- Submit Button --}}
+        <x-ios.button
+            type="submit"
+            variant="primary"
+            label="Wyślij link resetujący"
+            icon="paper-airplane"
+            iconPosition="right"
+            fullWidth
+        />
 
-                        <div class="row mb-3">
-                            <label for="email" class="col-md-4 col-form-label text-md-end">{{ __('Email Address') }}</label>
-
-                            <div class="col-md-6">
-                                <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus>
-
-                                @error('email')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="row mb-0">
-                            <div class="col-md-6 offset-md-4">
-                                <button type="submit" class="btn btn-primary">
-                                    {{ __('Send Password Reset Link') }}
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
+        {{-- Back to Login Link --}}
+        <div class="text-center mt-4">
+            <x-ios.button
+                variant="ghost"
+                href="{{ route('login') }}"
+                label="Pamiętasz hasło? Zaloguj się"
+                icon="arrow-left"
+                iconPosition="left"
+            />
         </div>
-    </div>
-</div>
-@endsection
+    </form>
+</x-ios.auth-card>
