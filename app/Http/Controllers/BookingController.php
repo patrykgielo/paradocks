@@ -373,6 +373,35 @@ class BookingController extends Controller
                 ->with('error', 'Brak dostępnego pracownika. Wybierz inny termin.');
         }
 
+        // Update customer profile - only fill empty fields to avoid overwriting existing data
+        $user = auth()->user();
+        $profileUpdates = [];
+
+        // Map wizard field names to user model fields
+        $phoneField = $booking['phone'] ?? null;
+        if ($phoneField) {
+            // Convert phone to E.164 format if needed
+            $phoneE164 = str_starts_with($phoneField, '+') ? $phoneField : '+48'.preg_replace('/\D/', '', $phoneField);
+        }
+
+        if (empty($user->first_name) && ! empty($booking['first_name'])) {
+            $profileUpdates['first_name'] = $booking['first_name'];
+        }
+        if (empty($user->last_name) && ! empty($booking['last_name'])) {
+            $profileUpdates['last_name'] = $booking['last_name'];
+        }
+        if (empty($user->phone_e164) && ! empty($phoneE164)) {
+            $profileUpdates['phone_e164'] = $phoneE164;
+        }
+
+        // Extract address fields from location_address (optional)
+        // The wizard uses Google Maps autocomplete which provides full address
+        // For now, we'll skip individual address field parsing since they're not in wizard form
+
+        if (! empty($profileUpdates)) {
+            $user->update($profileUpdates);
+        }
+
         // Create appointment
         $appointment = Appointment::create([
             'user_id' => auth()->id(),
