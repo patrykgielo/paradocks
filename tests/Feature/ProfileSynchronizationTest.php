@@ -110,17 +110,15 @@ class ProfileSynchronizationTest extends TestCase
     }
 
     /** @test */
-    public function booking_page_displays_empty_form_for_new_user()
+    public function booking_create_redirects_to_wizard()
     {
+        // v0.7.0+: booking.create is deprecated and redirects to new wizard
         $response = $this->actingAs($this->user)
             ->get(route('booking.create', $this->service));
 
-        $response->assertStatus(200);
-        $response->assertViewHas('user', function ($user) {
-            return $user->id === $this->user->id
-                && empty($user->first_name)
-                && empty($user->last_name);
-        });
+        $response->assertStatus(302);
+        $response->assertRedirect(route('booking.step', 1));
+        $this->assertEquals($this->service->id, session('booking.service_id'));
     }
 
     /** @test */
@@ -134,11 +132,14 @@ class ProfileSynchronizationTest extends TestCase
         $response->assertSessionHasNoErrors();
         $response->assertRedirect(route('appointments.index'));
 
-        // Verify profile was updated
+        // Verify basic profile fields were updated
         $this->user->refresh();
         $this->assertEquals('Jan', $this->user->first_name);
         $this->assertEquals('Kowalski', $this->user->last_name);
         $this->assertEquals('+48501234567', $this->user->phone_e164);
+
+        // v0.7.0+: New wizard only collects Google Maps full address (not individual fields)
+        // Individual address fields only saved by old appointments.store endpoint
         $this->assertEquals('Marszałkowska', $this->user->street_name);
         $this->assertEquals('12/34', $this->user->street_number);
         $this->assertEquals('Warszawa', $this->user->city);
@@ -146,26 +147,8 @@ class ProfileSynchronizationTest extends TestCase
         $this->assertEquals('Kod do bramy: 1234', $this->user->access_notes);
     }
 
-    /** @test */
-    public function booking_page_pre_fills_form_for_returning_user()
-    {
-        // Update user profile
-        $this->user->update([
-            'first_name' => 'Jan',
-            'last_name' => 'Kowalski',
-            'phone_e164' => '+48501234567',
-            'city' => 'Warszawa',
-        ]);
-
-        $response = $this->actingAs($this->user)
-            ->get(route('booking.create', $this->service));
-
-        $response->assertStatus(200);
-        $response->assertSee('Jan', false);
-        $response->assertSee('Kowalski', false);
-        $response->assertSee('+48501234567', false);
-        $response->assertSee('Warszawa', false);
-    }
+    // Test removed in v0.7.0 - booking.create is deprecated and redirects to wizard
+    // New wizard uses multi-step flow with session state, not a single form view
 
     /** @test */
     public function second_booking_does_not_overwrite_existing_profile_data()

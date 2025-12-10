@@ -10,6 +10,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - (empty - ready for next changes)
 
+## [0.7.2] - 2025-12-10
+
+### Fixed
+- **Profile Synchronization** - Fixed missing user profile sync in booking wizard
+  - BookingController::confirm() now updates user profile fields (first_name, last_name, phone_e164) on first booking
+  - Follows "fill empty fields only" pattern to avoid overwriting existing data
+  - Syncs with same behavior as legacy AppointmentController::store()
+- **PHPUnit Configuration** - Created missing tests/Unit directory with .gitkeep
+  - Prevents "Test directory not found" error in CI/CD pipeline
+  - PHPUnit test suite now passes without configuration errors
+
+### Changed
+- **ProfileSynchronizationTest** - Updated tests for new wizard flow
+  - booking_page_displays_empty_form_for_new_user() → booking_create_redirects_to_wizard()
+  - Now correctly tests 302 redirect instead of expecting 200 status
+  - Removed deprecated test for booking form pre-fill (wizard uses session state)
+  - Added comments explaining wizard vs. old form behavior differences
+
+## [0.7.1] - 2025-12-10
+
+### Fixed
+- **Docker Asset Deployment** - Auto-copy fresh build assets from image to volume on container startup
+  - Modified docker/entrypoint.sh to check timestamp and copy /tmp/public/build → /var/www/public/build
+  - Prevents stale assets when volume persists old build between deployments
+  - Resolves issue where CSS/JS assets weren't loading after v0.7.0 deployment
+
 ## [0.7.0] - 2025-12-10
 
 ### Added
