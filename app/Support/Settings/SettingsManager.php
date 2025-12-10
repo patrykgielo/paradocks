@@ -154,6 +154,11 @@ class SettingsManager
                     $value = $value[0];
                 }
 
+                // If still an array after unwrap, convert to null (happens with [null] values)
+                if (is_array($value)) {
+                    $value = null;
+                }
+
                 $result[$setting->key] = $value;
             }
 

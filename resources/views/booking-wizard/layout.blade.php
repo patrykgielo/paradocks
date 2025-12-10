@@ -26,10 +26,10 @@
     </div>
 
     {{-- Progress Indicator --}}
-    @include('booking-wizard.components.progress-indicator', [
-        'currentStep' => $currentStep ?? 1,
-        'totalSteps' => 5
-    ])
+    <x-booking-wizard.progress-indicator
+        :current-step="$currentStep ?? 1"
+        :total-steps="5"
+    />
 
     {{-- Main Content Area --}}
     <div class="booking-wizard__content container mx-auto px-4 py-8">

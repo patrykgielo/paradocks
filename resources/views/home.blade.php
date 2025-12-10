@@ -162,7 +162,7 @@
 
             <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 @auth
-                    <a href="{{ route('appointments.create') }}"
+                    <a href="{{ route('booking.step', 1) }}"
                        class="px-10 py-5 bg-white text-gray-900 font-semibold text-lg rounded-full
                               shadow-[0_12px_32px_rgba(0,0,0,0.2),0_0_60px_rgba(255,255,255,0.2)]
                               hover:shadow-[0_16px_40px_rgba(0,0,0,0.25),0_0_80px_rgba(255,255,255,0.25)]
