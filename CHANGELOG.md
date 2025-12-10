@@ -10,6 +10,93 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - (empty - ready for next changes)
 
+## [0.6.2] - 2025-12-10
+
+### Added
+- **iOS Component System** - Complete iOS-style design system for authentication and UI components
+  - ios-button.blade.php - Reusable button with 4 variants (primary, secondary, ghost, danger)
+  - ios-alert.blade.php - Flash message component with 4 types (success, error, warning, info)
+  - Alpine.js dismiss functionality with iOS spring animations
+  - Heroicon integration for icons
+  - Touch-friendly targets (≥44x44px)
+  - Loading state support for buttons
+
+- **Authentication Pages Redesign** - Complete iOS-style redesign of 6 password-related pages
+  - auth/passwords/email.blade.php - Forgot password (EN → PL)
+  - auth/passwords/reset.blade.php - Reset password (EN → PL)
+  - auth/passwords/confirm.blade.php - Password confirmation (EN → PL)
+  - auth/passwords/setup.blade.php - First-time setup (Bootstrap → iOS)
+  - auth/passwords/token-expired.blade.php - Expired link (Bootstrap → iOS)
+  - auth/verify.blade.php - Email verification (EN → PL)
+
+- **Gradient Theme System** - 8 unique gradient themes for psychological associations
+  - Login: Blue-Purple-Indigo (default auth)
+  - Register: Green-Teal-Blue (sign up)
+  - Forgot Password: Indigo-Blue-Sky (help/info)
+  - Reset Password: Purple-Indigo-Blue (secure/important)
+  - Confirm Password: Yellow-Orange-Red (warning)
+  - Setup: Green-Emerald-Teal (new start)
+  - Token Expired: Red-Orange-Yellow (error)
+  - Verify: Teal-Cyan-Blue (trust)
+
+- **iOS Animation System** - Complete animation framework in app.css
+  - Spring animation: cubic-bezier(0.36, 0.66, 0.04, 1)
+  - Fade-in-up with staggered delays (0ms, 200ms, 400ms, 600ms)
+  - Blob animation for gradient orbs (10s infinite)
+  - Reduced motion support (@media prefers-reduced-motion)
+
+- **Documentation** - Comprehensive iOS Component System documentation
+  - docs/features/ios-component-system/README.md - Complete component API reference
+  - Component usage examples for all variants
+  - Animation system documentation
+  - Accessibility guidelines (WCAG AA)
+  - Integration guides (Livewire, validation)
+
+### Changed
+- **Polish Translations** - All auth pages now use natural Polish
+  - "Zapomniałeś hasła?" (informal, user-friendly)
+  - "Zresetuj hasło" (imperative mood)
+  - "Potwierdź hasło" (clear action)
+  - "Zweryfikuj adres e-mail" (formal where appropriate)
+  - Grammatically correct, no machine translation artifacts
+
+- **Component Architecture** - Migrated from inline Tailwind to reusable components
+  - Bootstrap alerts → ios-alert component
+  - Bootstrap buttons → ios-button component
+  - Consistent iOS-style across all auth pages
+  - DRY principle: 2 components reused across 6 pages
+
+### Fixed
+- **Touch Targets** - All buttons now meet iOS HIG minimum (44x44px)
+- **Form Validation** - ios-input component auto-displays Laravel validation errors
+- **Mobile Zoom Prevention** - Input font-size: 16px prevents iOS zoom on focus
+
+### Improved
+- **Accessibility (WCAG AA)**
+  - Semantic HTML throughout (form, button, label)
+  - ARIA attributes (role="alert" on alerts)
+  - Keyboard navigation support
+  - Screen reader compatibility
+  - High color contrast (white on dark gradients)
+  - Focus indicators (ring-2, ring-offset-2)
+
+- **User Experience**
+  - Glassmorphism effects (backdrop-blur-xl, bg-white/95)
+  - Animated gradient orbs (iOS 17 style, 3 blobs)
+  - Noise texture overlay (App Store style)
+  - Dismissible alerts with Alpine.js
+  - Loading states on buttons
+  - Icon support (Heroicons) with proper spacing
+
+### Technical
+- **Quality Standard:** Premium iOS-style design - Matches homepage/service pages quality
+- **Agents Used:**
+  - frontend-ui-architect - Auth pages exploration
+  - daisyui-ios-component-architect - Component design
+  - design-system-guardian - Design token validation
+- **Files Changed:** 8 files (2 created, 6 modified)
+- **Implementation Time:** 10 hours (as estimated in plan)
+
 ## [0.7.2] - 2025-12-10
 
 ### Fixed

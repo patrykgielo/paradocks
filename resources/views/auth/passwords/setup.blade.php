@@ -1,76 +1,76 @@
-@extends('layouts.app')
+<x-ios.auth-card
+    title="Witaj w Paradocks!"
+    subtitle="Ustaw hasło aby aktywować swoje konto"
+    gradient="from-green-600 via-emerald-600 to-teal-600"
+>
+    {{-- Info Alert --}}
+    <x-ios.alert
+        type="info"
+        message="Administrator utworzył dla Ciebie konto. Aby się zalogować, ustaw swoje hasło."
+        class="mb-6"
+    />
 
-@section('content')
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">Ustaw swoje hasło</div>
+    {{-- Token Error Alert --}}
+    @error('token')
+        <x-ios.alert
+            type="error"
+            title="Błąd"
+            :message="$message"
+            dismissible
+            class="mb-6"
+        />
+    @enderror
 
-                <div class="card-body">
-                    <p class="mb-4">
-                        Administrator utworzył dla Ciebie konto. Aby się zalogować, ustaw swoje hasło.
-                    </p>
+    <form method="POST" action="{{ route('password.setup.store') }}" class="space-y-6">
+        @csrf
 
-                    <form method="POST" action="{{ route('password.setup.store') }}">
-                        @csrf
+        <input type="hidden" name="token" value="{{ $token }}">
 
-                        <input type="hidden" name="token" value="{{ $token }}">
+        {{-- Email (disabled, readonly) --}}
+        <x-ios.input
+            type="email"
+            name="email"
+            label="Adres e-mail"
+            placeholder="{{ $email }}"
+            :value="$email"
+            icon="envelope"
+            helpText="Twój adres e-mail"
+            disabled
+            readonly
+        />
 
-                        <div class="row mb-3">
-                            <label for="email" class="col-md-4 col-form-label text-md-end">Adres email</label>
+        {{-- New Password --}}
+        <x-ios.input
+            type="password"
+            name="password"
+            label="Nowe hasło"
+            placeholder="Minimum 8 znaków"
+            icon="password"
+            helpText="Minimum 8 znaków"
+            required
+            autofocus
+            autocomplete="new-password"
+        />
 
-                            <div class="col-md-6">
-                                <input id="email" type="email" class="form-control" name="email" value="{{ $email }}" disabled readonly>
-                                <small class="form-text text-muted">Twój adres email</small>
-                            </div>
-                        </div>
+        {{-- Confirm Password --}}
+        <x-ios.input
+            type="password"
+            name="password_confirmation"
+            label="Potwierdź hasło"
+            placeholder="Wprowadź hasło ponownie"
+            icon="password"
+            required
+            autocomplete="new-password"
+        />
 
-                        <div class="row mb-3">
-                            <label for="password" class="col-md-4 col-form-label text-md-end">Nowe hasło</label>
-
-                            <div class="col-md-6">
-                                <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" required autocomplete="new-password" autofocus>
-
-                                @error('password')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-
-                                <small class="form-text text-muted">Minimum 8 znaków</small>
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <label for="password-confirm" class="col-md-4 col-form-label text-md-end">Potwierdź hasło</label>
-
-                            <div class="col-md-6">
-                                <input id="password-confirm" type="password" class="form-control" name="password_confirmation" required autocomplete="new-password">
-                            </div>
-                        </div>
-
-                        @error('token')
-                            <div class="row mb-3">
-                                <div class="col-md-6 offset-md-4">
-                                    <div class="alert alert-danger" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </div>
-                                </div>
-                            </div>
-                        @enderror
-
-                        <div class="row mb-0">
-                            <div class="col-md-6 offset-md-4">
-                                <button type="submit" class="btn btn-primary">
-                                    Ustaw hasło i zaloguj się
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-@endsection
+        {{-- Submit Button --}}
+        <x-ios.button
+            type="submit"
+            variant="primary"
+            label="Ustaw hasło i zaloguj się"
+            icon="arrow-right"
+            iconPosition="right"
+            fullWidth
+        />
+    </form>
+</x-ios.auth-card>

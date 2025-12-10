@@ -1,28 +1,40 @@
-@extends('layouts.app')
+<x-ios.auth-card
+    title="Zweryfikuj adres e-mail"
+    subtitle="Link weryfikacyjny został wysłany na Twój adres"
+    gradient="from-teal-600 via-cyan-600 to-blue-600"
+>
+    {{-- Success Alert (resent) --}}
+    @if (session('resent'))
+        <x-ios.alert
+            type="success"
+            message="Link wysłany ponownie! Sprawdź swoją skrzynkę e-mail."
+            dismissible
+            class="mb-6"
+        />
+    @endif
 
-@section('content')
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">{{ __('Verify Your Email Address') }}</div>
+    {{-- Info Alert --}}
+    <x-ios.alert
+        type="info"
+        class="mb-6"
+    >
+        <p class="mb-0">
+            Sprawdź swoją skrzynkę e-mail i kliknij link weryfikacyjny.
+            Nie dostałeś wiadomości? Wyślij link ponownie, klikając poniższy przycisk.
+        </p>
+    </x-ios.alert>
 
-                <div class="card-body">
-                    @if (session('resent'))
-                        <div class="alert alert-success" role="alert">
-                            {{ __('A fresh verification link has been sent to your email address.') }}
-                        </div>
-                    @endif
+    {{-- Resend Verification Link Form --}}
+    <form method="POST" action="{{ route('verification.resend') }}" class="space-y-6">
+        @csrf
 
-                    {{ __('Before proceeding, please check your email for a verification link.') }}
-                    {{ __('If you did not receive the email') }},
-                    <form class="d-inline" method="POST" action="{{ route('verification.resend') }}">
-                        @csrf
-                        <button type="submit" class="btn btn-link p-0 m-0 align-baseline">{{ __('click here to request another') }}</button>.
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-@endsection
+        <x-ios.button
+            type="submit"
+            variant="primary"
+            label="Wyślij link ponownie"
+            icon="paper-airplane"
+            iconPosition="right"
+            fullWidth
+        />
+    </form>
+</x-ios.auth-card>
