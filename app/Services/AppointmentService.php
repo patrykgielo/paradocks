@@ -208,6 +208,44 @@ class AppointmentService
     }
 
     /**
+     * Find the best available staff member for the given service and datetime
+     *
+     * This is a convenience method for the booking wizard that takes a single dateTime
+     * and duration, then calculates the time range and finds the best staff member.
+     *
+     * "Best" strategy: Currently uses "first available" but can be enhanced with:
+     * - Workload balancing (least appointments today)
+     * - Skill matching (staff expertise level)
+     * - Customer preferences (favorite staff member)
+     *
+     * @param  int  $serviceId  Service to be performed
+     * @param  Carbon  $dateTime  Appointment start date and time
+     * @param  int  $durationMinutes  Service duration in minutes
+     * @return User|null Staff member model if available, null if no staff available
+     */
+    public function findBestAvailableStaff(
+        int $serviceId,
+        Carbon $dateTime,
+        int $durationMinutes
+    ): ?User {
+        // Calculate end time based on duration
+        $startTime = $dateTime->copy();
+        $endTime = $dateTime->copy()->addMinutes($durationMinutes);
+        $date = $dateTime->copy()->startOfDay();
+
+        // Use existing method to find first available staff
+        $staffId = $this->findFirstAvailableStaff(
+            $serviceId,
+            $date,
+            $startTime,
+            $endTime
+        );
+
+        // Return User model instead of just ID
+        return $staffId ? User::find($staffId) : null;
+    }
+
+    /**
      * Get available time slots across ALL staff members for a service on a specific date
      *
      * Uses new calendar-based system to find slots where at least one staff member is available

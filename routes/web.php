@@ -86,10 +86,25 @@ Route::prefix('api/webhooks')->name('webhooks.')->middleware('throttle:120,1')->
 
 // Protected routes (require authentication)
 Route::middleware(['auth'])->group(function () {
-    // Booking
+    // Booking (old single-page flow)
     Route::get('/services/{service}/book', [BookingController::class, 'create'])->name('booking.create');
-
     Route::post('/booking/available-slots', [BookingController::class, 'getAvailableSlots'])->name('booking.slots');
+
+    // Booking Wizard (new multi-step flow)
+    Route::get('/booking/step/{step}', [BookingController::class, 'showStep'])->name('booking.step');
+    Route::post('/booking/step/{step}', [BookingController::class, 'storeStep'])->name('booking.step.store');
+
+    // Booking AJAX APIs
+    Route::post('/booking/save-progress', [BookingController::class, 'saveProgress'])->name('booking.save-progress');
+    Route::get('/booking/restore-progress', [BookingController::class, 'restoreProgress'])->name('booking.restore-progress');
+
+    // Calendar availability APIs
+    Route::get('/booking/unavailable-dates', [BookingController::class, 'getUnavailableDates'])->name('booking.unavailable-dates');
+
+    // Booking confirmation
+    Route::post('/booking/confirm', [BookingController::class, 'confirm'])->name('booking.confirm');
+    Route::get('/booking/confirmation/{appointment}', [BookingController::class, 'showConfirmation'])->name('booking.confirmation');
+    Route::get('/booking/ical/{appointment}', [BookingController::class, 'downloadIcal'])->name('booking.ical');
 
     // Appointments
     Route::get('/my-appointments', [AppointmentController::class, 'index'])->name('appointments.index');
