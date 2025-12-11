@@ -3,35 +3,34 @@
 @section('content')
 @php($marketing = $marketingContent ?? app(\App\Support\Settings\SettingsManager::class)->marketingContent())
 
-{{-- Hero Banner (Full-screen, cinematic) --}}
+{{-- Hero Banner (Responsive height, monochrome) --}}
 <x-ios.hero-banner
     :title="$marketing['hero_title'] ?? 'Profesjonalny Detailing'"
     :subtitle="$marketing['hero_subtitle'] ?? 'Rezerwuj online. Płać po usłudze. Gwarancja satysfakcji.'"
-    :primary-cta="auth()->check() ? 'Zobacz Usługi' : 'Zarezerwuj Wizytę'"
-    :primary-cta-url="auth()->check() ? '#services' : route('register')"
-    secondary-cta="Dowiedz się więcej"
-    secondary-cta-url="#services"
-    gradient="from-indigo-600 via-violet-600 to-pink-600"
 >
-    {{-- Trust Badges --}}
-    <div class="flex flex-wrap justify-center gap-8 text-white/90">
-        <div class="flex items-center gap-2 backdrop-blur-sm bg-white/10 px-4 py-2 rounded-full">
-            <x-heroicon-s-star class="w-5 h-5 text-yellow-300" />
-            <span class="text-sm font-medium">4.9/5 ocena</span>
-        </div>
-        <div class="flex items-center gap-2 backdrop-blur-sm bg-white/10 px-4 py-2 rounded-full">
-            <x-heroicon-s-shield-check class="w-5 h-5 text-green-300" />
-            <span class="text-sm font-medium">Gwarancja jakości</span>
-        </div>
-        <div class="flex items-center gap-2 backdrop-blur-sm bg-white/10 px-4 py-2 rounded-full">
-            <x-heroicon-s-clock class="w-5 h-5 text-blue-300" />
-            <span class="text-sm font-medium">Szybka realizacja</span>
-        </div>
-    </div>
+    {{-- CTA Buttons --}}
+    <a href="{{ auth()->check() ? '#services' : route('register') }}"
+       class="group relative px-8 py-4 bg-white/20 backdrop-blur-xl rounded-full text-white font-semibold text-lg
+              shadow-[0_8px_24px_rgba(0,0,0,0.15),0_0_40px_rgba(255,255,255,0.1)]
+              hover:bg-white/30 hover:shadow-[0_12px_32px_rgba(0,0,0,0.2),0_0_60px_rgba(255,255,255,0.15)]
+              hover:scale-105 active:scale-95
+              transition-all duration-300
+              border border-white/30">
+        <span class="relative z-10">{{ auth()->check() ? 'Zobacz Usługi' : 'Zarezerwuj Wizytę' }}</span>
+    </a>
+
+    <a href="#services"
+       class="px-8 py-4 text-white font-semibold text-lg hover:text-white/80 transition-colors
+              flex items-center gap-2">
+        Dowiedz się więcej
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+        </svg>
+    </a>
 </x-ios.hero-banner>
 
 {{-- Service Grid with Glass Morphism Cards --}}
-<section id="services" class="relative py-24 px-4 md:px-6 bg-gradient-to-b from-gray-50 to-white">
+<section id="services" class="relative py-24 px-4 md:px-6 bg-white">
     <div class="container mx-auto">
         <div class="text-center mb-16 scroll-reveal">
             <h2 class="text-5xl md:text-6xl font-light tracking-tight text-gray-900 mb-4" style="letter-spacing: -0.02em;">
@@ -67,9 +66,9 @@
 </section>
 
 {{-- Why Choose Us Section (Split layout with parallax) --}}
-<section class="relative py-24 px-4 md:px-6 overflow-hidden bg-gradient-to-br from-indigo-50 via-violet-50 to-pink-50">
-    {{-- Background Orb --}}
-    <div class="absolute top-0 right-0 w-[800px] h-[800px] rounded-full bg-gradient-radial from-indigo-200/30 to-transparent blur-3xl"></div>
+<section class="relative py-24 px-4 md:px-6 overflow-hidden bg-neutral-50">
+    {{-- Background Orb (monochrome) --}}
+    <div class="absolute top-0 right-0 w-[800px] h-[800px] rounded-full bg-gradient-radial from-primary-200/20 to-transparent blur-3xl"></div>
 
     <div class="container mx-auto">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -81,7 +80,7 @@
 
                 <div class="space-y-6">
                     <div class="flex items-start gap-4 group">
-                        <div class="flex-shrink-0 w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center
+                        <div class="flex-shrink-0 w-12 h-12 rounded-lg bg-primary-500 flex items-center justify-center
                                     group-hover:scale-110 transition-transform duration-300">
                             <x-heroicon-s-sparkles class="w-6 h-6 text-white" />
                         </div>
@@ -92,7 +91,7 @@
                     </div>
 
                     <div class="flex items-start gap-4 group">
-                        <div class="flex-shrink-0 w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center
+                        <div class="flex-shrink-0 w-12 h-12 rounded-lg bg-primary-500 flex items-center justify-center
                                     group-hover:scale-110 transition-transform duration-300">
                             <x-heroicon-s-shield-check class="w-6 h-6 text-white" />
                         </div>
@@ -103,7 +102,7 @@
                     </div>
 
                     <div class="flex items-start gap-4 group">
-                        <div class="flex-shrink-0 w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-500 to-orange-500 flex items-center justify-center
+                        <div class="flex-shrink-0 w-12 h-12 rounded-lg bg-primary-500 flex items-center justify-center
                                     group-hover:scale-110 transition-transform duration-300">
                             <x-heroicon-s-clock class="w-6 h-6 text-white" />
                         </div>
@@ -114,7 +113,7 @@
                     </div>
 
                     <div class="flex items-start gap-4 group">
-                        <div class="flex-shrink-0 w-12 h-12 rounded-2xl bg-gradient-to-br from-green-500 to-teal-500 flex items-center justify-center
+                        <div class="flex-shrink-0 w-12 h-12 rounded-lg bg-primary-500 flex items-center justify-center
                                     group-hover:scale-110 transition-transform duration-300">
                             <x-heroicon-s-user-group class="w-6 h-6 text-white" />
                         </div>
@@ -128,9 +127,9 @@
 
             {{-- Right: Image/Visual --}}
             <div class="relative scroll-reveal">
-                <div class="relative rounded-3xl overflow-hidden shadow-2xl transform lg:translate-x-12">
+                <div class="relative rounded-lg overflow-hidden shadow-2xl transform lg:translate-x-12">
                     {{-- Placeholder for hero image --}}
-                    <div class="aspect-[4/3] bg-gradient-to-br from-indigo-600 via-violet-600 to-pink-600 flex items-center justify-center">
+                    <div class="aspect-[4/3] bg-primary-600 flex items-center justify-center">
                         <div class="text-center text-white p-8">
                             <x-heroicon-o-photo class="w-24 h-24 mx-auto mb-4 opacity-50" />
                             <p class="text-lg font-medium">Miejsce na zdjęcie hero</p>
@@ -143,12 +142,12 @@
     </div>
 </section>
 
-{{-- Final CTA Section (Gradient mesh background) --}}
-<section class="relative py-32 px-4 md:px-6 overflow-hidden bg-gradient-to-br from-indigo-600 via-violet-600 to-pink-600">
-    {{-- Animated gradient mesh --}}
+{{-- Final CTA Section (Monochrome background) --}}
+<section class="relative py-32 px-4 md:px-6 overflow-hidden bg-primary-600">
+    {{-- Animated monochrome mesh --}}
     <div class="absolute inset-0 overflow-hidden">
-        <div class="absolute top-0 left-0 w-[600px] h-[600px] rounded-full bg-gradient-radial from-pink-500/40 to-transparent blur-3xl animate-blob"></div>
-        <div class="absolute bottom-0 right-0 w-[500px] h-[500px] rounded-full bg-gradient-radial from-indigo-500/30 to-transparent blur-3xl animate-blob animation-delay-2000"></div>
+        <div class="absolute top-0 left-0 w-[600px] h-[600px] rounded-full bg-gradient-radial from-primary-500/15 to-transparent blur-3xl animate-blob"></div>
+        <div class="absolute bottom-0 right-0 w-[500px] h-[500px] rounded-full bg-gradient-radial from-primary-400/12 to-transparent blur-3xl animate-blob animation-delay-2000"></div>
     </div>
 
     <div class="container mx-auto relative z-10">

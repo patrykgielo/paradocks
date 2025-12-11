@@ -1,7 +1,6 @@
 <x-ios.auth-card
     title="Zweryfikuj adres e-mail"
     subtitle="Link weryfikacyjny został wysłany na Twój adres"
-    gradient="from-teal-600 via-cyan-600 to-blue-600"
 >
     {{-- Success Alert (resent) --}}
     @if (session('resent'))

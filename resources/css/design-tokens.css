@@ -4,35 +4,35 @@
  * WARNING: This file is AUTO-GENERATED. Do not edit manually!
  * Run 'npm run generate:theme' to regenerate.
  *
- * Source: design-system.json v3.0.0
- * Generated: 2025-12-11T16:12:00.791Z
+ * Source: design-system.json v4.0.0
+ * Generated: 2025-12-11T22:04:35.829Z
  */
 
 @theme {
   /* Colors */
-  --color-primary-50: #E8F2F4;
-  --color-primary-100: #D1E5E9;
-  --color-primary-200: #A3CBD3;
-  --color-primary-300: #8BB9C4;
-  --color-primary-400: #7DAFBD;
-  --color-primary-500: #6B9FA8;
-  --color-primary-600: #5A8A99;
-  --color-primary-700: #4D7C8A;
-  --color-primary-800: #3D6672;
-  --color-primary-900: #2F5159;
+  --color-primary-50: #E6F4F6;
+  --color-primary-100: #CCE9ED;
+  --color-primary-200: #99D3DB;
+  --color-primary-300: #66BDC9;
+  --color-primary-400: #4AA5B0;
+  --color-primary-500: #3D8A94;
+  --color-primary-600: #2F6A72;
+  --color-primary-700: #224A50;
+  --color-primary-800: #162A2E;
+  --color-primary-900: #0A0F10;
   --color-success: #34C759;
   --color-warning: #FF9500;
   --color-error: #FF3B30;
-  --color-info: #6B9FA8;
+  --color-info: #4AA5B0;
   --color-bg-primary: #FFFFFF;
-  --color-bg-secondary: #D4C5B0;
-  --color-bg-tertiary: #E8DFD0;
-  --color-text-primary: #2B2D2F;
-  --color-text-secondary: #524432;
-  --color-text-tertiary: #8B7C64;
+  --color-bg-secondary: #F3F4F6;
+  --color-bg-tertiary: #E5E7EB;
+  --color-text-primary: #1F2937;
+  --color-text-secondary: #4B5563;
+  --color-text-tertiary: #6B7280;
   --color-text-inverse: #FFFFFF;
-  --color-text-link: #6B9FA8;
-  --color-text-linkHover: #5A8A99;
+  --color-text-link: #4AA5B0;
+  --color-text-linkHover: #3D8A94;
 
   /* Typography */
   --font-system: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
@@ -80,9 +80,9 @@
   /* Border Radius */
   --radius-none: 0;
   --radius-sm: 0.25rem;
-  --radius-base: 0.5rem;
-  --radius-md: 0.75rem;
-  --radius-lg: 1rem;
+  --radius-base: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.625rem;
   --radius-xl: 1.25rem;
   --radius-2xl: 1.5rem;
   --radius-3xl: 1.875rem;

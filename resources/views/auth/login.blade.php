@@ -1,7 +1,6 @@
 <x-ios.auth-card
     title="Witaj ponownie"
     subtitle="Zaloguj się do swojego konta"
-    gradient="from-blue-600 via-purple-600 to-indigo-700"
 >
     <form method="POST" action="{{ route('login') }}" class="space-y-6">
         @csrf
@@ -49,7 +48,7 @@
 
         {{-- Login Button --}}
         <button type="submit"
-                class="w-full bg-gradient-to-r from-primary to-blue-600 text-white font-semibold py-4 rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ios-spring focus:outline-none focus:ring-4 focus:ring-primary/30">
+                class="w-full bg-primary-500 text-white font-semibold py-4 rounded-lg shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ios-spring focus:outline-none focus:ring-4 focus:ring-primary/30">
             <span class="flex items-center justify-center gap-2">
                 Zaloguj się
                 <x-heroicon-m-arrow-right class="w-5 h-5" />

@@ -1,7 +1,6 @@
 <x-ios.auth-card
     title="Witaj w Paradocks!"
     subtitle="Ustaw hasło aby aktywować swoje konto"
-    gradient="from-green-600 via-emerald-600 to-teal-600"
 >
     {{-- Info Alert --}}
     <x-ios.alert

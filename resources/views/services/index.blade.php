@@ -4,7 +4,7 @@
 
 @section('content')
 {{-- Hero Section --}}
-<section class="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-16 md:py-24">
+<section class="bg-primary-600 text-white py-16 md:py-24">
     <div class="container mx-auto px-4">
         <div class="max-w-3xl mx-auto text-center">
             <h1 class="text-4xl md:text-5xl font-bold mb-4">
