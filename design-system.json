@@ -1,65 +1,103 @@
 {
-  "version": "1.0.0",
-  "last_updated": "2024-11-14",
-  "description": "iOS Design System Tokens for Laravel Livewire Mobile-First Application",
-  
+  "version": "3.0.0",
+  "last_updated": "2025-12-11",
+  "description": "Paradocks Car Detailing - Bentley Modern (Luxury Automotive: 25% Saturation Sophisticated Palette)",
+
   "colors": {
     "primary": {
-      "50": "#eff6ff",
-      "100": "#dbeafe",
-      "200": "#bfdbfe",
-      "300": "#93c5fd",
-      "400": "#60a5fa",
-      "500": "#007AFF",
-      "600": "#0056b3",
-      "700": "#004494",
-      "800": "#003876",
-      "900": "#002c5f"
+      "50": "#E8F2F4",
+      "100": "#D1E5E9",
+      "200": "#A3CBD3",
+      "300": "#8BB9C4",
+      "400": "#7DAFBD",
+      "500": "#6B9FA8",
+      "600": "#5A8A99",
+      "700": "#4D7C8A",
+      "800": "#3D6672",
+      "900": "#2F5159"
     },
-    "secondary": {
-      "50": "#f8fafc",
-      "100": "#f1f5f9",
-      "200": "#e2e8f0",
-      "300": "#cbd5e1",
-      "400": "#94a3b8",
-      "500": "#64748b",
-      "600": "#475569",
-      "700": "#334155",
-      "800": "#1e293b",
-      "900": "#0f172a"
+    "accent": {
+      "50": "#F5F1ED",
+      "100": "#EBE3DB",
+      "200": "#D7C7B7",
+      "300": "#C4AB93",
+      "400": "#A78F75",
+      "500": "#8B7355",
+      "600": "#7A6449",
+      "700": "#69553D",
+      "800": "#584531",
+      "900": "#473625"
     },
     "semantic": {
       "success": "#34C759",
       "warning": "#FF9500",
       "error": "#FF3B30",
-      "info": "#5AC8FA"
+      "info": "#6B9FA8"
+    },
+    "neutral": {
+      "50": "#D4C5B0",
+      "100": "#C5B5A0",
+      "200": "#A89882",
+      "300": "#8B7C64",
+      "400": "#6E6046",
+      "500": "#524432",
+      "600": "#3E352A",
+      "700": "#2B2D2F",
+      "800": "#232425",
+      "900": "#1A1A1B"
     },
     "background": {
       "primary": "#FFFFFF",
-      "secondary": "#F2F2F7",
-      "tertiary": "#FFFFFF",
-      "grouped": "#F2F2F7",
-      "grouped-secondary": "#FFFFFF",
-      "grouped-tertiary": "#F2F2F7"
+      "secondary": "#D4C5B0",
+      "tertiary": "#E8DFD0"
     },
     "text": {
-      "primary": "#000000",
-      "secondary": "#3C3C43",
-      "tertiary": "#3C3C4399",
-      "quaternary": "#3C3C434D",
-      "placeholder": "#3C3C434D"
+      "primary": "#2B2D2F",
+      "secondary": "#524432",
+      "tertiary": "#8B7C64",
+      "inverse": "#FFFFFF",
+      "link": "#6B9FA8",
+      "linkHover": "#5A8A99"
     },
-    "gray": {
-      "50": "#F9FAFB",
-      "100": "#F2F2F7",
-      "200": "#E5E5EA",
-      "300": "#D1D1D6",
-      "400": "#C7C7CC",
-      "500": "#AEAEB2",
-      "600": "#8E8E93",
-      "700": "#636366",
-      "800": "#48484A",
-      "900": "#3A3A3C"
+    "border": {
+      "light": "#D4C5B0",
+      "medium": "#C5B5A0",
+      "dark": "#A89882",
+      "focus": "#6B9FA8"
+    },
+    "states": {
+      "hover": {
+        "primary": "#5A8A99",
+        "accent": "#7A6449",
+        "neutral": "#E8DFD0"
+      },
+      "focus": {
+        "ring": "#6B9FA8",
+        "ringOpacity": "0.5",
+        "ringWidth": "2px"
+      },
+      "active": {
+        "primary": "#4D7C8A",
+        "accent": "#69553D",
+        "neutral": "#D4C5B0"
+      },
+      "disabled": {
+        "background": "#E8DFD0",
+        "text": "#A89882",
+        "opacity": "0.6"
+      }
+    },
+    "gradients": {
+      "serviceCard": "linear-gradient(135deg, rgba(107, 159, 168, 0.12), rgba(139, 115, 85, 0.12))",
+      "hero": "linear-gradient(to bottom, #E8F2F4, transparent)",
+      "cta": "linear-gradient(to right, #6B9FA8, #8B7355)"
+    },
+    "opacity": {
+      "overlay": "rgba(43, 45, 47, 0.5)",
+      "hover": "rgba(107, 159, 168, 0.12)",
+      "focus": "rgba(107, 159, 168, 0.2)",
+      "disabled": "rgba(212, 197, 176, 0.6)",
+      "gradient": "rgba(139, 115, 85, 0.12)"
     }
   },
   
