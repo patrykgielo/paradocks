@@ -42,7 +42,7 @@
                         {{ __('Obecne hasło') }} <span class="text-red-500">*</span>
                     </label>
                     <input type="password" name="current_password" id="current_password"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                            required>
                     @error('current_password')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -55,7 +55,7 @@
                         {{ __('Nowe hasło') }} <span class="text-red-500">*</span>
                     </label>
                     <input type="password" name="password" id="password"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                            required minlength="8">
                     <p class="mt-1 text-sm text-gray-500">{{ __('Minimum 8 znaków') }}</p>
                     @error('password')
@@ -69,14 +69,14 @@
                         {{ __('Potwierdź nowe hasło') }} <span class="text-red-500">*</span>
                     </label>
                     <input type="password" name="password_confirmation" id="password_confirmation"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                            required>
                 </div>
             </div>
 
             <div class="mt-6">
                 <button type="submit"
-                        class="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        class="px-6 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
                     {{ __('Zmień hasło') }}
                 </button>
             </div>

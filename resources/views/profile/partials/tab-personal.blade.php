@@ -13,7 +13,7 @@
                 </label>
                 <input type="text" name="first_name" id="first_name"
                        value="{{ old('first_name', $user->first_name) }}"
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                        required>
                 @error('first_name')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -27,7 +27,7 @@
                 </label>
                 <input type="text" name="last_name" id="last_name"
                        value="{{ old('last_name', $user->last_name) }}"
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                        required>
                 @error('last_name')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -42,7 +42,7 @@
                 <input type="tel" name="phone_e164" id="phone_e164"
                        value="{{ old('phone_e164', $user->phone_e164) }}"
                        placeholder="+48123456789"
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                 <p class="mt-1 text-sm text-gray-500">{{ __('Format międzynarodowy, np. +48123456789') }}</p>
                 @error('phone_e164')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -58,7 +58,7 @@
             <div class="flex items-center justify-between">
                 <span class="text-gray-800">{{ $user->email }}</span>
                 <button type="button" onclick="window.location.hash='security'"
-                        class="text-sm text-blue-600 hover:text-blue-800">
+                        class="text-sm text-primary-600 hover:text-primary-800">
                     {{ __('Zmień email') }} &rarr;
                 </button>
             </div>
@@ -74,7 +74,7 @@
 
         <div class="mt-6 flex justify-end">
             <button type="submit"
-                    class="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                    class="px-6 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
                 {{ __('Zapisz zmiany') }}
             </button>
         </div>
