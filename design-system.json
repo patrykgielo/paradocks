@@ -1,106 +1,86 @@
 {
-  "version": "3.0.0",
+  "version": "4.0.0",
   "last_updated": "2025-12-11",
-  "description": "Paradocks Car Detailing - Bentley Modern (Luxury Automotive: 25% Saturation Sophisticated Palette)",
+  "description": "Paradocks Car Detailing - Medical Precision (Monochrome Luxury: 24% Saturation Turquoise Accent)",
 
   "colors": {
     "primary": {
-      "50": "#E8F2F4",
-      "100": "#D1E5E9",
-      "200": "#A3CBD3",
-      "300": "#8BB9C4",
-      "400": "#7DAFBD",
-      "500": "#6B9FA8",
-      "600": "#5A8A99",
-      "700": "#4D7C8A",
-      "800": "#3D6672",
-      "900": "#2F5159"
+      "50": "#E6F4F6",
+      "100": "#CCE9ED",
+      "200": "#99D3DB",
+      "300": "#66BDC9",
+      "400": "#4AA5B0",
+      "500": "#3D8A94",
+      "600": "#2F6A72",
+      "700": "#224A50",
+      "800": "#162A2E",
+      "900": "#0A0F10"
     },
-    "accent": {
-      "50": "#F5F1ED",
-      "100": "#EBE3DB",
-      "200": "#D7C7B7",
-      "300": "#C4AB93",
-      "400": "#A78F75",
-      "500": "#8B7355",
-      "600": "#7A6449",
-      "700": "#69553D",
-      "800": "#584531",
-      "900": "#473625"
+    "neutral": {
+      "50": "#F9FAFB",
+      "100": "#F3F4F6",
+      "200": "#E5E7EB",
+      "300": "#D1D5DB",
+      "400": "#9CA3AF",
+      "500": "#6B7280",
+      "600": "#4B5563",
+      "700": "#374151",
+      "800": "#1F2937",
+      "900": "#111827"
     },
     "semantic": {
       "success": "#34C759",
       "warning": "#FF9500",
       "error": "#FF3B30",
-      "info": "#6B9FA8"
-    },
-    "neutral": {
-      "50": "#D4C5B0",
-      "100": "#C5B5A0",
-      "200": "#A89882",
-      "300": "#8B7C64",
-      "400": "#6E6046",
-      "500": "#524432",
-      "600": "#3E352A",
-      "700": "#2B2D2F",
-      "800": "#232425",
-      "900": "#1A1A1B"
+      "info": "#4AA5B0"
     },
     "background": {
       "primary": "#FFFFFF",
-      "secondary": "#D4C5B0",
-      "tertiary": "#E8DFD0"
+      "secondary": "#F3F4F6",
+      "tertiary": "#E5E7EB"
     },
     "text": {
-      "primary": "#2B2D2F",
-      "secondary": "#524432",
-      "tertiary": "#8B7C64",
+      "primary": "#1F2937",
+      "secondary": "#4B5563",
+      "tertiary": "#6B7280",
       "inverse": "#FFFFFF",
-      "link": "#6B9FA8",
-      "linkHover": "#5A8A99"
+      "link": "#4AA5B0",
+      "linkHover": "#3D8A94"
     },
     "border": {
-      "light": "#D4C5B0",
-      "medium": "#C5B5A0",
-      "dark": "#A89882",
-      "focus": "#6B9FA8"
+      "light": "#E5E7EB",
+      "medium": "#D1D5DB",
+      "dark": "#9CA3AF",
+      "focus": "#4AA5B0"
     },
     "states": {
       "hover": {
-        "primary": "#5A8A99",
-        "accent": "#7A6449",
-        "neutral": "#E8DFD0"
+        "primary": "#3D8A94",
+        "neutral": "#F3F4F6"
       },
       "focus": {
-        "ring": "#6B9FA8",
+        "ring": "#4AA5B0",
         "ringOpacity": "0.5",
         "ringWidth": "2px"
       },
       "active": {
-        "primary": "#4D7C8A",
-        "accent": "#69553D",
-        "neutral": "#D4C5B0"
+        "primary": "#2F6A72",
+        "neutral": "#E5E7EB"
       },
       "disabled": {
-        "background": "#E8DFD0",
-        "text": "#A89882",
+        "background": "#F3F4F6",
+        "text": "#9CA3AF",
         "opacity": "0.6"
       }
     },
-    "gradients": {
-      "serviceCard": "linear-gradient(135deg, rgba(107, 159, 168, 0.12), rgba(139, 115, 85, 0.12))",
-      "hero": "linear-gradient(to bottom, #E8F2F4, transparent)",
-      "cta": "linear-gradient(to right, #6B9FA8, #8B7355)"
-    },
     "opacity": {
-      "overlay": "rgba(43, 45, 47, 0.5)",
-      "hover": "rgba(107, 159, 168, 0.12)",
-      "focus": "rgba(107, 159, 168, 0.2)",
-      "disabled": "rgba(212, 197, 176, 0.6)",
-      "gradient": "rgba(139, 115, 85, 0.12)"
+      "overlay": "rgba(31, 41, 55, 0.5)",
+      "hover": "rgba(74, 165, 176, 0.12)",
+      "focus": "rgba(74, 165, 176, 0.2)",
+      "disabled": "rgba(156, 163, 175, 0.6)"
     }
   },
-  
+
   "typography": {
     "fontFamilies": {
       "system": "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif",
@@ -139,7 +119,7 @@
       "wider": "0.05em"
     }
   },
-  
+
   "spacing": {
     "0": "0",
     "1": "0.25rem",
@@ -155,19 +135,19 @@
     "20": "5rem",
     "24": "6rem"
   },
-  
+
   "borderRadius": {
     "none": "0",
     "sm": "0.25rem",
-    "base": "0.5rem",
-    "md": "0.75rem",
-    "lg": "1rem",
+    "base": "0.375rem",
+    "md": "0.5rem",
+    "lg": "0.625rem",
     "xl": "1.25rem",
     "2xl": "1.5rem",
     "3xl": "1.875rem",
     "full": "9999px"
   },
-  
+
   "shadows": {
     "sm": "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
     "base": "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)",
@@ -177,7 +157,7 @@
     "2xl": "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
     "inner": "inset 0 2px 4px 0 rgba(0, 0, 0, 0.05)"
   },
-  
+
   "animations": {
     "durations": {
       "fast": "150ms",
@@ -193,7 +173,7 @@
       "ios": "cubic-bezier(0.25, 0.1, 0.25, 1)"
     }
   },
-  
+
   "breakpoints": {
     "sm": "640px",
     "md": "768px",
@@ -201,7 +181,7 @@
     "xl": "1280px",
     "2xl": "1536px"
   },
-  
+
   "ios": {
     "touchTarget": {
       "minimum": "44px",
@@ -229,7 +209,7 @@
       "notchTop": "44px"
     }
   },
-  
+
   "zIndex": {
     "base": "0",
     "dropdown": "1000",
