@@ -1,7 +1,6 @@
 <x-ios.auth-card
     title="Dołącz do nas"
     subtitle="Stwórz konto i rozpocznij przygodę"
-    gradient="from-green-600 via-teal-600 to-blue-600"
 >
     <form method="POST" action="{{ route('register') }}" class="space-y-6">
         @csrf
@@ -93,7 +92,7 @@
 
         {{-- Register Button --}}
         <button type="submit"
-                class="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white font-semibold py-4 rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ios-spring focus:outline-none focus:ring-4 focus:ring-green-600/30">
+                class="w-full bg-primary-500 text-white font-semibold py-4 rounded-lg shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ios-spring focus:outline-none focus:ring-4 focus:ring-primary/30">
             <span class="flex items-center justify-center gap-2">
                 Zarejestruj się
                 <x-heroicon-m-arrow-right class="w-5 h-5" />

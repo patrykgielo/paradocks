@@ -1,7 +1,6 @@
 <x-ios.auth-card
     title="Zapomniałeś hasła?"
     subtitle="Wprowadź adres e-mail, a my wyślemy link resetujący"
-    gradient="from-indigo-600 via-blue-600 to-sky-600"
 >
     {{-- Success Alert --}}
     @if (session('status'))

@@ -1,7 +1,6 @@
 <x-ios.auth-card
     title="Potwierdź hasło"
     subtitle="Ze względów bezpieczeństwa potwierdź swoje hasło"
-    gradient="from-yellow-600 via-orange-600 to-red-600"
 >
     {{-- Warning Alert --}}
     <x-ios.alert
