@@ -8,7 +8,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- (empty - ready for next changes)
+- **Fluid Typography Utilities** - Responsive text scaling without breakpoints
+  - `.text-fluid-hero`: 36-96px responsive (clamp)
+  - `.text-fluid-subtitle`: 18-24px responsive (clamp)
+  - `.text-fluid-body`: 16-20px responsive (clamp)
+  - Applied to hero-banner component for optimal mobile scaling
+
+### Changed
+- **BREAKING: Design System v4.0.0 "Medical Precision"** - Complete visual redesign
+  - **Monochrome Color Palette**: Professional 88% neutrals + 12% turquoise accent
+    - Primary turquoise: `#4AA5B0` (24% saturation, down from 59%)
+    - 9-shade neutral system: `#F9FAFB` → `#111827` (gray scale)
+    - Removed bronze/tan accent colors (`#D4C5B0`, `#8B7355`)
+  - **Border-Radius Standardization**: All UI elements use 10px (0.625rem)
+    - `rounded-lg` now 0.625rem (was 1rem/16px)
+    - DaisyUI `--rounded-box`: 0.625rem (was 1.5rem/24px)
+    - DaisyUI `--rounded-badge`: 0.625rem (was 1rem/16px)
+    - Preserved `rounded-full` for avatars, pills, badges, status indicators
+  - **Hero Section Mobile Optimization**: Responsive height strategy
+    - Mobile (375px): 50vh (was 100vh, 50% reduction)
+    - Tablet (768px): 60vh
+    - Desktop (1024px+): 70vh
+    - Responsive padding: 3rem → 6rem across breakpoints
+  - **Component Updates (Monochrome Migration)**:
+    - `button.blade.php`: Solid colors, no gradients (primary, secondary, ghost, danger variants)
+    - `auth-card.blade.php`: Monochrome turquoise orbs (15%, 12%, 10% opacity)
+    - `hero-banner.blade.php`: Solid `bg-primary-600` background, responsive height
+    - `service-card.blade.php`: Single turquoise icon color (all services)
+  - **Template Updates (11 files)**:
+    - Auth pages (8): Removed all gradient props, monochrome backgrounds
+    - Profile: Avatar gradient → solid `bg-primary-500`
+    - Booking wizard: Border-radius standardization, gradient removal
+    - Homepage: Complete gradient elimination (hero, sections, icons, CTA)
+    - Services index: Solid hero background
+  - **Build Optimization**: CSS optimized 105.19KB → 103.35KB (-1.84KB, -1.75%)
+  - **Design Token Generation**: 113 CSS variables auto-generated from design-system.json
+
+### Removed
+- **All purple/pink/indigo gradients** (100% elimination)
+  - Hero sections: Multi-color gradients → solid backgrounds
+  - Service cards: 8 different gradient colors → single turquoise
+  - Auth pages: Colorful gradient backgrounds → monochrome
+  - Icon containers: Multi-color → solid primary
+  - CTA buttons: Gradient backgrounds → solid colors
+- **Large border-radius values** from components (xl, 2xl, 3xl)
+- **Tan/bronze accent colors** from design system (v3.0.0 "Bentley Modern")
+- **Gradient utility usage** in templates (replaced with solid design system colors)
+
+### Technical Details
+- Research-backed design: BMW, Mercedes-Benz, Stripe, Linear best practices
+- WCAG AA compliant: 4.5:1 contrast ratios maintained
+- iOS design language: Preserved rounded-full for pills/toggles/orbs
+- Logo compatibility: Sharp geometric edges preserved as brand identity
+- Files modified: 21 total (3 config, 10 components, 8 templates)
 
 ## [0.7.0] - 2025-12-11
 

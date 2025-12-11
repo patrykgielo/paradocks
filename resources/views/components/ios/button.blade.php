@@ -11,13 +11,13 @@
 ])
 
 @php
-$baseClasses = 'inline-flex items-center justify-center min-h-[44px] px-6 py-3 rounded-xl font-semibold text-base transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95';
+$baseClasses = 'inline-flex items-center justify-center min-h-[44px] px-6 py-3 rounded-lg font-semibold text-base transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95';
 
 $variantClasses = [
-    'primary' => 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] focus:ring-blue-500',
-    'secondary' => 'bg-gray-100 text-gray-900 hover:bg-gray-200 hover:scale-[1.02] focus:ring-gray-400',
-    'ghost' => 'bg-transparent text-blue-500 hover:underline hover:text-blue-600 focus:ring-blue-500',
-    'danger' => 'bg-gradient-to-r from-red-500 to-pink-600 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] focus:ring-red-500',
+    'primary' => 'bg-primary-500 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] focus:ring-primary-500',
+    'secondary' => 'bg-neutral-100 text-neutral-900 hover:bg-neutral-200 hover:scale-[1.02] focus:ring-neutral-400',
+    'ghost' => 'bg-transparent text-primary-500 hover:underline hover:text-primary-600 focus:ring-primary-500',
+    'danger' => 'bg-red-500 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] focus:ring-red-500',
 ];
 
 $widthClass = $fullWidth ? 'w-full' : '';

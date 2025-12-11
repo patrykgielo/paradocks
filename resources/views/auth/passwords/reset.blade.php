@@ -1,7 +1,6 @@
 <x-ios.auth-card
     title="Zresetuj hasło"
     subtitle="Wprowadź nowe hasło dla swojego konta"
-    gradient="from-purple-600 via-indigo-600 to-blue-700"
 >
     <form method="POST" action="{{ route('password.update') }}" class="space-y-6">
         @csrf

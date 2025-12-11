@@ -1,7 +1,6 @@
 <x-ios.auth-card
     title="Link wygasł"
     subtitle="Link do ustawienia hasła jest już nieważny"
-    gradient="from-red-600 via-orange-600 to-yellow-600"
 >
     {{-- Expired Link Alert --}}
     <x-ios.alert

@@ -7,7 +7,7 @@
     <div class="max-w-2xl mx-auto">
         {{-- Profile Header --}}
         <div class="bg-white p-6 mb-6 flex items-center gap-4 md:rounded-lg shadow-sm">
-            <div class="w-20 h-20 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-2xl flex-shrink-0">
+            <div class="w-20 h-20 rounded-full bg-primary-500 flex items-center justify-center text-white font-bold text-2xl flex-shrink-0">
                 {{ strtoupper(substr(Auth::user()->first_name, 0, 1)) }}
             </div>
             <div class="flex-1 min-w-0">
