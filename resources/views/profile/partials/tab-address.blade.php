@@ -23,7 +23,7 @@
                     <input type="text" id="address-input"
                            value="{{ old('address', $address->address) }}"
                            placeholder="{{ __('Zacznij wpisywać adres...') }}"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                            autocomplete="off">
                     <input type="hidden" name="address" id="address-full" value="{{ old('address', $address->address) }}">
                     <input type="hidden" name="latitude" id="address-latitude" value="{{ old('latitude', $address->latitude) }}">
@@ -46,7 +46,7 @@
                     <input type="text" name="nickname" id="address_nickname"
                            value="{{ old('nickname', $address->nickname) }}"
                            placeholder="{{ __('np. Dom, Praca, Garaż') }}"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                 </div>
 
                 {{-- Map Preview --}}
@@ -55,7 +55,7 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('Lokalizacja') }}</label>
                     <div class="h-48 bg-gray-100 rounded-lg flex items-center justify-center">
                         <a href="{{ $address->google_maps_link }}" target="_blank"
-                           class="text-blue-600 hover:text-blue-800 flex items-center">
+                           class="text-primary-600 hover:text-primary-800 flex items-center">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -73,7 +73,7 @@
                     {{ __('Usuń adres') }}
                 </button>
                 <button type="submit"
-                        class="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        class="px-6 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
                     {{ __('Zapisz zmiany') }}
                 </button>
             </div>
@@ -101,7 +101,7 @@
                         <input type="text" id="address-input"
                                value="{{ old('address') }}"
                                placeholder="{{ __('Zacznij wpisywać adres...') }}"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                                autocomplete="off">
                         <input type="hidden" name="address" id="address-full" value="{{ old('address') }}">
                         <input type="hidden" name="latitude" id="address-latitude" value="{{ old('latitude') }}">
@@ -125,13 +125,13 @@
                         <input type="text" name="nickname" id="address_nickname_new"
                                value="{{ old('nickname') }}"
                                placeholder="{{ __('np. Dom, Praca, Garaż') }}"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                     </div>
                 </div>
 
                 <div class="mt-6 flex justify-end">
                     <button type="submit"
-                            class="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                            class="px-6 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
                         {{ __('Dodaj adres') }}
                     </button>
                 </div>
@@ -143,8 +143,8 @@
         @endif
     @endif
 
-    <div class="mt-6 p-4 bg-blue-50 rounded-lg">
-        <p class="text-sm text-blue-700">
+    <div class="mt-6 p-4 bg-primary-50 rounded-lg">
+        <p class="text-sm text-primary-700">
             <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
