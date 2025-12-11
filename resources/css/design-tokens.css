@@ -4,35 +4,35 @@
  * WARNING: This file is AUTO-GENERATED. Do not edit manually!
  * Run 'npm run generate:theme' to regenerate.
  *
- * Source: design-system.json v2.0.0
- * Generated: 2025-12-11T15:33:41.650Z
+ * Source: design-system.json v3.0.0
+ * Generated: 2025-12-11T16:12:00.791Z
  */
 
 @theme {
   /* Colors */
-  --color-primary-50: #ECFEFF;
-  --color-primary-100: #CFFAFE;
-  --color-primary-200: #A5F3FC;
-  --color-primary-300: #67E8F9;
-  --color-primary-400: #22D3EE;
-  --color-primary-500: #6BC6D9;
-  --color-primary-600: #0891B2;
-  --color-primary-700: #0E7490;
-  --color-primary-800: #155E75;
-  --color-primary-900: #164E63;
+  --color-primary-50: #E8F2F4;
+  --color-primary-100: #D1E5E9;
+  --color-primary-200: #A3CBD3;
+  --color-primary-300: #8BB9C4;
+  --color-primary-400: #7DAFBD;
+  --color-primary-500: #6B9FA8;
+  --color-primary-600: #5A8A99;
+  --color-primary-700: #4D7C8A;
+  --color-primary-800: #3D6672;
+  --color-primary-900: #2F5159;
   --color-success: #34C759;
   --color-warning: #FF9500;
   --color-error: #FF3B30;
-  --color-info: #5AC8FA;
+  --color-info: #6B9FA8;
   --color-bg-primary: #FFFFFF;
-  --color-bg-secondary: #FAFAFA;
-  --color-bg-tertiary: #F5F5F5;
-  --color-text-primary: #171717;
-  --color-text-secondary: #525252;
-  --color-text-tertiary: #A3A3A3;
+  --color-bg-secondary: #D4C5B0;
+  --color-bg-tertiary: #E8DFD0;
+  --color-text-primary: #2B2D2F;
+  --color-text-secondary: #524432;
+  --color-text-tertiary: #8B7C64;
   --color-text-inverse: #FFFFFF;
-  --color-text-link: #0891B2;
-  --color-text-linkHover: #0E7490;
+  --color-text-link: #6B9FA8;
+  --color-text-linkHover: #5A8A99;
 
   /* Typography */
   --font-system: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;

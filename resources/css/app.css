@@ -151,7 +151,7 @@ html {
 
 .ios-button-primary {
     background: rgba(255, 255, 255, 0.95);
-    color: #0891B2;  /* Brand cyan interactive (WCAG AA compliant) */
+    color: #5A8A99;  /* Brand cyan interactive (Bentley Modern) */
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
 }
@@ -227,16 +227,18 @@ html {
 }
 
 /* =============================================================================
-   Paradocks Brand Color System (Treatwell Inspired: Cyan + Coral)
+   Paradocks Brand Color System (Bentley Modern: 25% Saturation Sophisticated)
    ============================================================================= */
 
 :root {
-    /* Paradocks Brand Colors */
-    --brand-cyan: #6BC6D9;           /* Primary brand color (from logo) */
-    --brand-cyan-interactive: #0891B2; /* Interactive elements (WCAG AA 4.52:1) */
-    --brand-cyan-text: #0E7490;      /* Text links (WCAG AA 7.1:1) */
-    --brand-coral: #FF6B6B;          /* CTA accent (complementary warm) */
-    --brand-coral-hover: #E05555;    /* Coral hover state */
+    /* Paradocks Brand Colors - Bentley Modern Palette */
+    --brand-cyan: #6B9FA8;           /* Desaturated cyan (25% sat, 10% usage) */
+    --brand-cyan-interactive: #5A8A99; /* Interactive hover state */
+    --brand-cyan-text: #4D7C8A;      /* Text links (darker for contrast) */
+    --brand-charcoal: #2B2D2F;       /* Warm charcoal (60% usage, dark primary) */
+    --brand-tan: #D4C5B0;            /* Tan leather (30% usage, warm secondary) */
+    --brand-bronze: #8B7355;         /* Bronze (<5% usage, premium touch) */
+    --brand-bronze-hover: #7A6449;   /* Bronze hover state */
 
     /* iOS Semantic Colors (preserved for compatibility) */
     --ios-green: #34C759;
@@ -244,11 +246,11 @@ html {
     --ios-orange: #FF9500;
     --ios-red: #FF3B30;
 
-    /* Paradocks Gradients (Updated with new brand colors) */
-    --gradient-primary: linear-gradient(135deg, rgba(107, 198, 217, 0.8) 0%, rgba(8, 145, 178, 0.8) 100%);
-    --gradient-accent: linear-gradient(135deg, rgba(255, 107, 107, 0.8) 0%, rgba(224, 85, 85, 0.8) 100%);
-    --gradient-hero: linear-gradient(to bottom, #ECFEFF, transparent);
-    --gradient-cta: linear-gradient(to right, #6BC6D9, #FF6B6B);
+    /* Paradocks Gradients (Updated with Bentley Modern colors) */
+    --gradient-primary: linear-gradient(135deg, rgba(107, 159, 168, 0.8) 0%, rgba(90, 138, 153, 0.8) 100%);
+    --gradient-accent: linear-gradient(135deg, rgba(139, 115, 85, 0.8) 0%, rgba(122, 100, 73, 0.8) 100%);
+    --gradient-hero: linear-gradient(to bottom, #E8F2F4, transparent);
+    --gradient-cta: linear-gradient(to right, #6B9FA8, #8B7355);
 }
 
 /* Radial Gradient Utility (for orbs) */

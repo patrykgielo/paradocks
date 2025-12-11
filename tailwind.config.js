@@ -14,20 +14,20 @@ export default {
     themes: [
       {
         ios: {
-          // Paradocks Brand Colors (Treatwell Inspired: Cyan + Coral)
-          "primary": "#6BC6D9",        // Brand Cyan (from logo)
-          "secondary": "#0891B2",      // Cyan Interactive (WCAG AA 4.52:1)
-          "accent": "#FF6B6B",         // Coral CTA (complementary warm)
+          // Paradocks Brand Colors (Bentley Modern: 25% Saturation Sophisticated)
+          "primary": "#6B9FA8",        // Desaturated Cyan (25% sat, luxury automotive)
+          "secondary": "#2B2D2F",      // Warm Charcoal (dark primary)
+          "accent": "#8B7355",         // Bronze (premium touch)
           "success": "#34C759",        // iOS Green
           "warning": "#FF9500",        // iOS Orange
           "error": "#FF3B30",          // iOS Red
-          "info": "#6BC6D9",           // Brand Cyan
+          "info": "#6B9FA8",           // Desaturated Cyan
 
-          // Base colors (Light & Airy)
+          // Base colors (Warm & Sophisticated)
           "base-100": "#FFFFFF",       // Pure White Background
-          "base-200": "#FAFAFA",       // Off-White (premium apps standard)
-          "base-300": "#F5F5F5",       // Light Gray
-          "base-content": "#171717",   // Text Primary (WCAG AA 10.4:1)
+          "base-200": "#D4C5B0",       // Tan Leather (30% usage)
+          "base-300": "#E8DFD0",       // Light Tan
+          "base-content": "#2B2D2F",   // Warm Charcoal Text
 
           // Border radius (iOS-style)
           "--rounded-box": "1.5rem",   // 24px for cards
