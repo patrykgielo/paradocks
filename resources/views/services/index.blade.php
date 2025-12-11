@@ -1,92 +1,109 @@
 @extends('layouts.app')
 
+@section('title', 'Usługi - Profesjonalny Car Detailing')
+
 @section('content')
-<div class="max-w-7xl mx-auto">
-    <!-- Breadcrumbs -->
-    <nav class="mb-6 text-sm" aria-label="Breadcrumb">
-        <ol class="flex items-center space-x-2 text-gray-600">
-            <li>
-                <a href="{{ route('home') }}" class="hover:text-blue-600">Strona główna</a>
-            </li>
-            <li>
-                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
-                </svg>
-            </li>
-            <li class="text-gray-900 font-semibold" aria-current="page">Usługi</li>
-        </ol>
-    </nav>
-
-    <!-- Header -->
-    <header class="mb-12">
-        <h1 class="text-4xl font-bold text-gray-900 mb-4">Nasze Usługi</h1>
-        <p class="text-xl text-gray-600">Profesjonalne usługi car detailingu w Poznaniu</p>
-    </header>
-
-    <!-- Services Grid -->
-    @if($services->count() > 0)
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            @foreach($services as $service)
-                <article class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                    @if($service->featured_image)
-                        <div class="h-48 overflow-hidden">
-                            <img src="{{ Storage::url($service->featured_image) }}"
-                                 alt="{{ $service->name }}"
-                                 class="w-full h-full object-cover hover:scale-105 transition-transform duration-300">
-                        </div>
-                    @endif
-
-                    <div class="p-6">
-                        <h2 class="text-2xl font-bold text-gray-900 mb-3">
-                            <a href="{{ route('service.show', $service) }}" class="hover:text-blue-600">
-                                {{ $service->name }}
-                            </a>
-                        </h2>
-
-                        @if($service->excerpt)
-                            <p class="text-gray-600 mb-4 line-clamp-3">{{ $service->excerpt }}</p>
-                        @endif
-
-                        <div class="flex items-center justify-between mb-4 pt-4 border-t border-gray-200">
-                            <div class="text-gray-700">
-                                <svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                                <span class="text-sm">{{ $service->duration_display }}</span>
-                            </div>
-
-                            <div class="text-right">
-                                @if($service->price_from)
-                                    <p class="text-sm text-gray-500">od</p>
-                                    <p class="text-2xl font-bold text-blue-600">{{ number_format($service->price_from, 2) }} PLN</p>
-                                @else
-                                    <p class="text-2xl font-bold text-blue-600">{{ number_format($service->price, 2) }} PLN</p>
-                                @endif
-                            </div>
-                        </div>
-
-                        <a href="{{ route('service.show', $service) }}"
-                           class="block w-full text-center bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-300">
-                            Dowiedz się więcej
-                        </a>
-                    </div>
-                </article>
-            @endforeach
+{{-- Hero Section --}}
+<section class="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-16 md:py-24">
+    <div class="container mx-auto px-4">
+        <div class="max-w-3xl mx-auto text-center">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">
+                Nasze Usługi
+            </h1>
+            <p class="text-xl md:text-2xl text-blue-100 mb-8">
+                Profesjonalny car detailing w Poznaniu - Przywróć swojemu samochodowi pierwotny wygląd
+            </p>
+            @auth
+                <x-ios.button
+                    variant="primary"
+                    href="{{ route('booking.step', ['step' => 1]) }}"
+                    label="Zarezerwuj Termin"
+                    icon="calendar"
+                    iconPosition="right"
+                    class="bg-white text-blue-600 hover:bg-gray-100"
+                />
+            @else
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <x-ios.button
+                        variant="primary"
+                        href="{{ route('register') }}"
+                        label="Zarejestruj się"
+                        class="bg-white text-blue-600 hover:bg-gray-100"
+                    />
+                    <x-ios.button
+                        variant="ghost"
+                        href="{{ route('login') }}"
+                        label="Zaloguj się"
+                        class="border-2 border-white text-white hover:bg-white hover:text-blue-600"
+                    />
+                </div>
+            @endauth
         </div>
-    @else
-        <div class="bg-gray-100 rounded-lg p-12 text-center">
-            <p class="text-gray-600 text-lg">Obecnie brak dostępnych usług.</p>
-        </div>
-    @endif
-
-    <!-- CTA Section -->
-    <div class="mt-16 bg-blue-50 rounded-lg p-8 text-center">
-        <h2 class="text-3xl font-bold text-gray-900 mb-4">Gotowy na profesjonalny detailing?</h2>
-        <p class="text-gray-700 mb-6">Zarezerwuj termin online i ciesz się czystym autem</p>
-        <a href="{{ route('booking.create') }}"
-           class="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-300">
-            Zarezerwuj Termin
-        </a>
     </div>
-</div>
+</section>
+
+{{-- Services Grid Section --}}
+<section class="py-16 bg-gray-50">
+    <div class="container mx-auto px-4">
+        @if($services->count() > 0)
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+                @foreach($services as $service)
+                    <x-ios.service-card
+                        :service="$service"
+                        :icon="$service->icon ?? 'sparkles'"
+                        class="scroll-reveal"
+                    />
+                @endforeach
+            </div>
+        @else
+            {{-- Empty State --}}
+            <div class="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-12 text-center">
+                <svg class="w-24 h-24 mx-auto text-gray-400 mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                </svg>
+                <h3 class="text-2xl font-bold text-gray-900 mb-2">Obecnie brak dostępnych usług</h3>
+                <p class="text-gray-600">Wkrótce pojawią się nowe usługi. Sprawdź ponownie później!</p>
+            </div>
+        @endif
+    </div>
+</section>
+
+{{-- CTA Section --}}
+<section class="py-16 bg-white">
+    <div class="container mx-auto px-4">
+        <div class="max-w-4xl mx-auto bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-2xl p-8 md:p-12 text-center text-white">
+            <h2 class="text-3xl md:text-4xl font-bold mb-4">
+                Gotowy na profesjonalny detailing?
+            </h2>
+            <p class="text-xl text-blue-100 mb-8">
+                Zarezerwuj termin online i ciesz się czystym autem już dziś
+            </p>
+            @auth
+                <x-ios.button
+                    variant="primary"
+                    href="{{ route('booking.step', ['step' => 1]) }}"
+                    label="Zarezerwuj Termin Teraz"
+                    icon="calendar"
+                    iconPosition="right"
+                    class="bg-white text-blue-600 hover:bg-gray-100"
+                />
+            @else
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <x-ios.button
+                        variant="primary"
+                        href="{{ route('register') }}"
+                        label="Załóż Konto"
+                        class="bg-white text-blue-600 hover:bg-gray-100"
+                    />
+                    <x-ios.button
+                        variant="ghost"
+                        href="{{ route('login') }}"
+                        label="Mam już konto"
+                        class="border-2 border-white text-white hover:bg-white hover:text-blue-600"
+                    />
+                </div>
+            @endauth
+        </div>
+    </div>
+</section>
 @endsection

@@ -113,8 +113,8 @@ Route::middleware(['auth'])->group(function () {
 
     // Profile routes
     Route::prefix('moje-konto')->name('profile.')->group(function () {
-        // Redirect from base to personal page
-        Route::get('/', fn () => redirect()->route('profile.personal'))->name('index');
+        // Profile index with grouped list navigation (iOS pattern)
+        Route::get('/', [ProfileController::class, 'index'])->name('index');
 
         // Profile pages
         Route::get('/dane-osobowe', [ProfileController::class, 'personal'])->name('personal');

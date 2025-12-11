@@ -24,6 +24,25 @@ class ProfileController extends Controller
     ) {}
 
     /**
+     * Display profile index page with grouped list navigation.
+     */
+    public function index(Request $request): View
+    {
+        $user = $request->user();
+        $user->load(['vehicles.vehicleType', 'vehicles.carBrand', 'vehicles.carModel', 'addresses']);
+
+        // Get primary vehicle and address for display
+        $vehicle = $user->vehicles()->first();
+        $address = $user->addresses()->first();
+
+        return view('profile.index', [
+            'user' => $user,
+            'vehicle' => $vehicle,
+            'address' => $address,
+        ]);
+    }
+
+    /**
      * Display personal info page.
      */
     public function personal(Request $request): View
