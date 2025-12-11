@@ -7,12 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.1.0] - 2025-12-12
+
 ### Added
+- **Customer Profile Redesign** - All profile pages updated to v4.0.0 "Medical Precision"
+  - 8 files updated: layout, 5 tabs (personal, vehicle, address, notifications, security), email modal
+  - Color conversion: `blue-*` → `primary-*` (turquoise #4AA5B0)
+  - 96 lines changed (20+ inputs, 12+ buttons, 8+ info boxes, 6+ links, 4 checkboxes)
+  - Full compliance with monochrome design system
 - **Fluid Typography Utilities** - Responsive text scaling without breakpoints
   - `.text-fluid-hero`: 36-96px responsive (clamp)
   - `.text-fluid-subtitle`: 18-24px responsive (clamp)
   - `.text-fluid-body`: 16-20px responsive (clamp)
   - Applied to hero-banner component for optimal mobile scaling
+
+### Fixed
+- **CRITICAL: CI/CD Pipeline - Tests Now Enforce Deployment Quality**
+  - Production deployments were bypassing PHPUnit tests (discovered during v4.0.0 release)
+  - `test.yml`: Added `develop` and `main` branches to push triggers (was only `staging`)
+  - `deploy-production.yml`: Added full test job (PHPUnit + Laravel Pint)
+  - `deploy-production.yml`: Build job now depends on test job (`needs: test`)
+  - `deploy-production.yml`: Deploy job now depends on both (`needs: [test, build]`)
+  - **Impact**: Failed tests now block production deployments (prevents broken code in production)
+- **Test Suite - Weekend Appointment Failures**
+  - Tests failing with "staff not available" when run Thursday-Saturday
+  - Root cause: `now()->addDays(2)` could land on weekends, staff schedules only cover Mon-Fri
+  - Solution: Added `getNextWorkingDay()` helper to skip weekends
+  - Updated: `AppointmentStaffValidationTest` (4 tests), `ProfileSynchronizationTest` (5 tests)
+  - Result: 9/9 tests now passing consistently regardless of execution day
 
 ### Changed
 - **BREAKING: Design System v4.0.0 "Medical Precision"** - Complete visual redesign
