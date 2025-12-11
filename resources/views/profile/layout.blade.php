@@ -5,9 +5,9 @@
     <div class="flex flex-col lg:flex-row gap-6">
         {{-- Sidebar Navigation --}}
         <aside class="lg:w-64 flex-shrink-0">
-            {{-- Mobile: Horizontal scroll tabs --}}
-            <nav class="lg:hidden bg-white rounded-lg shadow-md p-2 mb-4">
-                <div class="flex space-x-2 overflow-x-auto">
+            {{-- Mobile: Vertical stack navigation (iOS pattern) --}}
+            <nav class="lg:hidden bg-white rounded-lg shadow-md mb-4">
+                <ul class="divide-y divide-gray-200">
                     @foreach([
                         ['route' => 'profile.personal', 'icon' => 'user', 'label' => 'Dane osobowe'],
                         ['route' => 'profile.vehicle', 'icon' => 'car', 'label' => 'Pojazd'],
@@ -15,15 +15,34 @@
                         ['route' => 'profile.notifications', 'icon' => 'bell', 'label' => 'Powiadomienia'],
                         ['route' => 'profile.security', 'icon' => 'shield', 'label' => 'Bezpieczeństwo'],
                     ] as $item)
-                        <a href="{{ route($item['route']) }}"
-                           class="flex items-center whitespace-nowrap px-3 py-2 rounded-lg text-sm transition-colors
-                                  {{ request()->routeIs($item['route'])
-                                     ? 'bg-blue-600 text-white'
-                                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
-                            @include('profile.partials.icons.' . $item['icon'], ['class' => 'w-4 h-4 mr-1.5'])
-                            <span>{{ __($item['label']) }}</span>
-                        </a>
+                        <li>
+                            <a href="{{ route($item['route']) }}"
+                               class="flex items-center px-4 py-3 transition-colors min-h-[44px]
+                                      {{ request()->routeIs($item['route'])
+                                         ? 'bg-blue-50 text-blue-700 font-medium'
+                                         : 'text-gray-700 hover:bg-gray-50' }}">
+                                @include('profile.partials.icons.' . $item['icon'], ['class' => 'w-5 h-5 mr-3'])
+                                <span class="flex-1">{{ __($item['label']) }}</span>
+                                @if(request()->routeIs($item['route']))
+                                    <svg class="w-5 h-5 text-blue-700" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                    </svg>
+                                @endif
+                            </a>
+                        </li>
                     @endforeach
+                </ul>
+
+                {{-- Logout Button (Mobile) --}}
+                <div class="border-t border-gray-200">
+                    <button
+                        onclick="confirmLogout()"
+                        class="flex items-center w-full px-4 py-3 text-red-600 hover:bg-red-50 transition-colors min-h-[44px]">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        </svg>
+                        <span class="font-medium">{{ __('Wyloguj się') }}</span>
+                    </button>
                 </div>
             </nav>
 
@@ -50,6 +69,18 @@
                         </li>
                     @endforeach
                 </ul>
+
+                {{-- Logout Button (Desktop) --}}
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <button
+                        onclick="confirmLogout()"
+                        class="flex items-center w-full px-3 py-2 rounded-lg transition-colors text-red-600 hover:bg-red-50">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        </svg>
+                        <span class="ml-3 font-medium">{{ __('Wyloguj się') }}</span>
+                    </button>
+                </div>
             </nav>
         </aside>
 
@@ -82,4 +113,20 @@
         </main>
     </div>
 </div>
+
+{{-- Hidden Logout Form --}}
+<form id="logout-form" method="POST" action="{{ route('logout') }}" style="display: none;">
+    @csrf
+</form>
+
+{{-- Logout Confirmation JavaScript --}}
+@push('scripts')
+<script>
+function confirmLogout() {
+    if (confirm('Czy na pewno chcesz się wylogować?')) {
+        document.getElementById('logout-form').submit();
+    }
+}
+</script>
+@endpush
 @endsection

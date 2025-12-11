@@ -14,20 +14,20 @@ export default {
     themes: [
       {
         ios: {
-          // Colors from design-system.json
-          "primary": "#007AFF",        // iOS Blue
-          "secondary": "#5856D6",      // iOS Purple
-          "accent": "#FF9500",         // iOS Orange
+          // Paradocks Brand Colors (Bentley Modern: 25% Saturation Sophisticated)
+          "primary": "#6B9FA8",        // Desaturated Cyan (25% sat, luxury automotive)
+          "secondary": "#2B2D2F",      // Warm Charcoal (dark primary)
+          "accent": "#8B7355",         // Bronze (premium touch)
           "success": "#34C759",        // iOS Green
           "warning": "#FF9500",        // iOS Orange
           "error": "#FF3B30",          // iOS Red
-          "info": "#0A84FF",           // iOS Light Blue
+          "info": "#6B9FA8",           // Desaturated Cyan
 
-          // Base colors
-          "base-100": "#FFFFFF",       // Background
-          "base-200": "#F2F2F7",       // iOS Light Gray
-          "base-300": "#E5E5EA",       // iOS Gray
-          "base-content": "#000000",   // Text Primary
+          // Base colors (Warm & Sophisticated)
+          "base-100": "#FFFFFF",       // Pure White Background
+          "base-200": "#D4C5B0",       // Tan Leather (30% usage)
+          "base-300": "#E8DFD0",       // Light Tan
+          "base-content": "#2B2D2F",   // Warm Charcoal Text
 
           // Border radius (iOS-style)
           "--rounded-box": "1.5rem",   // 24px for cards

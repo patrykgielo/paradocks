@@ -4,57 +4,35 @@
  * WARNING: This file is AUTO-GENERATED. Do not edit manually!
  * Run 'npm run generate:theme' to regenerate.
  *
- * Source: design-system.json v1.0.0
- * Generated: 2025-12-09T22:57:06.428Z
+ * Source: design-system.json v3.0.0
+ * Generated: 2025-12-11T16:12:00.791Z
  */
 
 @theme {
   /* Colors */
-  --color-primary-50: #eff6ff;
-  --color-primary-100: #dbeafe;
-  --color-primary-200: #bfdbfe;
-  --color-primary-300: #93c5fd;
-  --color-primary-400: #60a5fa;
-  --color-primary-500: #007AFF;
-  --color-primary-600: #0056b3;
-  --color-primary-700: #004494;
-  --color-primary-800: #003876;
-  --color-primary-900: #002c5f;
-  --color-secondary-50: #f8fafc;
-  --color-secondary-100: #f1f5f9;
-  --color-secondary-200: #e2e8f0;
-  --color-secondary-300: #cbd5e1;
-  --color-secondary-400: #94a3b8;
-  --color-secondary-500: #64748b;
-  --color-secondary-600: #475569;
-  --color-secondary-700: #334155;
-  --color-secondary-800: #1e293b;
-  --color-secondary-900: #0f172a;
+  --color-primary-50: #E8F2F4;
+  --color-primary-100: #D1E5E9;
+  --color-primary-200: #A3CBD3;
+  --color-primary-300: #8BB9C4;
+  --color-primary-400: #7DAFBD;
+  --color-primary-500: #6B9FA8;
+  --color-primary-600: #5A8A99;
+  --color-primary-700: #4D7C8A;
+  --color-primary-800: #3D6672;
+  --color-primary-900: #2F5159;
   --color-success: #34C759;
   --color-warning: #FF9500;
   --color-error: #FF3B30;
-  --color-info: #5AC8FA;
+  --color-info: #6B9FA8;
   --color-bg-primary: #FFFFFF;
-  --color-bg-secondary: #F2F2F7;
-  --color-bg-tertiary: #FFFFFF;
-  --color-bg-grouped: #F2F2F7;
-  --color-bg-grouped-secondary: #FFFFFF;
-  --color-bg-grouped-tertiary: #F2F2F7;
-  --color-text-primary: #000000;
-  --color-text-secondary: #3C3C43;
-  --color-text-tertiary: #3C3C4399;
-  --color-text-quaternary: #3C3C434D;
-  --color-text-placeholder: #3C3C434D;
-  --color-gray-50: #F9FAFB;
-  --color-gray-100: #F2F2F7;
-  --color-gray-200: #E5E5EA;
-  --color-gray-300: #D1D1D6;
-  --color-gray-400: #C7C7CC;
-  --color-gray-500: #AEAEB2;
-  --color-gray-600: #8E8E93;
-  --color-gray-700: #636366;
-  --color-gray-800: #48484A;
-  --color-gray-900: #3A3A3C;
+  --color-bg-secondary: #D4C5B0;
+  --color-bg-tertiary: #E8DFD0;
+  --color-text-primary: #2B2D2F;
+  --color-text-secondary: #524432;
+  --color-text-tertiary: #8B7C64;
+  --color-text-inverse: #FFFFFF;
+  --color-text-link: #6B9FA8;
+  --color-text-linkHover: #5A8A99;
 
   /* Typography */
   --font-system: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
