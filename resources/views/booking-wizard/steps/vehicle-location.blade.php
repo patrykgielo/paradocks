@@ -226,9 +226,9 @@
         @foreach($vehicleTypes as $type)
             <button
                 type="button"
-                @click="selectVehicleType({{ $type->id }}, '{{ $type->name }}')"
+                @click="$dispatch('select-vehicle-type', { id: {{ $type->id }}, name: '{{ $type->name }}' })"
                 class="vehicle-type-card text-left p-4 bg-white hover:bg-primary-50 active:scale-98 border-2 border-gray-200 hover:border-primary-400 rounded-xl transition-all duration-200"
-                :class="selectedVehicleType === {{ $type->id }} ? 'border-primary-400 bg-primary-50 ring-4 ring-primary-200' : ''"
+                :class="$root.selectedVehicleType === {{ $type->id }} ? 'border-primary-400 bg-primary-50 ring-4 ring-primary-200' : ''"
             >
                 <div class="flex items-start gap-4">
                     {{-- Icon --}}
@@ -248,7 +248,7 @@
                     </div>
 
                     {{-- Selection Indicator --}}
-                    <div x-show="selectedVehicleType === {{ $type->id }}" x-cloak class="flex-shrink-0">
+                    <div x-show="$root.selectedVehicleType === {{ $type->id }}" x-cloak class="flex-shrink-0">
                         <div class="w-6 h-6 rounded-full bg-primary-500 flex items-center justify-center">
                             <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
@@ -291,14 +291,32 @@ function vehicleLocationForm(initialVehicleType, initialAddress) {
         init() {
             // Load vehicle type name if pre-selected
             if (this.selectedVehicleType) {
-                const typeButton = document.querySelector(`button[onclick*="selectVehicleType(${this.selectedVehicleType}"]`);
-                if (typeButton) {
-                    const typeName = typeButton.querySelector('h4')?.textContent;
-                    if (typeName) {
-                        this.selectedVehicleTypeName = typeName;
-                    }
-                }
+                this.loadVehicleTypeName(this.selectedVehicleType);
             }
+
+            // Listen for vehicle type selection from bottom sheet
+            this.$watch('selectedVehicleType', (value) => {
+                if (value) {
+                    this.loadVehicleTypeName(value);
+                }
+            });
+
+            // Event listener for vehicle type selection
+            window.addEventListener('select-vehicle-type', (event) => {
+                this.selectVehicleType(event.detail.id, event.detail.name);
+            });
+        },
+
+        loadVehicleTypeName(typeId) {
+            // Try to find the vehicle type name from the bottom sheet buttons
+            const buttons = document.querySelectorAll('.vehicle-type-card h4');
+            buttons.forEach(button => {
+                const parentButton = button.closest('button');
+                const onClick = parentButton?.getAttribute('@click');
+                if (onClick && onClick.includes(`id: ${typeId}`)) {
+                    this.selectedVehicleTypeName = button.textContent.trim();
+                }
+            });
         },
 
         selectVehicleType(typeId, typeName) {
@@ -312,9 +330,6 @@ function vehicleLocationForm(initialVehicleType, initialAddress) {
             if (window.navigator && window.navigator.vibrate) {
                 window.navigator.vibrate(10);
             }
-
-            // Save progress
-            this.saveProgress();
         }
     }
 }
