@@ -59,7 +59,7 @@
 
                     {{-- Urgency indicator (only X left) --}}
                     <template x-if="slot.available && slot.spotsLeft && slot.spotsLeft <= 3">
-                        <span class="time-grid__slot-urgency text-xs text-orange-600 font-semibold mt-1 flex items-center gap-1">
+                        <span class="time-grid__slot-urgency text-xs text-error font-semibold mt-1 flex items-center gap-1">
                             🔥 Tylko <span x-text="slot.spotsLeft"></span>
                         </span>
                     </template>
@@ -100,8 +100,8 @@
         x-show="!date"
         x-cloak
     >
-        <div class="time-grid__placeholder-icon w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center mx-auto mb-4">
-            <svg class="w-8 h-8 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="time-grid__placeholder-icon w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
         </div>
@@ -241,7 +241,7 @@ function timeGridWidget(initialDate, serviceId, initialSelectedTime) {
 }
 
 .time-grid__slot:not(:disabled):not(.time-grid__slot--selected):hover {
-    @apply border-orange-500 bg-orange-50 shadow-md;
+    @apply border-primary-400 bg-primary-50 shadow-md;
 }
 
 .time-grid__slot:not(:disabled):active {
@@ -249,11 +249,11 @@ function timeGridWidget(initialDate, serviceId, initialSelectedTime) {
 }
 
 .time-grid__slot--selected {
-    @apply bg-orange-500 border-orange-500 text-white shadow-lg;
+    @apply bg-primary-400 border-primary-400 text-white shadow-lg;
 }
 
 .time-grid__slot--selected:hover {
-    @apply bg-orange-600 border-orange-600;
+    @apply bg-primary-600 border-primary-600;
 }
 
 .time-grid__slot--unavailable {
