@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Appointment;
-use App\Models\ServiceAvailability;
 use App\Models\User;
 use App\Support\Settings\SettingsManager;
 use Carbon\Carbon;
@@ -74,63 +73,6 @@ class AppointmentService
             ->exists();
 
         return ! $hasConflict;
-    }
-
-    /**
-     * Get available time slots for a service on a specific date
-     */
-    public function getAvailableTimeSlots(
-        int $serviceId,
-        int $staffId,
-        Carbon $date,
-        int $serviceDurationMinutes
-    ): array {
-        $dayOfWeek = $date->dayOfWeek;
-
-        // Get staff availability for this day and service
-        $availabilities = ServiceAvailability::query()
-            ->where('user_id', $staffId)
-            ->where('service_id', $serviceId)
-            ->where('day_of_week', $dayOfWeek)
-            ->get();
-
-        if ($availabilities->isEmpty()) {
-            return [];
-        }
-
-        $timeSlots = [];
-
-        $slotInterval = $this->settings->slotIntervalMinutes();
-
-        foreach ($availabilities as $availability) {
-            $currentSlot = Carbon::parse($availability->start_time);
-            $endOfAvailability = Carbon::parse($availability->end_time);
-
-            while ($currentSlot->copy()->addMinutes($serviceDurationMinutes)->lte($endOfAvailability)) {
-                $slotEnd = $currentSlot->copy()->addMinutes($serviceDurationMinutes);
-
-                // Check if this slot is available
-                if ($this->checkStaffAvailability(
-                    $staffId,
-                    $serviceId,
-                    $date,
-                    $currentSlot,
-                    $slotEnd
-                )) {
-                    $timeSlots[] = [
-                        'start' => $currentSlot->format('H:i'),
-                        'end' => $slotEnd->format('H:i'),
-                        'datetime_start' => $date->format('Y-m-d').' '.$currentSlot->format('H:i'),
-                        'datetime_end' => $date->format('Y-m-d').' '.$slotEnd->format('H:i'),
-                    ];
-                }
-
-                // Move to next slot based on configured interval
-                $currentSlot->addMinutes($slotInterval);
-            }
-        }
-
-        return $timeSlots;
     }
 
     /**

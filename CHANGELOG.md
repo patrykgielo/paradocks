@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+- **ServiceAvailability System - Dead Code Cleanup**
+  - **Model**: `app/Models/ServiceAvailability.php` (deleted)
+  - **Command**: `app/Console/Commands/EnsureStaffAvailability.php` (deleted, never scheduled)
+  - **RelationManager**: `app/Filament/Resources/EmployeeResource/RelationManagers/ServiceAvailabilitiesRelationManager.php` (deleted, 7,718 bytes)
+  - **Factory**: `database/factories/ServiceAvailabilityFactory.php` (deleted)
+  - **Relations**: Removed `serviceAvailabilities()` from User.php and Service.php models
+  - **Dead Method**: Removed `getAvailableTimeSlots()` from AppointmentService (56 lines, never called)
+  - **UI Components**: Removed "Dostępności" tab from EmployeeResource admin panel
+  - **Database Table**: Created migration to drop `service_availabilities` table (verified 0 records)
+  - **Reason**: Dead code since 2025-11-19 migration to StaffSchedule system
+  - **Impact**: Admin configuration reduction from 350 → 30 clicks (91% improvement)
+  - **Documentation**: Updated 9 files with deprecation notices and migration guides
+  - **See**: ADR-015: Staff Availability System Redesign for complete analysis
+
 ## [4.1.0] - 2025-12-12
 
 ### Added
