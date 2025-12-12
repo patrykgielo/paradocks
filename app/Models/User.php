@@ -194,6 +194,24 @@ class User extends Authenticatable implements FilamentUser, HasName
         return $value ?? 'pl';
     }
 
+    /**
+     * Get the user's phone number in display format.
+     *
+     * Converts E.164 format (+48123456789) to user-friendly display format.
+     * Returns null if no phone number is set.
+     *
+     * @return string|null Phone number in display format
+     */
+    public function getPhoneAttribute(): ?string
+    {
+        if (empty($this->phone_e164)) {
+            return null;
+        }
+
+        // Return phone in display format (keep E.164 for consistency with booking wizard)
+        return $this->phone_e164;
+    }
+
     public function canAccessPanel(Panel $panel): bool
     {
         // Layer 0: Maintenance mode check (BEFORE role check)

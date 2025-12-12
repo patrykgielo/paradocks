@@ -146,7 +146,30 @@ class BookingController extends Controller
                 ]);
 
             case 4: // Contact Information
-                return view('booking-wizard.steps.contact');
+                // Pre-fill contact data from user profile (only if not already in session)
+                $booking = session('booking', []);
+
+                if (auth()->check()) {
+                    $user = auth()->user();
+
+                    // Only pre-fill empty fields (preserve session data if user went back)
+                    if (empty($booking['first_name'])) {
+                        $booking['first_name'] = $user->first_name;
+                    }
+                    if (empty($booking['last_name'])) {
+                        $booking['last_name'] = $user->last_name;
+                    }
+                    if (empty($booking['email'])) {
+                        $booking['email'] = $user->email;
+                    }
+                    if (empty($booking['phone']) && $user->phone) {
+                        $booking['phone'] = $user->phone;
+                    }
+                }
+
+                return view('booking-wizard.steps.contact', [
+                    'bookingData' => $booking,
+                ]);
 
             case 5: // Review & Confirm
                 $booking = session('booking');
