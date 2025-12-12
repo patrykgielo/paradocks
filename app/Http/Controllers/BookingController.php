@@ -251,22 +251,101 @@ class BookingController extends Controller
     }
 
     /**
-     * AJAX: Save progress to session (partial data)
+     * AJAX: Save progress to session with validation
      */
     public function saveProgress(Request $request)
     {
         $step = $request->input('step');
         $data = $request->input('data', []);
 
-        // Merge new data into existing session
-        $booking = session('booking', []);
-        $booking = array_merge($booking, $data);
-        $booking['current_step'] = $step;
-        $booking['updated_at'] = now()->toDateTimeString();
+        // Validate based on step
+        try {
+            switch ($step) {
+                case 1: // Service Selection
+                    $validated = $this->validateStep1($data);
+                    break;
 
-        session(['booking' => $booking]);
+                case 2: // Date & Time
+                    $validated = $this->validateStep2($data);
+                    break;
 
-        return response()->json(['success' => true]);
+                case 3: // Vehicle & Location
+                    $validated = $this->validateStep3($data);
+                    break;
+
+                case 4: // Contact Information
+                    $validated = $this->validateStep4($data);
+                    break;
+
+                default:
+                    // For incremental saves (e.g., calendar date selection), no strict validation
+                    $validated = $data;
+                    break;
+            }
+
+            // Merge new data into existing session
+            $booking = session('booking', []);
+            $booking = array_merge($booking, $validated);
+            $booking['current_step'] = $step;
+            $booking['updated_at'] = now()->toDateTimeString();
+
+            session(['booking' => $booking]);
+
+            return response()->json(['success' => true]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'errors' => $e->errors(),
+                'message' => 'Sprawdź wprowadzone dane i spróbuj ponownie.',
+            ], 422);
+        }
+    }
+
+    /**
+     * Validation helpers for each step
+     */
+    private function validateStep1(array $data)
+    {
+        return validator($data, [
+            'service_id' => 'required|exists:services,id',
+        ])->validate();
+    }
+
+    private function validateStep2(array $data)
+    {
+        return validator($data, [
+            'date' => 'required|date|after_or_equal:today',
+            'time_slot' => 'required|regex:/^\d{2}:\d{2}$/',
+        ])->validate();
+    }
+
+    private function validateStep3(array $data)
+    {
+        return validator($data, [
+            'vehicle_type_id' => 'required|exists:vehicle_types,id',
+            'vehicle_brand' => 'nullable|string|max:100',
+            'vehicle_model' => 'nullable|string|max:100',
+            'vehicle_year' => 'nullable|integer|min:1900|max:'.(date('Y') + 1),
+            'location_address' => 'required|string|max:255',
+            'location_latitude' => 'required|numeric|between:-90,90',
+            'location_longitude' => 'required|numeric|between:-180,180',
+            'location_place_id' => 'nullable|string|max:255',
+            'location_components' => 'nullable|string',
+        ])->validate();
+    }
+
+    private function validateStep4(array $data)
+    {
+        return validator($data, [
+            'first_name' => 'required|string|min:2|max:100',
+            'last_name' => 'required|string|min:2|max:100',
+            'email' => 'required|email|max:255',
+            'phone' => ['required', 'regex:/^(\+48)?[\s-]?\d{9}$/'],
+            'notify_email' => 'nullable|boolean',
+            'notify_sms' => 'nullable|boolean',
+            'marketing_consent' => 'nullable|boolean',
+            'terms_accepted' => 'required|accepted',
+        ])->validate();
     }
 
     /**

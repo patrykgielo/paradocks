@@ -151,22 +151,22 @@ function calendarWidget(serviceId, selectedDate) {
 }
 
 .flatpickr-day:hover:not(.flatpickr-disabled) {
-    @apply bg-orange-100 !important;
+    @apply bg-primary-100 !important;
 }
 
 .flatpickr-day.selected,
 .flatpickr-day.selected:hover {
-    @apply bg-orange-500 text-white !important;
-    box-shadow: 0 4px 6px -1px rgba(249, 115, 22, 0.3) !important;
+    @apply bg-primary-400 text-white !important;
+    box-shadow: 0 4px 6px -1px rgba(74, 165, 176, 0.3) !important;
 }
 
 .flatpickr-day.today {
-    @apply border-2 border-orange-500 !important;
+    @apply border-2 border-primary-400 !important;
     background: transparent !important;
 }
 
 .flatpickr-day.today:not(.selected) {
-    @apply text-orange-600 font-bold !important;
+    @apply text-primary-600 font-bold !important;
 }
 
 .flatpickr-day.flatpickr-disabled {
@@ -196,7 +196,7 @@ function calendarWidget(serviceId, selectedDate) {
 
 .flatpickr-months .flatpickr-prev-month:hover,
 .flatpickr-months .flatpickr-next-month:hover {
-    @apply bg-orange-100 !important;
+    @apply bg-primary-100 !important;
 }
 
 .flatpickr-current-month {
