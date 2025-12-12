@@ -35,7 +35,7 @@
                         <h3 class="text-lg font-bold text-gray-900 mb-1">Typ Pojazdu</h3>
                         <p class="text-sm text-gray-600">Wybierz rozmiar swojego auta</p>
                     </div>
-                    <span class="text-xs font-semibold text-orange-600 bg-orange-100 px-3 py-1 rounded-full">
+                    <span class="text-xs font-semibold text-primary-600 bg-primary-100 px-3 py-1 rounded-full">
                         Wymagane
                     </span>
                 </div>
@@ -45,10 +45,10 @@
                     type="button"
                     @click="$dispatch('open-bottom-sheet', { id: 'vehicle-type-selector' })"
                     class="vehicle-location__type-selector w-full flex items-center justify-between px-6 py-4 bg-gray-50 hover:bg-gray-100 active:scale-98 border-2 border-gray-300 rounded-xl transition-all duration-200 text-left"
-                    :class="selectedVehicleType ? 'border-orange-500 bg-orange-50' : ''"
+                    :class="selectedVehicleType ? 'border-primary-400 bg-primary-50' : ''"
                 >
                     <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center flex-shrink-0">
+                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center flex-shrink-0">
                             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                             </svg>
@@ -107,7 +107,7 @@
                             name="vehicle_brand"
                             value="{{ old('vehicle_brand', session('booking.vehicle_brand')) }}"
                             placeholder="np. BMW, Toyota, Volkswagen"
-                            class="vehicle-location__input w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-200"
+                            class="vehicle-location__input w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-primary-400 focus:ring-2 focus:ring-primary-200 transition-all duration-200"
                         >
                     </div>
 
@@ -122,7 +122,7 @@
                             name="vehicle_model"
                             value="{{ old('vehicle_model', session('booking.vehicle_model')) }}"
                             placeholder="np. 320d, Corolla, Golf"
-                            class="vehicle-location__input w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-200"
+                            class="vehicle-location__input w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-primary-400 focus:ring-2 focus:ring-primary-200 transition-all duration-200"
                         >
                     </div>
 
@@ -139,7 +139,7 @@
                             placeholder="np. 2020"
                             min="1900"
                             max="{{ date('Y') + 1 }}"
-                            class="vehicle-location__input w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-200"
+                            class="vehicle-location__input w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-primary-400 focus:ring-2 focus:ring-primary-200 transition-all duration-200"
                         >
                     </div>
                 </div>
@@ -154,7 +154,7 @@
                         <h3 class="text-lg font-bold text-gray-900 mb-1">Miejsce Serwisu</h3>
                         <p class="text-sm text-gray-600">Gdzie możemy przyjechać z samochodem?</p>
                     </div>
-                    <span class="text-xs font-semibold text-orange-600 bg-orange-100 px-3 py-1 rounded-full">
+                    <span class="text-xs font-semibold text-primary-600 bg-primary-100 px-3 py-1 rounded-full">
                         Wymagane
                     </span>
                 </div>
@@ -178,7 +178,7 @@
                             x-model="locationAddress"
                             placeholder="Zacznij wpisywać adres..."
                             required
-                            class="vehicle-location__input w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-200"
+                            class="vehicle-location__input w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:border-primary-400 focus:ring-2 focus:ring-primary-200 transition-all duration-200"
                         >
                     </div>
 
@@ -227,12 +227,12 @@
             <button
                 type="button"
                 @click="selectVehicleType({{ $type->id }}, '{{ $type->name }}')"
-                class="vehicle-type-card text-left p-4 bg-white hover:bg-orange-50 active:scale-98 border-2 border-gray-200 hover:border-orange-500 rounded-xl transition-all duration-200"
-                :class="selectedVehicleType === {{ $type->id }} ? 'border-orange-500 bg-orange-50 ring-4 ring-orange-200' : ''"
+                class="vehicle-type-card text-left p-4 bg-white hover:bg-primary-50 active:scale-98 border-2 border-gray-200 hover:border-primary-400 rounded-xl transition-all duration-200"
+                :class="selectedVehicleType === {{ $type->id }} ? 'border-primary-400 bg-primary-50 ring-4 ring-primary-200' : ''"
             >
                 <div class="flex items-start gap-4">
                     {{-- Icon --}}
-                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center flex-shrink-0">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center flex-shrink-0">
                         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                         </svg>
@@ -249,7 +249,7 @@
 
                     {{-- Selection Indicator --}}
                     <div x-show="selectedVehicleType === {{ $type->id }}" x-cloak class="flex-shrink-0">
-                        <div class="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center">
+                        <div class="w-6 h-6 rounded-full bg-primary-500 flex items-center justify-center">
                             <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                             </svg>
@@ -423,7 +423,7 @@ function initMap(lat, lng) {
 
 .vehicle-location__input:focus {
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(249, 115, 22, 0.1);
+    box-shadow: 0 4px 8px rgba(74, 165, 176, 0.1);
 }
 
 /* Vehicle Type Cards in Bottom Sheet */

@@ -142,12 +142,6 @@ function timeGridWidget(initialDate, serviceId, initialSelectedTime) {
                 const data = await response.json();
                 this.timeSlots = data.slots || [];
 
-                // DEBUG: Log slot data structure
-                console.log('[TIME-GRID] Loaded time slots:', this.timeSlots.length);
-                if (this.timeSlots.length > 0) {
-                    console.log('[TIME-GRID] First slot:', this.timeSlots[0]);
-                    console.log('[TIME-GRID] First slot.available:', this.timeSlots[0].available, 'type:', typeof this.timeSlots[0].available);
-                }
 
                 // Auto-select if only one slot available
                 if (this.timeSlots.length === 1 && this.timeSlots[0].available) {
@@ -161,16 +155,11 @@ function timeGridWidget(initialDate, serviceId, initialSelectedTime) {
         },
 
         selectTimeSlot(slot) {
-            console.log('[TIME-GRID] selectTimeSlot called:', slot);
-            console.log('[TIME-GRID] slot.available:', slot.available, 'type:', typeof slot.available);
-
             if (!slot.available) {
-                console.warn('[TIME-GRID] Slot not available, aborting');
                 return;
             }
 
             this.selectedTime = slot.time;
-            console.log('[TIME-GRID] Selected time:', this.selectedTime);
 
             // Save to session
             this.saveProgress();
