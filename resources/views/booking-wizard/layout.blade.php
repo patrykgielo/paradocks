@@ -153,13 +153,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const formData = new FormData(wizardForm);
             const data = Object.fromEntries(formData.entries());
 
-            // Get submit button reference outside try block
-            const submitBtn = wizardForm.querySelector('button[type="submit"]');
+            // Get submit button reference (it's outside form, in sticky footer)
+            const submitBtn = document.querySelector('button[form="{{ $formId ?? 'booking-form' }}"]')
+                           || document.querySelector('.booking-wizard__next[type="submit"]');
             let originalText = null;
 
             try {
                 if (!submitBtn) {
                     console.error('Submit button not found');
+                    bookingWizard.isSubmitting = false;
                     return;
                 }
 
