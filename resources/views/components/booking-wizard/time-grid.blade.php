@@ -43,10 +43,10 @@
                     @click="selectTimeSlot(slot)"
                     :disabled="!slot.available"
                     :class="{
-                        'time-grid__slot--unavailable': !slot.available,
-                        'time-grid__slot--selected': selectedTime === slot.time
+                        '!bg-primary-400 !border-primary-400 !text-white shadow-lg': selectedTime === slot.time,
+                        '!border-primary-400 !bg-primary-50': selectedTime !== slot.time && !slot.available === false
                     }"
-                    class="time-grid__slot relative flex flex-col items-center justify-center min-h-[56px] px-4 py-3 bg-white border-2 border-gray-200 rounded-xl transition-all duration-200 ios-spring text-gray-900 font-medium disabled:opacity-30 disabled:cursor-not-allowed disabled:bg-gray-50"
+                    class="time-grid__slot relative flex flex-col items-center justify-center min-h-[56px] px-4 py-3 bg-white border-2 border-gray-200 rounded-xl transition-all duration-200 ios-spring text-gray-900 font-medium disabled:opacity-30 disabled:cursor-not-allowed disabled:bg-gray-50 hover:border-primary-400 hover:bg-primary-50 hover:shadow-md"
                 >
                     <span class="time-grid__slot-time text-base font-bold" x-text="slot.time"></span>
 
