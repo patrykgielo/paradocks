@@ -141,7 +141,7 @@ class BookingController extends Controller
             case 3: // Vehicle & Location
                 return view('booking-wizard.steps.vehicle-location', [
                     'vehicleTypes' => VehicleType::active()->orderBy('sort_order')->get(),
-                    'googleMapsApiKey' => config('services.google_maps.key'),
+                    'googleMapsApiKey' => config('services.google_maps.api_key'),
                     'googleMapsMapId' => config('services.google_maps.map_id'),
                 ]);
 
