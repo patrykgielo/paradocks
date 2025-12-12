@@ -310,7 +310,9 @@ class BookingController extends Controller
                 serviceDurationMinutes: $service->duration_minutes
             );
 
-            $availableCount = count(array_filter($slots, fn ($slot) => $slot['available']));
+            // getAvailableSlotsAcrossAllStaff() only returns available slots
+            // If a slot is not available, it's not in the array at all
+            $availableCount = count($slots);
 
             if ($availableCount === 0) {
                 $unavailableDates[] = $dateStr;

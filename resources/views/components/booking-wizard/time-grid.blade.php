@@ -142,6 +142,13 @@ function timeGridWidget(initialDate, serviceId, initialSelectedTime) {
                 const data = await response.json();
                 this.timeSlots = data.slots || [];
 
+                // DEBUG: Log slot data structure
+                console.log('[TIME-GRID] Loaded time slots:', this.timeSlots.length);
+                if (this.timeSlots.length > 0) {
+                    console.log('[TIME-GRID] First slot:', this.timeSlots[0]);
+                    console.log('[TIME-GRID] First slot.available:', this.timeSlots[0].available, 'type:', typeof this.timeSlots[0].available);
+                }
+
                 // Auto-select if only one slot available
                 if (this.timeSlots.length === 1 && this.timeSlots[0].available) {
                     this.selectTimeSlot(this.timeSlots[0]);
@@ -154,9 +161,16 @@ function timeGridWidget(initialDate, serviceId, initialSelectedTime) {
         },
 
         selectTimeSlot(slot) {
-            if (!slot.available) return;
+            console.log('[TIME-GRID] selectTimeSlot called:', slot);
+            console.log('[TIME-GRID] slot.available:', slot.available, 'type:', typeof slot.available);
+
+            if (!slot.available) {
+                console.warn('[TIME-GRID] Slot not available, aborting');
+                return;
+            }
 
             this.selectedTime = slot.time;
+            console.log('[TIME-GRID] Selected time:', this.selectedTime);
 
             // Save to session
             this.saveProgress();
@@ -226,7 +240,7 @@ function timeGridWidget(initialDate, serviceId, initialSelectedTime) {
     min-width: 64px;
 }
 
-.time-grid__slot:not(:disabled):hover {
+.time-grid__slot:not(:disabled):not(.time-grid__slot--selected):hover {
     @apply border-orange-500 bg-orange-50 shadow-md;
 }
 

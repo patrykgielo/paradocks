@@ -58,8 +58,8 @@ function calendarWidget(serviceId, selectedDate) {
         unavailableDates: [],
         availabilityData: {},
 
-        init() {
-            this.loadUnavailableDates();
+        async init() {
+            await this.loadUnavailableDates();
             this.initFlatpickr();
         },
 

@@ -234,10 +234,12 @@ class AppointmentService
                 // Avoid duplicate slots
                 if (! isset($allSlots[$slotKey])) {
                     $allSlots[$slotKey] = [
+                        'time' => $currentSlot->format('H:i'), // Frontend expects 'time' key
                         'start' => $currentSlot->format('H:i'),
                         'end' => $slotEnd->format('H:i'),
                         'datetime_start' => $date->format('Y-m-d').' '.$currentSlot->format('H:i'),
                         'datetime_end' => $date->format('Y-m-d').' '.$slotEnd->format('H:i'),
+                        'available' => true, // Frontend expects 'available' boolean
                     ];
                 }
             }

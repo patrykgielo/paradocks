@@ -88,7 +88,7 @@ Route::prefix('api/webhooks')->name('webhooks.')->middleware('throttle:120,1')->
 Route::middleware(['auth'])->group(function () {
     // Booking (old single-page flow)
     Route::get('/services/{service}/book', [BookingController::class, 'create'])->name('booking.create');
-    Route::post('/booking/available-slots', [BookingController::class, 'getAvailableSlots'])->name('booking.slots');
+    Route::get('/booking/available-slots', [BookingController::class, 'getAvailableSlots'])->name('booking.slots');
 
     // Booking Wizard (new multi-step flow)
     Route::get('/booking/step/{step}', [BookingController::class, 'showStep'])->name('booking.step');
