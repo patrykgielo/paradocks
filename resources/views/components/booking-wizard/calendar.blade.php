@@ -97,8 +97,8 @@ function calendarWidget(serviceId, selectedDate) {
                     // Trigger event for parent component (time grid)
                     this.$dispatch('date-selected', { date: dateStr });
 
-                    // Save to session
-                    this.saveProgress(dateStr);
+                    // NOTE: Don't save progress here - wait until time slot is selected
+                    // Partial data (date without time_slot) would fail validation
                 },
 
                 onDayCreate: (dObj, dStr, fp, dayElem) => {
@@ -112,20 +112,6 @@ function calendarWidget(serviceId, selectedDate) {
                         dayElem.innerHTML += '<span class="availability-dot availability-dot--limited"></span>';
                     }
                 }
-            });
-        },
-
-        saveProgress(date) {
-            fetch('{{ route('booking.save-progress') }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({
-                    step: 2,
-                    data: { date: date }
-                })
             });
         }
     }

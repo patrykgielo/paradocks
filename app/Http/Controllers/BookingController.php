@@ -313,9 +313,11 @@ class BookingController extends Controller
 
     private function validateStep2(array $data)
     {
+        // Allow partial saves (just date OR just time_slot)
+        // Full validation happens on form submit in storeStep()
         return validator($data, [
-            'date' => 'required|date|after_or_equal:today',
-            'time_slot' => 'required|regex:/^\d{2}:\d{2}$/',
+            'date' => 'nullable|date|after_or_equal:today',
+            'time_slot' => 'nullable|regex:/^\d{2}:\d{2}$/',
         ])->validate();
     }
 
