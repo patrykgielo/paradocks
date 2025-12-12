@@ -174,10 +174,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const { response, result } = await bookingWizard.saveProgress(bookingWizard.currentStep, data);
 
                 if (response.ok && result.success !== false) {
-                    // Success - navigate to next step WITHOUT page reload warning
+                    // Success - reset state BEFORE navigation (prevent race condition)
+                    bookingWizard.isSubmitting = false;
+
+                    // Navigate to next step WITHOUT page reload warning
                     bookingWizard.goToStep(bookingWizard.currentStep + 1);
                 } else {
-                    // Validation errors - display them
+                    // Validation errors - reset state and display them
+                    bookingWizard.isSubmitting = false;
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = originalText;
 
@@ -193,14 +197,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('Form submission error:', error);
 
                 // Restore button state
+                bookingWizard.isSubmitting = false;
                 if (submitBtn && originalText) {
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = originalText;
                 }
 
                 alert('Wystąpił błąd połączenia. Sprawdź połączenie internetowe i spróbuj ponownie.');
-            } finally {
-                bookingWizard.isSubmitting = false;
             }
         });
     }
