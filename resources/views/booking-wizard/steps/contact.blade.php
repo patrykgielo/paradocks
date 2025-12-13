@@ -44,7 +44,7 @@
                                 type="text"
                                 id="first-name"
                                 name="first_name"
-                                value="{{ old('first_name', session('booking.first_name') ?? auth()->user()?->first_name) }}"
+                                value="{{ old('first_name', $bookingData['first_name'] ?? '') }}"
                                 required
                                 autocomplete="given-name"
                                 placeholder="Jan"
@@ -75,7 +75,7 @@
                                 type="text"
                                 id="last-name"
                                 name="last_name"
-                                value="{{ old('last_name', session('booking.last_name') ?? auth()->user()?->last_name) }}"
+                                value="{{ old('last_name', $bookingData['last_name'] ?? '') }}"
                                 required
                                 autocomplete="family-name"
                                 placeholder="Kowalski"
@@ -110,13 +110,16 @@
                                 type="email"
                                 id="email"
                                 name="email"
-                                value="{{ old('email', session('booking.email') ?? auth()->user()?->email) }}"
+                                value="{{ old('email', $bookingData['email'] ?? '') }}"
                                 required
                                 autocomplete="email"
                                 placeholder="jan.kowalski@example.com"
+                                @if(auth()->check())
+                                    readonly
+                                @endif
                                 x-model="email"
                                 @blur="validateField('email')"
-                                class="contact-info__input w-full pl-12 pr-12 py-3 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-200"
+                                class="contact-info__input w-full pl-12 pr-12 py-3 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-200 @if(auth()->check()) bg-gray-50 cursor-not-allowed @endif"
                                 :class="validFields.email ? 'border-green-500' : ''"
                             >
                             <div x-show="validFields.email" x-cloak class="absolute right-4 top-1/2 -translate-y-1/2">
@@ -125,6 +128,14 @@
                                 </svg>
                             </div>
                         </div>
+                        @if(auth()->check())
+                            <p class="mt-2 text-xs text-gray-500 flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                                Email z Twojego konta nie może być zmieniony podczas rezerwacji
+                            </p>
+                        @endif
                         @error('email')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -145,7 +156,7 @@
                                 type="tel"
                                 id="phone"
                                 name="phone"
-                                value="{{ old('phone', session('booking.phone') ?? auth()->user()?->phone) }}"
+                                value="{{ old('phone', $bookingData['phone'] ?? '') }}"
                                 required
                                 autocomplete="tel"
                                 placeholder="+48 123 456 789"
@@ -287,10 +298,12 @@
 <script>
 function contactInfoForm() {
     return {
-        firstName: '',
-        lastName: '',
-        email: '',
-        phone: '',
+        // FIXED: Initialize from Blade-rendered values (not empty strings)
+        // This reads the actual input value set by Blade template
+        firstName: document.getElementById('first-name')?.value || '',
+        lastName: document.getElementById('last-name')?.value || '',
+        email: document.getElementById('email')?.value || '',
+        phone: document.getElementById('phone')?.value || '',
         validFields: {
             firstName: false,
             lastName: false,

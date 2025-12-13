@@ -1,6 +1,23 @@
 # Zarządzanie Dostępnością Pracowników
 
-## Przegląd
+> ⚠️ **UWAGA: TEN DOKUMENT JEST PRZESTARZAŁY**
+>
+> **Data Wycofania:** 2025-12-12
+>
+> System **ServiceAvailability** (Dostępności) został **USUNIĘTY** z aplikacji.
+>
+> **Przyczyna:** Był to dead code, który tworzył kombinatoryczną eksplozję konfiguracji (350 ustawień dla 5 pracowników × 10 usług × 7 dni). System rezerwacji **NIE UŻYWAŁ** tego modelu od 2025-11-19.
+>
+> **✅ NOWY SYSTEM:**
+> - Przeczytaj: **[Przewodnik Harmonogramów Pracowników](staff-scheduling-guide.md)**
+> - Zarządzanie przez zakładki: **Harmonogramy / Wyjątki / Urlopy**
+> - Redukcja konfiguracji: **350 → 30 kliknięć (91% mniej)**
+>
+> **Dokumentacja poniżej zachowana wyłącznie dla celów historycznych.**
+>
+> ---
+
+## Przegląd (PRZESTARZAŁY SYSTEM)
 
 System dostępności pracowników (Staff Availability) określa, **kiedy pracownicy mogą wykonywać konkretne usługi**. Dostępność jest podstawą kalendarza rezerwacji - bez ustawionych dostępności, klienci nie będą widzieć wolnych terminów.
 

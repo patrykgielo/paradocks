@@ -157,12 +157,6 @@ class EmployeeResource extends Resource
                     ->sortable()
                     ->badge()
                     ->color('primary'),
-                Tables\Columns\TextColumn::make('serviceAvailabilities_count')
-                    ->label('Dostępności')
-                    ->counts('serviceAvailabilities')
-                    ->sortable()
-                    ->badge()
-                    ->color('warning'),
                 Tables\Columns\IconColumn::make('email_verified_at')
                     ->label('Zweryfikowany')
                     ->boolean()
@@ -209,7 +203,6 @@ class EmployeeResource extends Resource
             RelationManagers\StaffSchedulesRelationManager::class,
             RelationManagers\DateExceptionsRelationManager::class,
             RelationManagers\VacationPeriodsRelationManager::class,
-            RelationManagers\ServiceAvailabilitiesRelationManager::class, // Legacy - do usunięcia w przyszłości
         ];
     }
 

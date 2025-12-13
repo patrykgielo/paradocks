@@ -4,7 +4,7 @@
     'minDate' => 'today',
 ])
 
-<div class="calendar" x-data="calendarWidget(@js($serviceId), @js($selectedDate))">
+<div class="calendar" x-data="calendarWidget(@js($serviceId), @js($selectedDate))" x-cloak>
     {{-- Hidden input for form submission --}}
     <input
         type="hidden"
@@ -13,8 +13,22 @@
         required
     >
 
-    {{-- Calendar container --}}
-    <div class="calendar__wrapper">
+    {{-- Loading skeleton (shown while fetching availability data) --}}
+    <div x-show="loading" class="calendar__skeleton">
+        <div class="skeleton skeleton--calendar animate-pulse bg-gray-200 rounded-2xl h-80 flex items-center justify-center">
+            <div class="text-center">
+                <svg class="animate-spin h-8 w-8 mx-auto text-primary-400 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <p class="text-sm text-gray-500 font-medium">Ładowanie dostępnych terminów...</p>
+                <p class="text-xs text-gray-400 mt-1">Sprawdzanie harmonogramów personelu</p>
+            </div>
+        </div>
+    </div>
+
+    {{-- Calendar container (hidden until loaded) --}}
+    <div x-show="!loading" class="calendar__wrapper">
         <input
             type="text"
             id="booking-date"
@@ -53,21 +67,36 @@
 <script>
 function calendarWidget(serviceId, selectedDate) {
     return {
+        loading: true,
         selectedDate: selectedDate,
         flatpickrInstance: null,
         unavailableDates: [],
         availabilityData: {},
 
-        init() {
-            this.loadUnavailableDates();
+        async init() {
+            this.loading = true;
+            await this.loadUnavailableDates();
             this.initFlatpickr();
+            this.loading = false;
         },
 
         async loadUnavailableDates() {
             if (!serviceId) return;
 
             try {
-                const response = await fetch(`/booking/unavailable-dates?service_id=${serviceId}`);
+                const response = await fetch(`/booking/unavailable-dates?service_id=${serviceId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin' // Include cookies for authentication
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
                 const data = await response.json();
                 this.unavailableDates = data.unavailable_dates || [];
                 this.availabilityData = data.availability || {};
@@ -97,8 +126,8 @@ function calendarWidget(serviceId, selectedDate) {
                     // Trigger event for parent component (time grid)
                     this.$dispatch('date-selected', { date: dateStr });
 
-                    // Save to session
-                    this.saveProgress(dateStr);
+                    // NOTE: Don't save progress here - wait until time slot is selected
+                    // Partial data (date without time_slot) would fail validation
                 },
 
                 onDayCreate: (dObj, dStr, fp, dayElem) => {
@@ -112,20 +141,6 @@ function calendarWidget(serviceId, selectedDate) {
                         dayElem.innerHTML += '<span class="availability-dot availability-dot--limited"></span>';
                     }
                 }
-            });
-        },
-
-        saveProgress(date) {
-            fetch('{{ route('booking.save-progress') }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({
-                    step: 2,
-                    data: { date: date }
-                })
             });
         }
     }
@@ -151,22 +166,22 @@ function calendarWidget(serviceId, selectedDate) {
 }
 
 .flatpickr-day:hover:not(.flatpickr-disabled) {
-    @apply bg-orange-100 !important;
+    @apply bg-primary-100 !important;
 }
 
 .flatpickr-day.selected,
 .flatpickr-day.selected:hover {
-    @apply bg-orange-500 text-white !important;
-    box-shadow: 0 4px 6px -1px rgba(249, 115, 22, 0.3) !important;
+    @apply bg-primary-400 text-white !important;
+    box-shadow: 0 4px 6px -1px rgba(74, 165, 176, 0.3) !important;
 }
 
 .flatpickr-day.today {
-    @apply border-2 border-orange-500 !important;
+    @apply border-2 border-primary-400 !important;
     background: transparent !important;
 }
 
 .flatpickr-day.today:not(.selected) {
-    @apply text-orange-600 font-bold !important;
+    @apply text-primary-600 font-bold !important;
 }
 
 .flatpickr-day.flatpickr-disabled {
@@ -196,7 +211,7 @@ function calendarWidget(serviceId, selectedDate) {
 
 .flatpickr-months .flatpickr-prev-month:hover,
 .flatpickr-months .flatpickr-next-month:hover {
-    @apply bg-orange-100 !important;
+    @apply bg-primary-100 !important;
 }
 
 .flatpickr-current-month {

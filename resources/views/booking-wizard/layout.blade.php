@@ -18,7 +18,7 @@
                 </h1>
 
                 {{-- Help --}}
-                <a href="#" class="booking-wizard__help text-sm text-orange-600 hover:text-orange-700 font-medium">
+                <a href="#" class="booking-wizard__help text-sm text-primary-600 hover:text-primary-700 font-medium">
                     Need Help?
                 </a>
             </div>
@@ -102,37 +102,123 @@
 </style>
 @endpush
 
-{{-- Session Persistence (Laravel Session) --}}
+{{-- Session Persistence (Laravel Session) + AJAX Form Handler --}}
 @push('scripts')
 <script>
-// Auto-save state to Laravel session via AJAX
-function saveBookingProgress(step, data) {
-    fetch('{{ route('booking.save-progress') }}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-        },
-        body: JSON.stringify({
-            step: step,
-            data: data
-        })
-    });
-}
+// Booking Wizard State Management
+const bookingWizard = {
+    currentStep: {{ $currentStep ?? 1 }},
+    isSubmitting: false,
 
-// Warn before leaving mid-booking
-let bookingInProgress = true;
-window.addEventListener('beforeunload', (event) => {
-    if (bookingInProgress && {{ $currentStep ?? 1 }} > 1) {
-        event.preventDefault();
-        event.returnValue = '';
-        return 'Your booking progress will be lost. Are you sure you want to leave?';
+    // Auto-save state to Laravel session via AJAX
+    async saveProgress(step, data) {
+        try {
+            const response = await fetch('{{ route('booking.save-progress') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    step: step,
+                    data: data
+                })
+            });
+            const result = await response.json();
+            return { response, result };
+        } catch (error) {
+            console.error('Failed to save progress:', error);
+            return { response: { ok: false }, result: { success: false, message: 'Błąd połączenia' } };
+        }
+    },
+
+    // Navigate to next step (client-side only, no page reload)
+    goToStep(step) {
+        if (this.isSubmitting) return;
+        window.location.href = '{{ route('booking.step', ['step' => '__STEP__']) }}'.replace('__STEP__', step);
+    }
+};
+
+// Intercept form submissions to use AJAX instead of POST-redirect
+document.addEventListener('DOMContentLoaded', () => {
+    const wizardForm = document.getElementById('{{ $formId ?? 'booking-form' }}');
+
+    if (wizardForm) {
+        // Step 5 (Review/Confirmation) should NOT use AJAX - let it submit naturally
+        // This allows the controller to redirect to the confirmation page
+        if (bookingWizard.currentStep === 5) {
+            console.log('Step 5 detected - allowing natural form submission (no AJAX)');
+            return; // Exit early - don't attach AJAX handler
+        }
+
+        wizardForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            if (bookingWizard.isSubmitting) return;
+            bookingWizard.isSubmitting = true;
+
+            const formData = new FormData(wizardForm);
+            const data = Object.fromEntries(formData.entries());
+
+            // Get submit button reference (it's outside form, in sticky footer)
+            const submitBtn = document.querySelector('button[form="{{ $formId ?? 'booking-form' }}"]')
+                           || document.querySelector('.booking-wizard__next[type="submit"]');
+            let originalText = null;
+
+            try {
+                if (!submitBtn) {
+                    console.error('Submit button not found');
+                    bookingWizard.isSubmitting = false;
+                    return;
+                }
+
+                // Show loading state
+                originalText = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+
+                // Save progress via AJAX
+                const { response, result } = await bookingWizard.saveProgress(bookingWizard.currentStep, data);
+
+                if (response.ok && result.success !== false) {
+                    // Success - reset state BEFORE navigation (prevent race condition)
+                    bookingWizard.isSubmitting = false;
+
+                    // Navigate to next step WITHOUT page reload warning
+                    bookingWizard.goToStep(bookingWizard.currentStep + 1);
+                } else {
+                    // Validation errors - reset state and display them
+                    bookingWizard.isSubmitting = false;
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+
+                    if (result.errors) {
+                        // Show validation errors
+                        let errorMessages = Object.values(result.errors).flat().join('\n');
+                        alert(result.message + '\n\n' + errorMessages);
+                    } else {
+                        alert(result.message || 'Wystąpił błąd podczas zapisywania. Spróbuj ponownie.');
+                    }
+                }
+            } catch (error) {
+                console.error('Form submission error:', error);
+
+                // Restore button state
+                bookingWizard.isSubmitting = false;
+                if (submitBtn && originalText) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
+
+                alert('Wystąpił błąd połączenia. Sprawdź połączenie internetowe i spróbuj ponownie.');
+            }
+        });
     }
 });
 
-// Clear warning after booking confirmed
-function bookingConfirmed() {
-    bookingInProgress = false;
+// Legacy function for backward compatibility
+function saveBookingProgress(step, data) {
+    return bookingWizard.saveProgress(step, data);
 }
 </script>
 @endpush

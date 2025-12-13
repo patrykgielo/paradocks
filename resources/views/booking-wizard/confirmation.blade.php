@@ -212,20 +212,45 @@
             </div>
 
             {{-- Action Buttons --}}
-            <div class="confirmation-screen__actions grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 animate-slide-up" style="animation-delay: 0.3s;">
+            <div class="confirmation-screen__actions grid grid-cols-1 gap-4 mb-8 animate-slide-up" style="animation-delay: 0.3s;">
+                {{-- Primary Action: View My Appointments --}}
                 <a
-                    href="{{ route('profile.bookings') }}"
+                    href="{{ route('appointments.index') }}"
                     class="confirmation-screen__btn confirmation-screen__btn--primary flex items-center justify-center gap-2 px-6 py-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 active:scale-98"
                 >
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
-                    Moje Rezerwacje
+                    Zobacz Moje Wizyty
                 </a>
 
+                {{-- Secondary Actions Grid --}}
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <a
+                        href="{{ route('services.index') }}"
+                        class="confirmation-screen__btn confirmation-screen__btn--secondary flex items-center justify-center gap-2 px-6 py-3 bg-white hover:bg-gray-50 text-gray-900 font-medium border-2 border-gray-300 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 active:scale-98"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                        Przeglądaj Usługi
+                    </a>
+
+                    <a
+                        href="{{ route('profile.index') }}"
+                        class="confirmation-screen__btn confirmation-screen__btn--secondary flex items-center justify-center gap-2 px-6 py-3 bg-white hover:bg-gray-50 text-gray-900 font-medium border-2 border-gray-300 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 active:scale-98"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        Mój Profil
+                    </a>
+                </div>
+
+                {{-- Tertiary Action: Home --}}
                 <a
                     href="{{ route('home') }}"
-                    class="confirmation-screen__btn confirmation-screen__btn--secondary flex items-center justify-center gap-2 px-6 py-4 bg-white hover:bg-gray-50 text-gray-900 font-bold border-2 border-gray-300 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 active:scale-98"
+                    class="confirmation-screen__btn confirmation-screen__btn--tertiary flex items-center justify-center gap-2 px-6 py-3 text-gray-700 hover:text-orange-600 font-medium transition-all duration-200"
                 >
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
