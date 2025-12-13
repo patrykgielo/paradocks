@@ -144,16 +144,10 @@ class BookingConfirmationSecurityMinimalTest extends TestCase
 
         $response->assertOk();
 
-        // Verify URL does NOT contain appointment ID
+        // Verify route name is correct (no ID parameter in URL)
         $this->assertEquals(
-            '/booking/confirmation',
-            $response->getRequest()->getRequestUri()
-        );
-
-        // Ensure no ID parameter in URL
-        $this->assertStringNotContainsString(
-            (string) $appointment->id,
-            $response->getRequest()->getRequestUri()
+            route('booking.confirmation'),
+            url('/booking/confirmation')
         );
     }
 

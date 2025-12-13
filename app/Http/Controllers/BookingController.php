@@ -544,8 +544,8 @@ class BookingController extends Controller
         //     EmailService::sendAppointmentConfirmation($appointment);
         // }
 
-        // Increment booking stats for trust signals
-        BookingStatsService::incrementBookingCount($service);
+        // TODO: Increment booking stats for trust signals (requires migration)
+        // BookingStatsService::incrementBookingCount($service);
 
         // SECURITY: Store appointment ID in single-use session token (no ID in URL)
         session(['booking_confirmed_id' => $appointment->id]);
@@ -583,7 +583,7 @@ class BookingController extends Controller
         $outlookCalendarUrl = CalendarService::generateOutlookCalendarUrl($appointment);
 
         return view('booking-wizard.confirmation', [
-            'appointment' => $appointment->load(['service', 'staff', 'user']),
+            'appointment' => $appointment->load(['service', 'staff', 'customer']),
             'googleCalendarUrl' => $googleCalendarUrl,
             'appleCalendarUrl' => $appleCalendarUrl,
             'outlookCalendarUrl' => $outlookCalendarUrl,
@@ -596,7 +596,7 @@ class BookingController extends Controller
     public function downloadIcal(Appointment $appointment)
     {
         // Security: only allow appointment owner
-        if ($appointment->user_id !== auth()->id()) {
+        if ($appointment->customer_id !== auth()->id()) {
             abort(403);
         }
 

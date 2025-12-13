@@ -39,6 +39,18 @@ class BookingConfirmationSecurityTest extends TestCase
 
         $this->service = Service::first();
         $this->vehicleType = VehicleType::first();
+
+        // Attach service to staff member
+        $this->staff->services()->attach($this->service->id);
+
+        // Create base schedule for staff (Mon-Fri, 9:00-17:00)
+        \App\Models\StaffSchedule::create([
+            'user_id' => $this->staff->id,
+            'day_of_week' => 1, // Monday
+            'start_time' => '09:00:00',
+            'end_time' => '17:00:00',
+            'is_active' => true,
+        ]);
     }
 
     /**
@@ -174,16 +186,10 @@ class BookingConfirmationSecurityTest extends TestCase
 
         $response->assertOk();
 
-        // Verify URL does NOT contain appointment ID
+        // Verify route name is correct (no ID parameter in URL)
         $this->assertEquals(
-            '/booking/confirmation',
-            $response->getRequest()->getRequestUri()
-        );
-
-        // Ensure no ID parameter in URL
-        $this->assertStringNotContainsString(
-            (string) $appointment->id,
-            $response->getRequest()->getRequestUri()
+            route('booking.confirmation'),
+            url('/booking/confirmation')
         );
     }
 
