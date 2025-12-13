@@ -298,10 +298,12 @@
 <script>
 function contactInfoForm() {
     return {
-        firstName: '',
-        lastName: '',
-        email: '',
-        phone: '',
+        // FIXED: Initialize from Blade-rendered values (not empty strings)
+        // This reads the actual input value set by Blade template
+        firstName: document.getElementById('first-name')?.value || '',
+        lastName: document.getElementById('last-name')?.value || '',
+        email: document.getElementById('email')?.value || '',
+        phone: document.getElementById('phone')?.value || '',
         validFields: {
             firstName: false,
             lastName: false,

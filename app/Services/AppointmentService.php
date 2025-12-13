@@ -579,8 +579,9 @@ class AppointmentService
                         return false;
                     }
 
-                    $appointmentStart = Carbon::parse($date->format('Y-m-d').' '.$appointment->start_time);
-                    $appointmentEnd = Carbon::parse($date->format('Y-m-d').' '.$appointment->end_time);
+                    // FIXED: Extract only time portion from datetime fields (start_time/end_time are cast as datetime)
+                    $appointmentStart = Carbon::parse($date->format('Y-m-d').' '.$appointment->start_time->format('H:i:s'));
+                    $appointmentEnd = Carbon::parse($date->format('Y-m-d').' '.$appointment->end_time->format('H:i:s'));
 
                     // Check for time overlap
                     return

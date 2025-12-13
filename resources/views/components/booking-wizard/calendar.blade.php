@@ -84,7 +84,19 @@ function calendarWidget(serviceId, selectedDate) {
             if (!serviceId) return;
 
             try {
-                const response = await fetch(`/booking/unavailable-dates?service_id=${serviceId}`);
+                const response = await fetch(`/booking/unavailable-dates?service_id=${serviceId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin' // Include cookies for authentication
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
                 const data = await response.json();
                 this.unavailableDates = data.unavailable_dates || [];
                 this.availabilityData = data.availability || {};

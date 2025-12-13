@@ -9,7 +9,7 @@ use App\Models\VehicleType;
 use App\Services\AppointmentService;
 use App\Services\BookingStatsService;
 use App\Services\CalendarService;
-use App\Services\EmailService;
+// use App\Services\Email\EmailService; // TODO: Add when sendAppointmentConfirmation is implemented
 use App\Support\Settings\SettingsManager;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -153,18 +153,23 @@ class BookingController extends Controller
                     $user = auth()->user();
 
                     // Only pre-fill empty fields (preserve session data if user went back)
-                    if (empty($booking['first_name'])) {
+                    // FIXED: Treat empty strings as empty (use ?? instead of empty() to handle null)
+                    if (! isset($booking['first_name']) || $booking['first_name'] === '' || $booking['first_name'] === null) {
                         $booking['first_name'] = $user->first_name;
                     }
-                    if (empty($booking['last_name'])) {
+                    if (! isset($booking['last_name']) || $booking['last_name'] === '' || $booking['last_name'] === null) {
                         $booking['last_name'] = $user->last_name;
                     }
-                    if (empty($booking['email'])) {
+                    if (! isset($booking['email']) || $booking['email'] === '' || $booking['email'] === null) {
                         $booking['email'] = $user->email;
                     }
-                    if (empty($booking['phone']) && $user->phone) {
+                    if ((! isset($booking['phone']) || $booking['phone'] === '' || $booking['phone'] === null) && $user->phone) {
                         $booking['phone'] = $user->phone;
                     }
+
+                    // CRITICAL FIX: Update session with pre-filled data
+                    // This ensures Alpine.js gets user data on init and after navigation
+                    session(['booking' => $booking]);
                 }
 
                 return view('booking-wizard.steps.contact', [
@@ -508,50 +513,68 @@ class BookingController extends Controller
 
         // Create appointment
         $appointment = Appointment::create([
-            'user_id' => auth()->id(),
+            'customer_id' => auth()->id(),
             'service_id' => $booking['service_id'],
-            'employee_id' => $staff->id,
-            'appointment_date' => $appointmentDateTime,
+            'staff_id' => $staff->id,
+            'appointment_date' => $appointmentDateTime->format('Y-m-d'),
+            'start_time' => $appointmentDateTime->format('H:i:s'),
+            'end_time' => $appointmentDateTime->copy()->addMinutes($service->duration_minutes)->format('H:i:s'),
             'status' => 'pending',
             'vehicle_type_id' => $booking['vehicle_type_id'],
-            'vehicle_brand' => $booking['vehicle_brand'] ?? null,
-            'vehicle_model' => $booking['vehicle_model'] ?? null,
+            'vehicle_custom_brand' => $booking['vehicle_brand'] ?? null,
+            'vehicle_custom_model' => $booking['vehicle_model'] ?? null,
             'vehicle_year' => $booking['vehicle_year'] ?? null,
             'location_address' => $booking['location_address'],
             'location_latitude' => $booking['location_latitude'],
             'location_longitude' => $booking['location_longitude'],
             'location_place_id' => $booking['location_place_id'] ?? null,
             'location_components' => $booking['location_components'] ?? null,
+            // Contact information (captured at time of booking for historical accuracy)
             'first_name' => $booking['first_name'],
             'last_name' => $booking['last_name'],
-            'phone' => $booking['phone'],
             'email' => $booking['email'],
+            'phone' => $booking['phone'],
             'notify_email' => $booking['notify_email'] ?? true,
             'notify_sms' => $booking['notify_sms'] ?? true,
         ]);
 
         // Send confirmation email/SMS
-        if ($booking['notify_email'] ?? true) {
-            EmailService::sendAppointmentConfirmation($appointment);
-        }
+        // TODO: Implement appointment confirmation email
+        // if ($booking['notify_email'] ?? true) {
+        //     EmailService::sendAppointmentConfirmation($appointment);
+        // }
 
         // Increment booking stats for trust signals
         BookingStatsService::incrementBookingCount($service);
 
-        // Clear session
+        // SECURITY: Store appointment ID in single-use session token (no ID in URL)
+        session(['booking_confirmed_id' => $appointment->id]);
+
+        // Clear wizard session
         session()->forget('booking');
 
-        return redirect()->route('booking.confirmation', $appointment->id);
+        return redirect()->route('booking.confirmation');
     }
 
     /**
-     * Show confirmation screen
+     * Show confirmation screen (session-based, single-use)
      */
-    public function showConfirmation(Appointment $appointment)
+    public function showConfirmation()
     {
-        // Security: only show to appointment owner
-        if ($appointment->user_id !== auth()->id()) {
-            abort(403);
+        // SECURITY FIX: Use single-use session token instead of ID in URL
+        // Pull = get and delete in one operation (token can only be used once)
+        $appointmentId = session()->pull('booking_confirmed_id');
+
+        if (! $appointmentId) {
+            return redirect()->route('appointments.index')
+                ->with('error', 'Link potwierdzenia wygasł. Zobacz swoje wizyty poniżej.');
+        }
+
+        $appointment = Appointment::findOrFail($appointmentId);
+
+        // SECURITY: Double-check ownership (defense in depth)
+        if ($appointment->customer_id !== auth()->id()) {
+            abort(403, 'Brak dostępu do tego potwierdzenia.');
         }
 
         // Generate calendar URLs
@@ -560,7 +583,7 @@ class BookingController extends Controller
         $outlookCalendarUrl = CalendarService::generateOutlookCalendarUrl($appointment);
 
         return view('booking-wizard.confirmation', [
-            'appointment' => $appointment->load(['service', 'employee', 'user']),
+            'appointment' => $appointment->load(['service', 'staff', 'user']),
             'googleCalendarUrl' => $googleCalendarUrl,
             'appleCalendarUrl' => $appleCalendarUrl,
             'outlookCalendarUrl' => $outlookCalendarUrl,

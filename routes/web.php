@@ -98,12 +98,13 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/booking/save-progress', [BookingController::class, 'saveProgress'])->name('booking.save-progress');
     Route::get('/booking/restore-progress', [BookingController::class, 'restoreProgress'])->name('booking.restore-progress');
 
-    // Calendar availability APIs
-    Route::get('/booking/unavailable-dates', [BookingController::class, 'getUnavailableDates'])->name('booking.unavailable-dates');
+    // Calendar availability endpoint (AJAX) - requires auth to match booking wizard access
+    Route::get('/booking/unavailable-dates', [BookingController::class, 'getUnavailableDates'])
+        ->name('booking.unavailable-dates');
 
-    // Booking confirmation
+    // Booking confirmation (SECURITY: No ID in URL, uses single-use session token)
     Route::post('/booking/confirm', [BookingController::class, 'confirm'])->name('booking.confirm');
-    Route::get('/booking/confirmation/{appointment}', [BookingController::class, 'showConfirmation'])->name('booking.confirmation');
+    Route::get('/booking/confirmation', [BookingController::class, 'showConfirmation'])->name('booking.confirmation');
     Route::get('/booking/ical/{appointment}', [BookingController::class, 'downloadIcal'])->name('booking.ical');
 
     // Appointments

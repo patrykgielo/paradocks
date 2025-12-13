@@ -144,6 +144,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const wizardForm = document.getElementById('{{ $formId ?? 'booking-form' }}');
 
     if (wizardForm) {
+        // Step 5 (Review/Confirmation) should NOT use AJAX - let it submit naturally
+        // This allows the controller to redirect to the confirmation page
+        if (bookingWizard.currentStep === 5) {
+            console.log('Step 5 detected - allowing natural form submission (no AJAX)');
+            return; // Exit early - don't attach AJAX handler
+        }
+
         wizardForm.addEventListener('submit', async (event) => {
             event.preventDefault();
 
