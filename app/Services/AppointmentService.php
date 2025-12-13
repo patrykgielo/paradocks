@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Appointment;
-use App\Models\ServiceAvailability;
 use App\Models\User;
 use App\Support\Settings\SettingsManager;
 use Carbon\Carbon;
@@ -74,63 +73,6 @@ class AppointmentService
             ->exists();
 
         return ! $hasConflict;
-    }
-
-    /**
-     * Get available time slots for a service on a specific date
-     */
-    public function getAvailableTimeSlots(
-        int $serviceId,
-        int $staffId,
-        Carbon $date,
-        int $serviceDurationMinutes
-    ): array {
-        $dayOfWeek = $date->dayOfWeek;
-
-        // Get staff availability for this day and service
-        $availabilities = ServiceAvailability::query()
-            ->where('user_id', $staffId)
-            ->where('service_id', $serviceId)
-            ->where('day_of_week', $dayOfWeek)
-            ->get();
-
-        if ($availabilities->isEmpty()) {
-            return [];
-        }
-
-        $timeSlots = [];
-
-        $slotInterval = $this->settings->slotIntervalMinutes();
-
-        foreach ($availabilities as $availability) {
-            $currentSlot = Carbon::parse($availability->start_time);
-            $endOfAvailability = Carbon::parse($availability->end_time);
-
-            while ($currentSlot->copy()->addMinutes($serviceDurationMinutes)->lte($endOfAvailability)) {
-                $slotEnd = $currentSlot->copy()->addMinutes($serviceDurationMinutes);
-
-                // Check if this slot is available
-                if ($this->checkStaffAvailability(
-                    $staffId,
-                    $serviceId,
-                    $date,
-                    $currentSlot,
-                    $slotEnd
-                )) {
-                    $timeSlots[] = [
-                        'start' => $currentSlot->format('H:i'),
-                        'end' => $slotEnd->format('H:i'),
-                        'datetime_start' => $date->format('Y-m-d').' '.$currentSlot->format('H:i'),
-                        'datetime_end' => $date->format('Y-m-d').' '.$slotEnd->format('H:i'),
-                    ];
-                }
-
-                // Move to next slot based on configured interval
-                $currentSlot->addMinutes($slotInterval);
-            }
-        }
-
-        return $timeSlots;
     }
 
     /**
@@ -292,10 +234,12 @@ class AppointmentService
                 // Avoid duplicate slots
                 if (! isset($allSlots[$slotKey])) {
                     $allSlots[$slotKey] = [
+                        'time' => $currentSlot->format('H:i'), // Frontend expects 'time' key
                         'start' => $currentSlot->format('H:i'),
                         'end' => $slotEnd->format('H:i'),
                         'datetime_start' => $date->format('Y-m-d').' '.$currentSlot->format('H:i'),
                         'datetime_end' => $date->format('Y-m-d').' '.$slotEnd->format('H:i'),
+                        'available' => true, // Frontend expects 'available' boolean
                     ];
                 }
             }
@@ -384,5 +328,281 @@ class AppointmentService
             'valid' => empty($errors),
             'errors' => $errors,
         ];
+    }
+
+    /**
+     * Get bulk availability for date range (optimized for calendar loading)
+     *
+     * Instead of calling getAvailableSlotsAcrossAllStaff() 60 times (one per day),
+     * this method fetches all necessary data upfront and processes in memory.
+     *
+     * Performance: ~3-5 queries total vs 60 × N queries
+     *
+     * @return array ['2025-12-15' => 'available'|'limited'|'unavailable', ...]
+     */
+    public function getBulkAvailability(int $serviceId, Carbon $startDate, Carbon $endDate): array
+    {
+        // Query 1: Get all staff members who can perform this service (with pivot data eager loaded)
+        $staffMembers = User::whereHas('roles', function ($query) {
+            $query->where('name', 'staff');
+        })->whereHas('services', function ($query) use ($serviceId) {
+            $query->where('service_id', $serviceId);
+        })->with('services')->get();
+
+        if ($staffMembers->isEmpty()) {
+            // No staff can perform this service - all dates unavailable
+            $availability = [];
+            $currentDate = $startDate->copy();
+            while ($currentDate->lte($endDate)) {
+                $availability[$currentDate->format('Y-m-d')] = 'unavailable';
+                $currentDate->addDay();
+            }
+
+            return $availability;
+        }
+
+        $staffIds = $staffMembers->pluck('id')->toArray();
+
+        // Query 2: Get all appointments in date range (bulk fetch)
+        $appointments = Appointment::query()
+            ->whereIn('staff_id', $staffIds)
+            ->whereBetween('appointment_date', [
+                $startDate->format('Y-m-d'),
+                $endDate->format('Y-m-d'),
+            ])
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->get()
+            ->groupBy(function ($appointment) {
+                return $appointment->appointment_date->format('Y-m-d');
+            });
+
+        // Query 3: Bulk fetch ALL vacation periods for all staff in date range
+        $vacationPeriods = \App\Models\StaffVacationPeriod::query()
+            ->whereIn('user_id', $staffIds)
+            ->where('is_approved', true)
+            ->where(function ($query) use ($startDate, $endDate) {
+                $query->whereBetween('start_date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
+                    ->orWhereBetween('end_date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
+                    ->orWhere(function ($q) use ($startDate, $endDate) {
+                        $q->where('start_date', '<=', $startDate->format('Y-m-d'))
+                            ->where('end_date', '>=', $endDate->format('Y-m-d'));
+                    });
+            })
+            ->get()
+            ->groupBy('user_id');
+
+        // Query 4: Bulk fetch ALL date exceptions for all staff in date range
+        $dateExceptions = \App\Models\StaffDateException::query()
+            ->whereIn('user_id', $staffIds)
+            ->whereBetween('exception_date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
+            ->get()
+            ->groupBy('user_id');
+
+        // Query 5: Bulk fetch ALL base schedules for all staff
+        $baseSchedules = \App\Models\StaffSchedule::query()
+            ->whereIn('user_id', $staffIds)
+            ->where('is_active', true)
+            ->where(function ($query) use ($startDate) {
+                $query->whereNull('effective_from')
+                    ->orWhere('effective_from', '<=', $startDate->format('Y-m-d'));
+            })
+            ->where(function ($query) use ($endDate) {
+                $query->whereNull('effective_until')
+                    ->orWhere('effective_until', '>=', $endDate->format('Y-m-d'));
+            })
+            ->get()
+            ->groupBy('user_id');
+
+        // Get business hours and slot interval settings (ONCE, outside loop)
+        $businessHours = $this->settings->bookingBusinessHours();
+        $slotInterval = $this->settings->slotIntervalMinutes();
+
+        // Get advance booking requirement (ONCE, outside loop)
+        $advanceHours = $this->settings->advanceBookingHours();
+        $minimumBookingDateTime = now()->addHours($advanceHours);
+
+        // Get service details (ONCE)
+        $service = \App\Models\Service::find($serviceId);
+        if (! $service) {
+            // Service not found - all dates unavailable
+            $availability = [];
+            $currentDate = $startDate->copy();
+            while ($currentDate->lte($endDate)) {
+                $availability[$currentDate->format('Y-m-d')] = 'unavailable';
+                $currentDate->addDay();
+            }
+
+            return $availability;
+        }
+
+        // Process each date
+        $availability = [];
+        $currentDate = $startDate->copy();
+
+        while ($currentDate->lte($endDate)) {
+            $dateStr = $currentDate->format('Y-m-d');
+            $dayAppointments = $appointments->get($dateStr, collect());
+
+            // Calculate available slots for this day (using pre-fetched data)
+            $availableSlotCount = $this->calculateAvailableSlotsForDay(
+                $staffMembers,
+                $currentDate,
+                $service,
+                $businessHours,
+                $slotInterval,
+                $dayAppointments,
+                $vacationPeriods,
+                $dateExceptions,
+                $baseSchedules,
+                $minimumBookingDateTime
+            );
+
+            // Categorize availability
+            if ($availableSlotCount === 0) {
+                $availability[$dateStr] = 'unavailable';
+            } elseif ($availableSlotCount <= 3) {
+                $availability[$dateStr] = 'limited';
+            } else {
+                $availability[$dateStr] = 'available';
+            }
+
+            $currentDate->addDay();
+        }
+
+        return $availability;
+    }
+
+    /**
+     * Calculate available slots for a specific day (helper method for bulk processing)
+     *
+     * ⚠️ ZERO DATABASE QUERIES - Works entirely with pre-fetched data
+     *
+     * @param  \Illuminate\Support\Collection  $staffMembers
+     * @param  \App\Models\Service  $service
+     * @param  \Illuminate\Support\Collection  $dayAppointments
+     * @param  \Illuminate\Support\Collection  $vacationPeriods  Grouped by user_id
+     * @param  \Illuminate\Support\Collection  $dateExceptions  Grouped by user_id
+     * @param  \Illuminate\Support\Collection  $baseSchedules  Grouped by user_id
+     * @param  Carbon  $minimumBookingDateTime  Minimum allowed booking datetime
+     * @return int Number of available slots
+     */
+    protected function calculateAvailableSlotsForDay(
+        $staffMembers,
+        Carbon $date,
+        $service,
+        array $businessHours,
+        int $slotInterval,
+        $dayAppointments,
+        $vacationPeriods,
+        $dateExceptions,
+        $baseSchedules,
+        Carbon $minimumBookingDateTime
+    ): int {
+        $serviceDurationMinutes = $service->duration_minutes;
+        $serviceId = $service->id;
+        $businessStart = Carbon::parse($date->format('Y-m-d').' '.$businessHours['start']);
+        $businessEnd = Carbon::parse($date->format('Y-m-d').' '.$businessHours['end']);
+
+        // Check if date meets advance booking requirement (using pre-calculated minimum)
+        $earliestSlotDateTime = Carbon::parse($date->format('Y-m-d').' '.$businessHours['start']);
+        if ($earliestSlotDateTime->lt($minimumBookingDateTime)) {
+            return 0;
+        }
+
+        $availableSlots = 0;
+        $currentSlot = $businessStart->copy();
+
+        while ($currentSlot->copy()->addMinutes($serviceDurationMinutes)->lte($businessEnd)) {
+            $slotEnd = $currentSlot->copy()->addMinutes($serviceDurationMinutes);
+
+            // Check if ANY staff member is available for this slot
+            $isAnyStaffAvailable = false;
+
+            foreach ($staffMembers as $staff) {
+                // Check if staff can perform this service (using eager-loaded relation)
+                $canPerformService = $staff->services->contains('id', $serviceId);
+                if (! $canPerformService) {
+                    continue;
+                }
+
+                // Check if staff is on vacation
+                $staffVacations = $vacationPeriods->get($staff->id, collect());
+                $isOnVacation = $staffVacations->contains(function ($vacation) use ($date) {
+                    return $date->between($vacation->start_date, $vacation->end_date);
+                });
+                if ($isOnVacation) {
+                    continue;
+                }
+
+                // Check date exceptions
+                $staffExceptions = $dateExceptions->get($staff->id, collect());
+                $dateException = $staffExceptions->firstWhere('exception_date', $date->format('Y-m-d'));
+
+                if ($dateException) {
+                    // If exception exists, check if staff is available during this time
+                    if (! $dateException->is_available) {
+                        continue; // Staff marked as unavailable this day
+                    }
+
+                    // Check time range if available
+                    if ($dateException->start_time && $dateException->end_time) {
+                        $exceptionStart = Carbon::parse($date->format('Y-m-d').' '.$dateException->start_time);
+                        $exceptionEnd = Carbon::parse($date->format('Y-m-d').' '.$dateException->end_time);
+
+                        // Slot must be completely within exception hours
+                        if ($currentSlot->lt($exceptionStart) || $slotEnd->gt($exceptionEnd)) {
+                            continue;
+                        }
+                    }
+                } else {
+                    // No exception - check base schedule
+                    $dayOfWeek = $date->dayOfWeek; // 0 = Sunday, 6 = Saturday
+                    $staffBaseSchedules = $baseSchedules->get($staff->id, collect());
+                    $daySchedule = $staffBaseSchedules->firstWhere('day_of_week', $dayOfWeek);
+
+                    if (! $daySchedule) {
+                        continue; // No schedule for this day of week
+                    }
+
+                    // Check if slot falls within base schedule hours
+                    $scheduleStart = Carbon::parse($date->format('Y-m-d').' '.$daySchedule->start_time);
+                    $scheduleEnd = Carbon::parse($date->format('Y-m-d').' '.$daySchedule->end_time);
+
+                    if ($currentSlot->lt($scheduleStart) || $slotEnd->gt($scheduleEnd)) {
+                        continue; // Slot outside staff working hours
+                    }
+                }
+
+                // Check for appointment conflicts for this staff
+                $hasConflict = $dayAppointments->contains(function ($appointment) use ($staff, $currentSlot, $slotEnd, $date) {
+                    if ($appointment->staff_id !== $staff->id) {
+                        return false;
+                    }
+
+                    // FIXED: Extract only time portion from datetime fields (start_time/end_time are cast as datetime)
+                    $appointmentStart = Carbon::parse($date->format('Y-m-d').' '.$appointment->start_time->format('H:i:s'));
+                    $appointmentEnd = Carbon::parse($date->format('Y-m-d').' '.$appointment->end_time->format('H:i:s'));
+
+                    // Check for time overlap
+                    return
+                        ($currentSlot->gte($appointmentStart) && $currentSlot->lt($appointmentEnd)) || // Starts during appointment
+                        ($slotEnd->gt($appointmentStart) && $slotEnd->lte($appointmentEnd)) || // Ends during appointment
+                        ($currentSlot->lte($appointmentStart) && $slotEnd->gte($appointmentEnd));    // Contains appointment
+                });
+
+                if (! $hasConflict) {
+                    $isAnyStaffAvailable = true;
+                    break; // Found at least one available staff
+                }
+            }
+
+            if ($isAnyStaffAvailable) {
+                $availableSlots++;
+            }
+
+            $currentSlot->addMinutes($slotInterval);
+        }
+
+        return $availableSlots;
     }
 }

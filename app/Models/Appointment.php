@@ -80,6 +80,13 @@ class Appointment extends Model
         'sent_24h_reminder_sms',
         'sent_2h_reminder_sms',
         'sent_followup_sms',
+        // Contact information captured at time of booking
+        'first_name',
+        'last_name',
+        'email',
+        'phone',
+        'notify_email',
+        'notify_sms',
     ];
 
     protected $casts = [

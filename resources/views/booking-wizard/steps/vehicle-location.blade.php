@@ -23,7 +23,14 @@
         method="POST"
         action="{{ route('booking.step.store', ['step' => 3]) }}"
         class="vehicle-location__form max-w-2xl mx-auto"
-        x-data="vehicleLocationForm(@js(session('booking.vehicle_type_id')), @js(session('booking.location_address')))"
+        x-data="vehicleLocationForm(
+            @js(session('booking.vehicle_type_id')),
+            @js(session('booking.location_address')),
+            @js(session('booking.location_latitude')),
+            @js(session('booking.location_longitude')),
+            @js(session('booking.location_place_id')),
+            @js(session('booking.location_components'))
+        )"
     >
         @csrf
 
@@ -35,7 +42,7 @@
                         <h3 class="text-lg font-bold text-gray-900 mb-1">Typ Pojazdu</h3>
                         <p class="text-sm text-gray-600">Wybierz rozmiar swojego auta</p>
                     </div>
-                    <span class="text-xs font-semibold text-orange-600 bg-orange-100 px-3 py-1 rounded-full">
+                    <span class="text-xs font-semibold text-primary-600 bg-primary-100 px-3 py-1 rounded-full">
                         Wymagane
                     </span>
                 </div>
@@ -45,10 +52,10 @@
                     type="button"
                     @click="$dispatch('open-bottom-sheet', { id: 'vehicle-type-selector' })"
                     class="vehicle-location__type-selector w-full flex items-center justify-between px-6 py-4 bg-gray-50 hover:bg-gray-100 active:scale-98 border-2 border-gray-300 rounded-xl transition-all duration-200 text-left"
-                    :class="selectedVehicleType ? 'border-orange-500 bg-orange-50' : ''"
+                    :class="selectedVehicleType ? 'border-primary-400 bg-primary-50' : ''"
                 >
                     <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center flex-shrink-0">
+                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center flex-shrink-0">
                             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                             </svg>
@@ -107,7 +114,7 @@
                             name="vehicle_brand"
                             value="{{ old('vehicle_brand', session('booking.vehicle_brand')) }}"
                             placeholder="np. BMW, Toyota, Volkswagen"
-                            class="vehicle-location__input w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-200"
+                            class="vehicle-location__input w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-primary-400 focus:ring-2 focus:ring-primary-200 transition-all duration-200"
                         >
                     </div>
 
@@ -122,7 +129,7 @@
                             name="vehicle_model"
                             value="{{ old('vehicle_model', session('booking.vehicle_model')) }}"
                             placeholder="np. 320d, Corolla, Golf"
-                            class="vehicle-location__input w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-200"
+                            class="vehicle-location__input w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-primary-400 focus:ring-2 focus:ring-primary-200 transition-all duration-200"
                         >
                     </div>
 
@@ -139,7 +146,7 @@
                             placeholder="np. 2020"
                             min="1900"
                             max="{{ date('Y') + 1 }}"
-                            class="vehicle-location__input w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-200"
+                            class="vehicle-location__input w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-primary-400 focus:ring-2 focus:ring-primary-200 transition-all duration-200"
                         >
                     </div>
                 </div>
@@ -154,7 +161,7 @@
                         <h3 class="text-lg font-bold text-gray-900 mb-1">Miejsce Serwisu</h3>
                         <p class="text-sm text-gray-600">Gdzie możemy przyjechać z samochodem?</p>
                     </div>
-                    <span class="text-xs font-semibold text-orange-600 bg-orange-100 px-3 py-1 rounded-full">
+                    <span class="text-xs font-semibold text-primary-600 bg-primary-100 px-3 py-1 rounded-full">
                         Wymagane
                     </span>
                 </div>
@@ -178,9 +185,43 @@
                             x-model="locationAddress"
                             placeholder="Zacznij wpisywać adres..."
                             required
-                            class="vehicle-location__input w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-200"
+                            class="vehicle-location__input w-full pl-12 py-3 border-2 border-gray-300 rounded-xl focus:border-primary-400 focus:ring-2 focus:ring-primary-200 transition-all duration-200"
+                            :class="{
+                                'pr-32': addressValidationStatus === 'selected' || addressValidationStatus === 'validating',
+                                'pr-4': !addressValidationStatus || addressValidationStatus === 'error',
+                                'border-green-400 focus:border-green-400 focus:ring-green-200': addressValidationStatus === 'selected',
+                                'border-red-400 focus:border-red-400 focus:ring-red-200': addressValidationStatus === 'error'
+                            }"
                         >
+
+                        {{-- Status Badge --}}
+                        <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                            {{-- Loading Spinner --}}
+                            <div x-show="addressValidationStatus === 'validating'" x-cloak class="flex items-center gap-2 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                                <svg class="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span>Sprawdzam...</span>
+                            </div>
+
+                            {{-- Success Badge --}}
+                            <div x-show="addressValidationStatus === 'selected'" x-cloak class="flex items-center gap-1.5 px-3 py-1.5 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                </svg>
+                                <span>Zweryfikowano</span>
+                            </div>
+                        </div>
                     </div>
+
+                    {{-- Help Text --}}
+                    <p class="mt-2 text-xs text-gray-500 flex items-start gap-1.5">
+                        <svg class="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                        </svg>
+                        <span>Wybierz adres z listy podpowiedzi lub wpisz pełny adres - automatycznie go zweryfikujemy</span>
+                    </p>
 
                     {{-- Hidden fields for location data --}}
                     <input type="hidden" id="location-latitude" name="location_latitude" x-model="locationLat">
@@ -194,6 +235,24 @@
                                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
                             </svg>
                             {{ $message }}
+                        </p>
+                    @enderror
+
+                    @error('location_latitude')
+                        <p class="mt-2 text-sm text-red-600 flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                            Wybierz adres z listy podpowiedzi Google Maps
+                        </p>
+                    @enderror
+
+                    @error('location_longitude')
+                        <p class="mt-2 text-sm text-red-600 flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                            Wybierz adres z listy podpowiedzi Google Maps
                         </p>
                     @enderror
                 </div>
@@ -226,13 +285,13 @@
         @foreach($vehicleTypes as $type)
             <button
                 type="button"
-                @click="selectVehicleType({{ $type->id }}, '{{ $type->name }}')"
-                class="vehicle-type-card text-left p-4 bg-white hover:bg-orange-50 active:scale-98 border-2 border-gray-200 hover:border-orange-500 rounded-xl transition-all duration-200"
-                :class="selectedVehicleType === {{ $type->id }} ? 'border-orange-500 bg-orange-50 ring-4 ring-orange-200' : ''"
+                @click="$dispatch('select-vehicle-type', { id: {{ $type->id }}, name: '{{ $type->name }}' })"
+                class="vehicle-type-card text-left p-4 bg-white hover:bg-primary-50 active:scale-98 border-2 border-gray-200 hover:border-primary-400 rounded-xl transition-all duration-200"
+                :class="$root.selectedVehicleType === {{ $type->id }} ? 'border-primary-400 bg-primary-50 ring-4 ring-primary-200' : ''"
             >
                 <div class="flex items-start gap-4">
                     {{-- Icon --}}
-                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center flex-shrink-0">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center flex-shrink-0">
                         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                         </svg>
@@ -248,8 +307,8 @@
                     </div>
 
                     {{-- Selection Indicator --}}
-                    <div x-show="selectedVehicleType === {{ $type->id }}" x-cloak class="flex-shrink-0">
-                        <div class="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center">
+                    <div x-show="$root.selectedVehicleType === {{ $type->id }}" x-cloak class="flex-shrink-0">
+                        <div class="w-6 h-6 rounded-full bg-primary-500 flex items-center justify-center">
                             <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                             </svg>
@@ -263,7 +322,7 @@
 @endsection
 
 @push('scripts')
-{{-- Google Maps API --}}
+{{-- Google Maps API (Modern Loading Pattern with Places Library Wait) --}}
 @if($googleMapsApiKey)
 <script>
     window.GOOGLE_MAPS_CONFIG = {
@@ -271,34 +330,226 @@
         mapId: '{{ $googleMapsMapId }}'
     };
 </script>
-<script src="https://maps.googleapis.com/maps/api/js?key={{ $googleMapsApiKey }}&libraries=places&callback=initGoogleMaps" async defer></script>
+<script>
+    // Modern Google Maps loading pattern with proper places library initialization
+    (function() {
+        const script = document.createElement('script');
+        script.src = 'https://maps.googleapis.com/maps/api/js?key={{ $googleMapsApiKey }}&libraries=places&loading=async';
+        script.async = true;
+        script.defer = true;
+
+        script.onload = function() {
+            // Wait for google.maps.places to be fully initialized
+            // When using loading=async, places library may take extra time
+            const checkPlacesReady = setInterval(function() {
+                if (window.google && window.google.maps && window.google.maps.places && window.google.maps.places.Autocomplete) {
+                    clearInterval(checkPlacesReady);
+                    console.log('Google Maps Places library ready');
+
+                    // Initialize autocomplete now that places is confirmed ready
+                    if (typeof initGoogleMaps === 'function') {
+                        initGoogleMaps();
+                    }
+                }
+            }, 50); // Check every 50ms
+
+            // Timeout after 10 seconds
+            setTimeout(function() {
+                clearInterval(checkPlacesReady);
+                if (!window.google?.maps?.places?.Autocomplete) {
+                    console.error('Google Maps Places library failed to load');
+                }
+            }, 10000);
+        };
+
+        script.onerror = function() {
+            console.error('Failed to load Google Maps API script');
+        };
+
+        document.head.appendChild(script);
+    })();
+</script>
 @endif
 
 <script>
 let mapInstance = null;
 let markerInstance = null;
 
-function vehicleLocationForm(initialVehicleType, initialAddress) {
+function vehicleLocationForm(initialVehicleType, initialAddress, initialLat, initialLng, initialPlaceId, initialComponents) {
     return {
         selectedVehicleType: initialVehicleType,
         selectedVehicleTypeName: '',
         locationAddress: initialAddress || '',
-        locationLat: '',
-        locationLng: '',
-        locationPlaceId: '',
-        locationComponents: '',
+        locationLat: initialLat || '',
+        locationLng: initialLng || '',
+        locationPlaceId: initialPlaceId || '',
+        locationComponents: initialComponents || '',
+        addressValidationStatus: '', // '', 'validating', 'selected', 'error'
+        isGeocodingInProgress: false,
 
         init() {
             // Load vehicle type name if pre-selected
             if (this.selectedVehicleType) {
-                const typeButton = document.querySelector(`button[onclick*="selectVehicleType(${this.selectedVehicleType}"]`);
-                if (typeButton) {
-                    const typeName = typeButton.querySelector('h4')?.textContent;
-                    if (typeName) {
-                        this.selectedVehicleTypeName = typeName;
-                    }
-                }
+                this.loadVehicleTypeName(this.selectedVehicleType);
             }
+
+            // If coordinates exist from session, mark as validated and show map
+            if (this.locationLat && this.locationLng) {
+                this.addressValidationStatus = 'selected';
+
+                // Initialize map after DOM is ready
+                this.$nextTick(() => {
+                    if (typeof initMap === 'function') {
+                        setTimeout(() => initMap(parseFloat(this.locationLat), parseFloat(this.locationLng)), 100);
+                    }
+                });
+            }
+
+            // Listen for vehicle type selection from bottom sheet
+            this.$watch('selectedVehicleType', (value) => {
+                if (value) {
+                    this.loadVehicleTypeName(value);
+                }
+            });
+
+            // Event listener for vehicle type selection
+            window.addEventListener('select-vehicle-type', (event) => {
+                this.selectVehicleType(event.detail.id, event.detail.name);
+            });
+
+            // Watch address changes - reset validation when user types
+            this.$watch('locationAddress', (newValue, oldValue) => {
+                if (newValue !== oldValue && this.addressValidationStatus === 'selected') {
+                    this.addressValidationStatus = '';
+                }
+            });
+
+            // Setup blur event listener for address input
+            this.$nextTick(() => {
+                const addressInput = document.getElementById('location-address');
+                if (addressInput) {
+                    addressInput.addEventListener('blur', () => {
+                        this.handleAddressBlur();
+                    });
+                }
+            });
+
+            // Add form submit listener to ensure coordinates exist
+            const form = document.getElementById('vehicle-location-form');
+            if (form) {
+                form.addEventListener('submit', (e) => {
+                    if (!this.validateLocationBeforeSubmit()) {
+                        e.preventDefault();
+                        return false;
+                    }
+                });
+            }
+        },
+
+        async handleAddressBlur() {
+            const address = this.locationAddress?.trim();
+
+            // If address is filled but no coordinates, try to geocode
+            if (address && !this.locationLat && !this.isGeocodingInProgress) {
+                await this.geocodeAddress(address);
+            }
+        },
+
+        async geocodeAddress(address) {
+            if (!address || !window.google?.maps?.Geocoder) {
+                console.warn('Geocoder not available');
+                return;
+            }
+
+            this.isGeocodingInProgress = true;
+            this.addressValidationStatus = 'validating';
+
+            console.log('Geocoding address:', address);
+
+            try {
+                const geocoder = new google.maps.Geocoder();
+                const result = await new Promise((resolve, reject) => {
+                    geocoder.geocode(
+                        {
+                            address: address,
+                            componentRestrictions: { country: 'pl' }
+                        },
+                        (results, status) => {
+                            if (status === 'OK' && results?.[0]) {
+                                resolve(results[0]);
+                            } else {
+                                reject(new Error(`Geocoding failed: ${status}`));
+                            }
+                        }
+                    );
+                });
+
+                // Successfully geocoded
+                const location = result.geometry.location;
+                const lat = location.lat();
+                const lng = location.lng();
+
+                console.log('Geocoding successful:', { lat, lng, address: result.formatted_address });
+
+                // Update Alpine.js data
+                this.locationLat = lat;
+                this.locationLng = lng;
+                this.locationPlaceId = result.place_id || '';
+                this.locationComponents = JSON.stringify(result.address_components || []);
+                this.locationAddress = result.formatted_address || address;
+                this.addressValidationStatus = 'selected';
+
+                // Update hidden fields directly (fallback for form submission)
+                document.getElementById('location-latitude').value = lat;
+                document.getElementById('location-longitude').value = lng;
+                document.getElementById('location-place-id').value = result.place_id || '';
+                document.getElementById('location-components').value = JSON.stringify(result.address_components || []);
+
+                // Initialize or update map
+                if (typeof initMap === 'function') {
+                    setTimeout(() => initMap(lat, lng), 100);
+                }
+
+            } catch (error) {
+                console.error('Geocoding error:', error);
+                this.addressValidationStatus = 'error';
+
+                // Show user-friendly error
+                setTimeout(() => {
+                    alert('Nie mogliśmy zweryfikować tego adresu. Spróbuj wybrać adres z listy podpowiedzi Google Maps.');
+                }, 100);
+            } finally {
+                this.isGeocodingInProgress = false;
+            }
+        },
+
+        validateLocationBeforeSubmit() {
+            const address = this.locationAddress?.trim();
+
+            // If no address at all, let browser validation handle it
+            if (!address) {
+                return true;
+            }
+
+            // If address exists but no coordinates, block submission
+            if (address && !this.locationLat) {
+                alert('Proszę wybrać adres z listy podpowiedzi lub poczekać na weryfikację adresu.');
+                return false;
+            }
+
+            return true;
+        },
+
+        loadVehicleTypeName(typeId) {
+            // Try to find the vehicle type name from the bottom sheet buttons
+            const buttons = document.querySelectorAll('.vehicle-type-card h4');
+            buttons.forEach(button => {
+                const parentButton = button.closest('button');
+                const onClick = parentButton?.getAttribute('@click');
+                if (onClick && onClick.includes(`id: ${typeId}`)) {
+                    this.selectedVehicleTypeName = button.textContent.trim();
+                }
+            });
         },
 
         selectVehicleType(typeId, typeName) {
@@ -312,16 +563,34 @@ function vehicleLocationForm(initialVehicleType, initialAddress) {
             if (window.navigator && window.navigator.vibrate) {
                 window.navigator.vibrate(10);
             }
-
-            // Save progress
-            this.saveProgress();
         }
     }
 }
 
+/**
+ * Initialize Google Maps Places Autocomplete
+ *
+ * NOTE: Using google.maps.places.Autocomplete (deprecated as of March 2025)
+ * Reason: Project explicitly uses "Modern JS API, NOT Web Components"
+ * Status: Not scheduled for discontinuation, will continue to receive bug fixes
+ * Migration: Will migrate to PlaceAutocompleteElement when project requirements allow
+ *
+ * @see https://developers.google.com/maps/documentation/javascript/places-migration-overview
+ */
 function initGoogleMaps() {
     const addressInput = document.getElementById('location-address');
-    if (!addressInput) return;
+    if (!addressInput) {
+        console.warn('Google Maps: Address input not found');
+        return;
+    }
+
+    // Defensive check: Ensure google.maps.places.Autocomplete exists
+    if (!window.google || !window.google.maps || !window.google.maps.places || !window.google.maps.places.Autocomplete) {
+        console.error('Google Maps: Places library not loaded. Cannot initialize autocomplete.');
+        return;
+    }
+
+    console.log('Google Maps: Initializing Places Autocomplete');
 
     // Initialize autocomplete
     const autocomplete = new google.maps.places.Autocomplete(addressInput, {
@@ -332,23 +601,53 @@ function initGoogleMaps() {
     autocomplete.addListener('place_changed', function() {
         const place = autocomplete.getPlace();
 
-        if (place.geometry) {
-            const lat = place.geometry.location.lat();
-            const lng = place.geometry.location.lng();
-
-            // Update Alpine.js data
-            const alpineComponent = Alpine.$data(addressInput.closest('form'));
-            if (alpineComponent) {
-                alpineComponent.locationLat = lat;
-                alpineComponent.locationLng = lng;
-                alpineComponent.locationPlaceId = place.place_id || '';
-                alpineComponent.locationComponents = JSON.stringify(place.address_components || []);
-                alpineComponent.locationAddress = place.formatted_address || addressInput.value;
-            }
-
-            // Initialize or update map
-            setTimeout(() => initMap(lat, lng), 100);
+        if (!place.geometry) {
+            console.warn('Google Maps: No geometry found for selected place');
+            return;
         }
+
+        const lat = place.geometry.location.lat();
+        const lng = place.geometry.location.lng();
+
+        console.log('Google Maps: Place selected from dropdown', {
+            lat,
+            lng,
+            address: place.formatted_address,
+            placeId: place.place_id
+        });
+
+        // Update Alpine.js data via the form element that has x-data
+        const formElement = addressInput.closest('form');
+
+        // Update hidden fields directly (primary method - ensures form submission works)
+        document.getElementById('location-latitude').value = lat;
+        document.getElementById('location-longitude').value = lng;
+        document.getElementById('location-place-id').value = place.place_id || '';
+        document.getElementById('location-components').value = JSON.stringify(place.address_components || []);
+
+        // Also update Alpine.js reactive data if available (for map preview and validation status)
+        if (formElement && formElement._x_dataStack && formElement._x_dataStack.length > 0) {
+            const alpineData = formElement._x_dataStack[0];
+            alpineData.locationLat = lat;
+            alpineData.locationLng = lng;
+            alpineData.locationPlaceId = place.place_id || '';
+            alpineData.locationComponents = JSON.stringify(place.address_components || []);
+            alpineData.locationAddress = place.formatted_address || addressInput.value;
+            alpineData.addressValidationStatus = 'selected'; // Mark as validated
+
+            console.log('Google Maps: Alpine.js data updated successfully with validation status');
+        } else {
+            console.warn('Google Maps: Alpine.js component not found, hidden fields updated directly');
+        }
+
+        // Verify hidden fields are populated
+        console.log('Hidden fields verification:', {
+            latitude: document.getElementById('location-latitude').value,
+            longitude: document.getElementById('location-longitude').value
+        });
+
+        // Initialize or update map
+        setTimeout(() => initMap(lat, lng), 100);
     });
 }
 
@@ -423,7 +722,7 @@ function initMap(lat, lng) {
 
 .vehicle-location__input:focus {
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(249, 115, 22, 0.1);
+    box-shadow: 0 4px 8px rgba(74, 165, 176, 0.1);
 }
 
 /* Vehicle Type Cards in Bottom Sheet */
@@ -448,6 +747,25 @@ function initMap(lat, lng) {
 /* Active state scale */
 .active\:scale-98:active {
     transform: scale(0.98);
+}
+
+/* Spin animation for loading spinner */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+/* Validation status transitions */
+.vehicle-location__input {
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 </style>
 @endpush

@@ -17,6 +17,8 @@ class ServicesRelationManager extends RelationManager
 
     protected static ?string $modelLabel = 'Usługa';
 
+    protected static ?string $recordTitleAttribute = 'name';
+
     public function form(Schema $schema): Schema
     {
         return $schema->components([
