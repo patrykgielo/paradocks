@@ -255,6 +255,74 @@
                             Wybierz adres z listy podpowiedzi Google Maps
                         </p>
                     @enderror
+
+                    {{-- Service Area Validation Feedback --}}
+                    <div class="mt-4 space-y-4">
+                        {{-- Checking Status --}}
+                        <div x-show="serviceAreaValidation.isChecking" x-cloak class="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                            <div class="flex items-center gap-3">
+                                <svg class="animate-spin h-5 w-5 text-blue-500 flex-shrink-0" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span class="text-sm font-medium text-blue-700">Sprawdzanie dostępności obszaru obsługi...</span>
+                            </div>
+                        </div>
+
+                        {{-- Success - Location Within Service Area --}}
+                        <div x-show="serviceAreaValidation.isValid === true" x-cloak class="p-4 bg-green-50 border border-green-200 rounded-xl">
+                            <div class="flex items-start gap-3">
+                                <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div class="text-sm font-bold text-green-900 mb-1">Świetnie! Obsługujemy Twoją lokalizację</div>
+                                    <div class="text-xs text-green-700">Możesz kontynuować rezerwację</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Error - Location Outside Service Area + Available Areas List --}}
+                        <div x-show="serviceAreaValidation.isValid === false" x-cloak class="p-6 bg-red-50 border border-red-200 rounded-xl">
+                            <div class="flex items-start gap-3 mb-4">
+                                <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="text-sm font-bold text-red-900 mb-1">Przepraszamy, nie obsługujemy tej lokalizacji</div>
+                                    <div class="text-xs text-red-700" x-text="serviceAreaValidation.message"></div>
+                                </div>
+                            </div>
+
+                            {{-- Available Service Areas Info --}}
+                            <div class="mt-4 p-4 bg-white rounded-lg border border-gray-200">
+                                <div class="flex items-start gap-2 mb-3">
+                                    <svg class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <div>
+                                        <h5 class="text-sm font-bold text-gray-900 mb-1">Obecnie obsługujemy następujące obszary:</h5>
+                                        <div class="space-y-2 mt-2">
+                                            <template x-for="area in serviceAreaValidation.availableAreas" :key="area.city">
+                                                <div class="flex items-center gap-2 text-xs text-gray-700">
+                                                    <svg class="w-4 h-4 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+                                                    </svg>
+                                                    <span class="font-semibold" x-text="area.city"></span>
+                                                    <span class="text-gray-500">•</span>
+                                                    <span x-text="area.radius_km + ' km zasięgu'"></span>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {{-- Map Preview (if location selected) --}}
@@ -330,11 +398,18 @@
         mapId: '{{ $googleMapsMapId }}'
     };
 </script>
+
+{{-- Import Service Area Map Handler --}}
+<script type="module">
+    import { ServiceAreaMapHandler } from '@/serviceAreaMap.js';
+    window.ServiceAreaMapHandler = ServiceAreaMapHandler;
+</script>
+
 <script>
     // Modern Google Maps loading pattern with proper places library initialization
     (function() {
         const script = document.createElement('script');
-        script.src = 'https://maps.googleapis.com/maps/api/js?key={{ $googleMapsApiKey }}&libraries=places&loading=async';
+        script.src = 'https://maps.googleapis.com/maps/api/js?key={{ $googleMapsApiKey }}&libraries=places,geometry,marker&loading=async';
         script.async = true;
         script.defer = true;
 
@@ -374,6 +449,7 @@
 <script>
 let mapInstance = null;
 let markerInstance = null;
+let serviceAreaHandler = null;
 
 function vehicleLocationForm(initialVehicleType, initialAddress, initialLat, initialLng, initialPlaceId, initialComponents) {
     return {
@@ -386,6 +462,15 @@ function vehicleLocationForm(initialVehicleType, initialAddress, initialLat, ini
         locationComponents: initialComponents || '',
         addressValidationStatus: '', // '', 'validating', 'selected', 'error'
         isGeocodingInProgress: false,
+
+        // Service Area Validation
+        serviceAreaValidation: {
+            isValid: null,              // null, true, false
+            isChecking: false,
+            message: '',
+            nearestArea: null,
+            availableAreas: [],         // List of available service areas
+        },
 
         init() {
             // Load vehicle type name if pre-selected
@@ -505,6 +590,9 @@ function vehicleLocationForm(initialVehicleType, initialAddress, initialLat, ini
                 document.getElementById('location-place-id').value = result.place_id || '';
                 document.getElementById('location-components').value = JSON.stringify(result.address_components || []);
 
+                // Validate service area (CRITICAL: Check if location is within service coverage)
+                await this.validateServiceArea(lat, lng, result.formatted_address || address);
+
                 // Initialize or update map
                 if (typeof initMap === 'function') {
                     setTimeout(() => initMap(lat, lng), 100);
@@ -537,6 +625,18 @@ function vehicleLocationForm(initialVehicleType, initialAddress, initialLat, ini
                 return false;
             }
 
+            // Block submission if service area validation failed
+            if (this.serviceAreaValidation.isValid === false) {
+                alert('Przepraszamy, nie obsługujemy tej lokalizacji. Prosimy wybrać adres z jednego z dostępnych obszarów obsługi.');
+                return false;
+            }
+
+            // Block submission if service area is still being validated
+            if (this.serviceAreaValidation.isChecking) {
+                alert('Proszę poczekać na sprawdzenie dostępności obszaru obsługi.');
+                return false;
+            }
+
             return true;
         },
 
@@ -550,6 +650,55 @@ function vehicleLocationForm(initialVehicleType, initialAddress, initialLat, ini
                     this.selectedVehicleTypeName = button.textContent.trim();
                 }
             });
+        },
+
+        async validateServiceArea(lat, lng, address) {
+            this.serviceAreaValidation.isChecking = true;
+            this.serviceAreaValidation.isValid = null;
+            this.serviceAreaValidation.message = '';
+            this.serviceAreaValidation.nearestArea = null;
+            this.serviceAreaValidation.availableAreas = [];
+
+            try {
+                // Direct AJAX request to validation endpoint (independent of ServiceAreaMapHandler)
+                const response = await fetch('/api/service-area/validate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                    },
+                    body: JSON.stringify({
+                        latitude: lat,
+                        longitude: lng
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+
+                this.serviceAreaValidation.isValid = result.valid;
+                this.serviceAreaValidation.message = result.message || '';
+                this.serviceAreaValidation.nearestArea = result.nearest_area || null;
+                this.serviceAreaValidation.availableAreas = result.available_areas || [];
+
+                // Show visual feedback on map if handler is available
+                if (serviceAreaHandler) {
+                    serviceAreaHandler.showUserLocation(lat, lng, result.valid);
+                }
+
+                console.log('Service area validation result:', result);
+            } catch (error) {
+                console.error('Service area validation failed:', error);
+                this.serviceAreaValidation.isValid = false;
+                this.serviceAreaValidation.message = 'Nie udało się sprawdzić obszaru obsługi. Spróbuj ponownie.';
+            } finally {
+                this.serviceAreaValidation.isChecking = false;
+            }
         },
 
         selectVehicleType(typeId, typeName) {
@@ -577,7 +726,7 @@ function vehicleLocationForm(initialVehicleType, initialAddress, initialLat, ini
  *
  * @see https://developers.google.com/maps/documentation/javascript/places-migration-overview
  */
-function initGoogleMaps() {
+async function initGoogleMaps() {
     const addressInput = document.getElementById('location-address');
     if (!addressInput) {
         console.warn('Google Maps: Address input not found');
@@ -591,6 +740,16 @@ function initGoogleMaps() {
     }
 
     console.log('Google Maps: Initializing Places Autocomplete');
+
+    // Initialize service area handler
+    if (window.ServiceAreaMapHandler && !serviceAreaHandler) {
+        serviceAreaHandler = new window.ServiceAreaMapHandler('location-map', {
+            validationEndpoint: '/api/service-area/validate',
+            areasEndpoint: '/api/service-area/areas',
+        });
+
+        console.log('ServiceAreaMapHandler initialized');
+    }
 
     // Initialize autocomplete
     const autocomplete = new google.maps.places.Autocomplete(addressInput, {
@@ -636,6 +795,11 @@ function initGoogleMaps() {
             alpineData.addressValidationStatus = 'selected'; // Mark as validated
 
             console.log('Google Maps: Alpine.js data updated successfully with validation status');
+
+            // Validate service area
+            if (typeof alpineData.validateServiceArea === 'function') {
+                alpineData.validateServiceArea(lat, lng, place.formatted_address);
+            }
         } else {
             console.warn('Google Maps: Alpine.js component not found, hidden fields updated directly');
         }
@@ -651,7 +815,7 @@ function initGoogleMaps() {
     });
 }
 
-function initMap(lat, lng) {
+async function initMap(lat, lng) {
     const mapContainer = document.getElementById('location-map');
     if (!mapContainer) return;
 
@@ -665,6 +829,13 @@ function initMap(lat, lng) {
             disableDefaultUI: true,
             zoomControl: true,
         });
+
+        // Initialize service area visualization
+        if (serviceAreaHandler) {
+            serviceAreaHandler.setMap(mapInstance);
+            await serviceAreaHandler.initialize();
+            console.log('Service area circles loaded on map');
+        }
     } else {
         mapInstance.setCenter(position);
     }

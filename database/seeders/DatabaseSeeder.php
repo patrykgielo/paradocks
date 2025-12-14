@@ -37,6 +37,7 @@ class DatabaseSeeder extends Seeder
             RolePermissionSeeder::class,    // ✅ Dev roles
             VehicleTypeSeeder::class,       // ✅ Dev vehicle types
             ServiceSeeder::class,           // ✅ Dev services
+            ServiceAreaSeeder::class,       // ✅ Dev service areas (geographic restrictions)
             // EmailTemplateSeeder removed - now data migration (2025_12_02_224732_seed_email_templates.php)
             // SmsTemplateSeeder removed - now data migration (2025_12_02_225216_seed_sms_templates.php)
         ]);
