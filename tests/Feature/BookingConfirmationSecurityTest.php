@@ -193,6 +193,7 @@ class BookingConfirmationSecurityTest extends TestCase
     public function skip_test_appointment_id_not_in_confirmation_url(): void
     {
         $this->markTestSkipped('getRequest() not available - route validation covered by other tests');
+
         return;
 
         // Create appointment

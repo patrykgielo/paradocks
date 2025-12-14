@@ -220,11 +220,13 @@ class ServiceAreaWaitlistTest extends TestCase
 
     /**
      * @test
+     *
      * @group skip
      */
     public function skip_test_it_enforces_rate_limiting(): void
     {
         $this->markTestSkipped('Rate limiting not configured in test environment');
+
         return;
 
         // Arrange: Create Warsaw service area

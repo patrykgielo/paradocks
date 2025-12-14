@@ -113,6 +113,7 @@ class BookingConfirmationSecurityMinimalTest extends TestCase
     public function skip_test_appointment_id_not_in_url(): void
     {
         $this->markTestSkipped('getRequest() not available in Laravel test - route validation covered by other tests');
+
         return;
 
         $this->artisan('db:seed', ['--class' => 'ServiceSeeder']);
