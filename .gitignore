@@ -45,3 +45,4 @@ backups/
 *.sql.gz
 .backups/
 cookies.txt
+app/vendor/

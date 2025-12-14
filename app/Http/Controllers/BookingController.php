@@ -567,8 +567,8 @@ class BookingController extends Controller
         //     EmailService::sendAppointmentConfirmation($appointment);
         // }
 
-        // Increment booking stats for trust signals
-        BookingStatsService::incrementBookingCount($service);
+        // TODO: Increment booking stats for trust signals (requires migration)
+        // BookingStatsService::incrementBookingCount($service);
 
         // SECURITY: Store appointment ID in single-use session token (no ID in URL)
         session(['booking_confirmed_id' => $appointment->id]);

@@ -52,6 +52,9 @@ class BookingConfirmationSecurityTest extends TestCase
 
         $this->service = Service::first();
         $this->vehicleType = VehicleType::first();
+
+        // Attach service to staff member (required for availability checks)
+        $this->staff->services()->attach($this->service->id);
     }
 
     /**
