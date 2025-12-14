@@ -29,6 +29,7 @@ use App\Observers\AppointmentObserver;
 use App\Observers\UserObserver;
 use App\Services\Email\EmailGatewayInterface;
 use App\Services\Email\EmailService;
+use App\Services\Email\FakeEmailGateway;
 use App\Services\Email\SmtpMailer;
 use App\Services\MaintenanceService;
 use App\Services\Sms\SmsApiGateway;
@@ -52,8 +53,13 @@ class AppServiceProvider extends ServiceProvider
         // Register MaintenanceService as singleton
         $this->app->singleton(MaintenanceService::class);
 
-        // Bind EmailGateway interface to SMTP implementation
-        $this->app->bind(EmailGatewayInterface::class, SmtpMailer::class);
+        // Bind EmailGateway interface to appropriate implementation
+        // Use FakeEmailGateway in testing to prevent actual SMTP connections
+        if ($this->app->environment('testing')) {
+            $this->app->bind(EmailGatewayInterface::class, FakeEmailGateway::class);
+        } else {
+            $this->app->bind(EmailGatewayInterface::class, SmtpMailer::class);
+        }
 
         // Register EmailService as singleton
         $this->app->singleton(EmailService::class);
@@ -85,9 +91,15 @@ class AppServiceProvider extends ServiceProvider
      *
      * This allows dynamic SMTP configuration without modifying .env file.
      * Only applies if smtp_host is set in database settings.
+     * Skipped in testing environment to prevent SMTP configuration.
      */
     private function configureMailFromDatabase(): void
     {
+        // Skip in testing environment
+        if ($this->app->environment('testing')) {
+            return;
+        }
+
         try {
             $settingsManager = app(SettingsManager::class);
             $emailSettings = $settingsManager->group('email');
