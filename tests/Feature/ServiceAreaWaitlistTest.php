@@ -15,8 +15,8 @@ class ServiceAreaWaitlistTest extends TestCase
     {
         parent::setUp();
 
-        // Disable rate limiting for tests
-        $this->withoutRateLimiting();
+        // Disable rate limiting middleware for tests
+        $this->withoutMiddleware(\Illuminate\Routing\Middleware\ThrottleRequests::class);
     }
 
     /** @test */
