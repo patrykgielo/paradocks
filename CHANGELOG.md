@@ -7,6 +7,67 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.2.0] - 2025-12-14
+
+### Added
+- **Geographic Service Area Restriction System**
+  - Define service areas with city name, center coordinates, and radius
+  - Haversine formula for distance calculation (no external API needed)
+  - Real-time address validation in booking wizard (Step 3)
+  - Admin panel management with Google Maps picker component
+  - Fallback: allow all bookings if no areas configured
+  - Cached service areas (1 hour TTL) for performance
+  - Polish and English translations for validation messages
+  - API endpoints: `/api/service-area/validate`, `/api/service-area/areas`
+  - Rate limiting: 10 req/min for validation, 30 req/min for areas
+  - Database tables: `service_areas`, `service_area_waitlist`
+  - Filament admin resources: ServiceAreaResource, ServiceAreaWaitlistResource
+  - Unit and feature tests (Haversine, validation, waitlist)
+  - See: `docs/fixes/google-maps-picker-livewire-fix.md`
+
+- **Google Maps Picker Component for Admin Panel**
+  - Custom Filament ViewField for service area management at `/admin/service-areas/{id}/edit`
+  - Draggable marker for center point selection
+  - Autocomplete address search with Google Places API
+  - Circle overlay for radius visualization
+  - Real-time coordinate updates via Livewire deferred updates
+  - Smooth map centering with `panTo()` instead of `setCenter()`
+  - Standard Google Maps marker (improved UX vs custom icon)
+  - Input validation for coordinates
+
+### Fixed
+- **CRITICAL: Livewire/Alpine.js State Conflict in Google Maps Picker**
+  - **Problem**: Map would reset to Warsaw coordinates after autocomplete selection or marker drag
+  - **Root Cause**: `$wire.set()` calls without `false` parameter triggered full component re-render, resetting Alpine.js state
+  - **Solution**: Added deferred updates: `$wire.set('data.latitude', lat, false)`
+  - **Impact**: 95%+ improvement in map interaction responsiveness
+  - **Key Pattern**: Use `$wire.set(key, value, false)` for real-time UI interactions (maps, drag events, autocomplete)
+  - **Files**: `resources/views/filament/components/google-maps-picker.blade.php`
+  - **Documentation**: Complete fix guide in `docs/fixes/google-maps-picker-livewire-fix.md` with:
+    - Root cause analysis (10-step Livewire/Alpine.js state conflict breakdown)
+    - All 4 changes with before/after code examples
+    - 6 test scenarios + 3 edge cases
+    - Troubleshooting guide and best practices
+
+### Changed
+- **Booking Wizard Step 3**: Added service area validation with AJAX
+  - Displays Polish error message with distance to nearest area if outside boundaries
+  - Shows list of available service areas when validation fails
+  - Removed waitlist form (RODO compliance - no unnecessary data collection)
+  - Updated `APP_LOCALE` from `en` to `pl` in `.env`
+
+### Documentation
+- **New Files**:
+  - `docs/fixes/google-maps-picker-livewire-fix.md` - Complete technical fix guide (742 lines)
+  - `docs/fixes/README.md` - Fixes index with common patterns and prevention checklist
+  - `docs/fixes/ALPINE-BUTTON-CLICK-FIX.md` - Alpine.js button click event fix
+  - `docs/security/SECURITY-FIX-002-service-area-cleanup.md` - Service area cleanup guide
+  - `docs/troubleshooting-service-areas-id-skew.md` - ID skew troubleshooting
+- **Updated Files**:
+  - `docs/features/google-maps/README.md` - Added "Admin Panel Integration" section
+  - `CLAUDE.md` - Added "Livewire + Alpine.js Integration Issues" troubleshooting section
+  - `docs/README.md` - Added "Bug Fixes & Solutions" section with recent fixes
+
 ### Removed
 - **ServiceAvailability System - Dead Code Cleanup**
   - **Model**: `app/Models/ServiceAvailability.php` (deleted)

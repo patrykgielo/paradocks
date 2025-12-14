@@ -9,6 +9,7 @@ use App\Models\VehicleType;
 use App\Services\AppointmentService;
 use App\Services\BookingStatsService;
 use App\Services\CalendarService;
+use App\Services\ServiceAreaValidator;
 // use App\Services\Email\EmailService; // TODO: Add when sendAppointmentConfirmation is implemented
 use App\Support\Settings\SettingsManager;
 use Carbon\Carbon;
@@ -21,11 +22,17 @@ class BookingController extends Controller
 
     protected SettingsManager $settings;
 
-    public function __construct(AppointmentService $appointmentService, SettingsManager $settings)
-    {
+    protected ServiceAreaValidator $serviceAreaValidator;
+
+    public function __construct(
+        AppointmentService $appointmentService,
+        SettingsManager $settings,
+        ServiceAreaValidator $serviceAreaValidator
+    ) {
         $this->middleware('auth');
         $this->appointmentService = $appointmentService;
         $this->settings = $settings;
+        $this->serviceAreaValidator = $serviceAreaValidator;
     }
 
     public function create(Service $service)
@@ -233,6 +240,22 @@ class BookingController extends Controller
                     'location_place_id' => 'nullable|string|max:255',
                     'location_components' => 'nullable|string',
                 ]);
+
+                // ===== SERVICE AREA VALIDATION =====
+                $areaValidation = $this->serviceAreaValidator->validate(
+                    $validated['location_latitude'],
+                    $validated['location_longitude']
+                );
+
+                if (! $areaValidation['valid']) {
+                    return response()->json([
+                        'success' => false,
+                        'error' => $areaValidation['message'] ?? trans('service_area.validation.not_available'),
+                        'nearest_area' => $areaValidation['nearest'],
+                        'show_waitlist' => true,
+                    ], 422);
+                }
+                // ===== END SERVICE AREA VALIDATION =====
 
                 session([
                     'booking.vehicle_type_id' => $validated['vehicle_type_id'],
