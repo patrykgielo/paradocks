@@ -11,6 +11,14 @@ class ServiceAreaWaitlistTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Disable rate limiting for tests
+        $this->withoutRateLimiting();
+    }
+
     /** @test */
     public function it_creates_waitlist_entry_for_outside_location(): void
     {

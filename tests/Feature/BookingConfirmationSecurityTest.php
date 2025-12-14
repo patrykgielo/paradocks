@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use App\Models\Appointment;
 use App\Models\Service;
+use App\Models\StaffSchedule;
 use App\Models\User;
 use App\Models\VehicleType;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -37,8 +39,34 @@ class BookingConfirmationSecurityTest extends TestCase
         $staffRole = Role::firstOrCreate(['name' => 'staff', 'guard_name' => 'web']);
         $this->staff->assignRole($staffRole);
 
+        // Create staff schedule for Monday-Friday 09:00-18:00
+        for ($day = Carbon::MONDAY; $day <= Carbon::FRIDAY; $day++) {
+            StaffSchedule::create([
+                'user_id' => $this->staff->id,
+                'day_of_week' => $day,
+                'start_time' => '09:00:00',
+                'end_time' => '18:00:00',
+                'is_active' => true,
+            ]);
+        }
+
         $this->service = Service::first();
         $this->vehicleType = VehicleType::first();
+    }
+
+    /**
+     * Get next working day (Monday-Friday) at least 2 days from now.
+     */
+    protected function getNextWorkingDay(): Carbon
+    {
+        $date = Carbon::now()->addDays(2); // Start 2 days from now for 24h advance booking
+
+        // If it's Saturday or Sunday, move to next Monday
+        while ($date->dayOfWeek === Carbon::SATURDAY || $date->dayOfWeek === Carbon::SUNDAY) {
+            $date->addDay();
+        }
+
+        return $date;
     }
 
     /**
@@ -196,7 +224,7 @@ class BookingConfirmationSecurityTest extends TestCase
         session([
             'booking' => [
                 'service_id' => $this->service->id,
-                'date' => now()->addDays(2)->format('Y-m-d'),
+                'date' => $this->getNextWorkingDay()->format('Y-m-d'),
                 'time_slot' => '10:00',
                 'vehicle_type_id' => $this->vehicleType->id,
                 'location_address' => 'Test Address 123',
