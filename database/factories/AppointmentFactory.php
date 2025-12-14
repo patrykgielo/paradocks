@@ -22,7 +22,7 @@ class AppointmentFactory extends Factory
         return [
             'appointment_date' => $appointmentDate->format('Y-m-d'),
             'start_time' => $startTime,
-            'end_time' => date('H:i:s', strtotime($startTime) + 3600), // 1 hour later
+            'end_time' => date('H:i:s', strtotime($startTime) + 3600),
             'status' => 'pending',
             'vehicle_type_id' => \App\Models\VehicleType::factory(),
             'location_address' => fake()->address(),
