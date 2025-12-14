@@ -606,7 +606,7 @@ class BookingController extends Controller
         $outlookCalendarUrl = CalendarService::generateOutlookCalendarUrl($appointment);
 
         return view('booking-wizard.confirmation', [
-            'appointment' => $appointment->load(['service', 'staff', 'user']),
+            'appointment' => $appointment->load(['service', 'staff', 'customer']),
             'googleCalendarUrl' => $googleCalendarUrl,
             'appleCalendarUrl' => $appleCalendarUrl,
             'outlookCalendarUrl' => $outlookCalendarUrl,
