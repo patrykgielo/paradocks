@@ -1,6 +1,6 @@
 # Paradocks - Documentation Hub
 
-**Last Updated:** November 26, 2025
+**Last Updated:** December 14, 2025
 
 Centralna nawigacja po dokumentacji projektu Laravel 12 + Filament 4.2.3.
 
@@ -9,6 +9,19 @@ Centralna nawigacja po dokumentacji projektu Laravel 12 + Filament 4.2.3.
 **Nowy developer?** Zobacz:
 1. **[CLAUDE.md](../CLAUDE.md)** - Quick reference + essential commands
 2. **[Project Map](./project_map.md)** - High-level system overview
+3. **[Planned Features](./features/planned/)** - 🆕 Future features ready for implementation
+
+---
+
+## 🎯 Planned Features
+
+**Status:** 🟡 Designed, not yet implemented | **Docs:** [`features/planned/`](./features/planned/)
+
+Features with complete implementation plans, research, and technical decisions ready to execute:
+
+- **[Visual Redesign v4.0 - Monochrome](./features/planned/visual-redesign-v4.0-monochrome.md)** - Professional monochrome color system (8-9h effort)
+
+See **[Planned Features README](./features/planned/README.md)** for full roadmap and how to use these plans.
 
 ---
 
