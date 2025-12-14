@@ -224,7 +224,9 @@ Capture vehicle information (type, brand, model, year) for service preparation.
 
 ### Google Maps Integration
 Places Autocomplete for accurate location capture in booking wizard.
+**Admin Integration:** Custom Filament map picker for service area management.
 **See:** [Google Maps Integration](app/docs/features/google-maps/README.md)
+**Known Fix:** [Livewire Re-render Loop Fix](app/docs/fixes/google-maps-picker-livewire-fix.md)
 
 ### Settings System
 Centralized settings management via Filament admin panel.
@@ -463,6 +465,28 @@ docker compose exec app php artisan filament:optimize-clear
 ```
 
 **See:** [Troubleshooting Guide](app/docs/guides/troubleshooting.md)
+
+### Livewire + Alpine.js Integration Issues
+
+**Problem:** Component state resets after user interaction (e.g., map jumps back to default position).
+
+**Root Cause:** `$wire.set()` without third parameter triggers full component re-render, resetting Alpine.js state.
+
+**Solution:** Use deferred updates for real-time UI interactions:
+
+```javascript
+// ❌ BAD: Causes re-render loop
+this.$wire.set('data.latitude', lat);
+
+// ✅ GOOD: Deferred update, no re-render
+this.$wire.set('data.latitude', lat, false);
+```
+
+**When to Use:**
+- **Deferred (`false`)**: Map interactions, drag events, real-time updates
+- **Immediate (default)**: Form submissions, "Save" button clicks
+
+**See:** [Livewire Re-render Loop Fix](app/docs/fixes/google-maps-picker-livewire-fix.md)
 
 ## Testing
 

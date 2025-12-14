@@ -430,6 +430,115 @@ The warning "google.maps.places.Autocomplete is not available to new customers" 
 
 **Bottom Line:** If you have an existing Google Cloud project, ignore the warning and use the JavaScript API. It's superior in every way.
 
+## Admin Panel Integration
+
+The admin panel uses a custom Filament ViewField component for service area management at `/admin/service-areas/{id}/edit`.
+
+### Component Details
+
+**File:** `resources/views/filament/components/google-maps-picker.blade.php`
+
+**Purpose:** Interactive map interface for administrators to:
+- Define service area center point (latitude/longitude)
+- Set service radius (1-200 km)
+- Visualize coverage area with circle overlay
+- Use autocomplete for address search
+
+**Features:**
+- Draggable marker for center point selection
+- Google Places Autocomplete for address search
+- Circle overlay for radius visualization (synced with color from service area settings)
+- Real-time coordinate updates via Livewire
+- Smooth map panning with `panTo()` animation
+- Manual radius control with instant preview
+
+**Architecture:**
+- **Frontend:** Alpine.js component (`googleMapsPicker`)
+- **Backend:** Livewire form integration via `$wire.set()`
+- **Map:** Google Maps JavaScript API with standard marker
+- **State Management:** Alpine.js local state with deferred Livewire sync
+
+### Known Issues & Fixes
+
+**CRITICAL FIX (2025-12-14):** Map Resetting to Warsaw After Selection
+
+The component experienced a critical bug where the map would reset to default Warsaw coordinates after autocomplete selection or marker dragging. This was caused by a Livewire/Alpine.js state conflict.
+
+**Root Cause:** `$wire.set()` calls without third parameter caused full component re-render, resetting Alpine.js state to default values.
+
+**Solution:** Added `, false` parameter to all `$wire.set()` calls to enable deferred updates without re-rendering:
+
+```javascript
+// Before (caused re-render loop)
+this.$wire.set('data.latitude', lat);
+this.$wire.set('data.longitude', lng);
+
+// After (deferred update, no re-render)
+this.$wire.set('data.latitude', lat, false);
+this.$wire.set('data.longitude', lng, false);
+```
+
+**Complete Documentation:** [Livewire Re-render Loop Fix](../../fixes/google-maps-picker-livewire-fix.md)
+
+### Best Practices for Livewire + Alpine.js Integration
+
+Based on lessons learned from the map picker component:
+
+**Key Pattern:** Use `$wire.set(key, value, false)` to prevent component re-render when updating coordinates from Alpine.js event handlers.
+
+```javascript
+// ✅ CORRECT: Deferred updates for real-time UI interactions
+updatePosition(lat, lng) {
+    // Update Alpine.js state immediately
+    this.currentLat = lat;
+    this.currentLng = lng;
+
+    // Sync to Livewire later (deferred, no re-render)
+    this.$wire.set('data.latitude', lat, false);
+    this.$wire.set('data.longitude', lng, false);
+}
+
+// ❌ INCORRECT: Immediate updates cause re-render loop
+updatePosition(lat, lng) {
+    this.currentLat = lat;
+    this.currentLng = lng;
+
+    // Triggers full component re-render - Alpine.js state resets!
+    this.$wire.set('data.latitude', lat);
+    this.$wire.set('data.longitude', lng);
+}
+```
+
+**Why This Matters:**
+- Immediate sync (`defer = true` or omitted) triggers AJAX request and full component re-render
+- Re-render resets Alpine.js component to initial state from `x-data` attribute
+- Deferred sync (`defer = false`) queues updates locally until next request (e.g., form submit)
+- Alpine.js maintains control of UI state without interference from Livewire
+
+**When to Use Each Approach:**
+- **Deferred (`false`)**: Real-time map interactions, drag events, autocomplete selections
+- **Immediate (default)**: User-triggered saves, form submissions, explicit "Update" button clicks
+
+### Usage in Service Area Management
+
+1. Navigate to `/admin/service-areas/{id}/edit`
+2. Scroll to "Map Preview" section
+3. Use one of three methods to set location:
+   - **Autocomplete**: Type address in search field and select from suggestions
+   - **Click**: Click anywhere on map to place marker
+   - **Drag**: Drag the red marker to desired position
+4. Adjust radius using input field (1-200 km)
+5. Click "Zaktualizuj zasięg" or press Enter to update circle
+6. Map auto-zooms to fit circle bounds
+7. Click "Save" at bottom to persist changes to database
+
+**Data Flow:**
+1. User interaction updates Alpine.js local state
+2. Coordinates queued for Livewire via `$wire.set(..., false)`
+3. Map marker and circle update in real-time (no page reload)
+4. On form submit, queued updates sent to server
+5. ServiceArea model saved with new coordinates and radius
+
 ## References
 
 - [Google Maps JavaScript API Docs](https://developers.google.com/maps/documentation/javascript)

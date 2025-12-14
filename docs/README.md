@@ -174,6 +174,41 @@ Complete role-based authorization system for Filament admin panel with granular 
 
 ---
 
+## 🔧 Bug Fixes & Solutions
+
+**Directory:** [`fixes/`](./fixes/)
+
+Detailed documentation for critical bug fixes with root cause analysis, solutions, and prevention strategies.
+
+### Recent Fixes
+
+**Google Maps Picker Livewire Re-render Fix** (December 2025)
+- **Issue:** Map resets to Warsaw after autocomplete selection or marker dragging
+- **Root Cause:** Livewire/Alpine.js state conflict - missing third parameter in `$wire.set()`
+- **Solution:** Added `, false` for deferred updates without re-rendering
+- **Impact:** Critical - broke all service area edits in admin panel
+- **Docs:** [Livewire Re-render Loop Fix](./fixes/google-maps-picker-livewire-fix.md)
+
+**Alpine.js Button Click Fix** (December 2025)
+- **Issue:** Button clicks not registering in Filament components
+- **Solution:** Adjusted Alpine.js event binding and CSS pointer-events
+- **Docs:** [Alpine Button Click Fix](./fixes/ALPINE-BUTTON-CLICK-FIX.md)
+
+### Common Patterns
+
+**Livewire + Alpine.js Integration:**
+```javascript
+// ✅ CORRECT: Use deferred updates for real-time UI
+this.$wire.set('data.field', value, false);
+
+// ❌ WRONG: Triggers re-render loop
+this.$wire.set('data.field', value);
+```
+
+**See:** [Fixes Index](./fixes/README.md) for complete list and prevention checklist
+
+---
+
 ## 🏗️ Architecture
 
 - **[Project Map](./project_map.md)** - Complete system overview, domain model, relationships
@@ -316,6 +351,10 @@ docs/
 │   │   └── README.md
 │   └── booking-system/
 │       └── README.md
+├── fixes/                            # Bug fixes with root cause analysis
+│   ├── README.md                     # Fixes index + common patterns
+│   ├── google-maps-picker-livewire-fix.md
+│   └── ALPINE-BUTTON-CLICK-FIX.md
 ├── decisions/                        # ADRs (new)
 ├── decision_log/                     # ADRs (original)
 ├── edge-cases/                       # Edge case analysis

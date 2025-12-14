@@ -43,6 +43,7 @@
 ### 🔧 Security Fixes
 
 - [SECURITY-FIX-001: Booking Confirmation ID Exposure](SECURITY-FIX-001-booking-confirmation.md) - Session-based confirmation (2025-12-12)
+- [SECURITY-FIX-002: Service Area Cleanup](SECURITY-FIX-002-service-area-cleanup.md) - Data integrity & seeder idempotency (2025-12-14)
 
 ### 🎯 Project-Specific Patterns
 
