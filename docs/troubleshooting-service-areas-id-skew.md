@@ -2,7 +2,7 @@
 
 **Date:** 2025-12-14
 **Issue:** Service area ID=34 when only 1 record exists (expected IDs 1-3)
-**Root Cause:** Multiple `migrate:fresh --seed` runs without AUTO_INCREMENT reset
+**Root Cause:** Multiple `migrate:fresh` runs without AUTO_INCREMENT reset
 
 ## Problem Description
 

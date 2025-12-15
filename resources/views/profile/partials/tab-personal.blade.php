@@ -50,6 +50,83 @@
             </div>
         </div>
 
+        {{-- Address Section --}}
+        <div class="mt-6 pt-6 border-t border-gray-200">
+            <h3 class="text-base font-semibold text-gray-800 mb-4">{{ __('Adres zamieszkania') }}</h3>
+            <p class="text-sm text-gray-600 mb-4">
+                {{ __('Twój adres domowy do celów fakturowania i kontaktu. Nie musi być taki sam jak miejsce wykonania usługi.') }}
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                {{-- Street Name --}}
+                <div class="md:col-span-2">
+                    <label for="street_name" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ __('Ulica') }}
+                    </label>
+                    <input type="text" name="street_name" id="street_name"
+                           value="{{ old('street_name', $user->street_name) }}"
+                           placeholder="{{ __('np. Marszałkowska') }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    @error('street_name')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                {{-- Street Number --}}
+                <div class="md:col-span-2">
+                    <label for="street_number" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ __('Numer budynku / lokalu') }}
+                    </label>
+                    <input type="text" name="street_number" id="street_number"
+                           value="{{ old('street_number', $user->street_number) }}"
+                           placeholder="{{ __('np. 12/34') }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    @error('street_number')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                {{-- City --}}
+                <div class="md:col-span-2">
+                    <label for="city" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ __('Miasto') }}
+                    </label>
+                    <input type="text" name="city" id="city"
+                           value="{{ old('city', $user->city) }}"
+                           placeholder="{{ __('np. Warszawa') }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    @error('city')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                {{-- Postal Code --}}
+                <div class="md:col-span-2">
+                    <label for="postal_code" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ __('Kod pocztowy') }}
+                    </label>
+                    <input type="text" name="postal_code" id="postal_code"
+                           value="{{ old('postal_code', $user->postal_code) }}"
+                           placeholder="00-000"
+                           maxlength="6"
+                           x-data="{ formatPostalCode(e) {
+                               let val = e.target.value.replace(/[^0-9]/g, '');
+                               if (val.length >= 2) {
+                                   e.target.value = val.substring(0, 2) + '-' + val.substring(2, 5);
+                               } else {
+                                   e.target.value = val;
+                               }
+                           } }"
+                           @input="formatPostalCode($event)"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    <p class="mt-1 text-sm text-gray-500">{{ __('Format: XX-XXX') }}</p>
+                    @error('postal_code')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+            </div>
+        </div>
+
         {{-- Email (read-only, change via security tab) --}}
         <div class="mt-4 p-4 bg-gray-50 rounded-lg">
             <label class="block text-sm font-medium text-gray-700 mb-1">

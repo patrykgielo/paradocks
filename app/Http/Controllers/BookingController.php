@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Appointment;
 use App\Models\Service;
 use App\Models\User;
+use App\Models\UserInvoiceProfile;
 use App\Models\VehicleType;
+use App\Rules\ValidNIP;
 use App\Services\AppointmentService;
 use App\Services\BookingStatsService;
 use App\Services\CalendarService;
@@ -174,6 +176,56 @@ class BookingController extends Controller
                         $booking['phone'] = $user->phone;
                     }
 
+                    // Pre-fill home address from user profile
+                    if (! isset($booking['street_name']) || $booking['street_name'] === '' || $booking['street_name'] === null) {
+                        $booking['street_name'] = $user->street_name;
+                    }
+                    if (! isset($booking['street_number']) || $booking['street_number'] === '' || $booking['street_number'] === null) {
+                        $booking['street_number'] = $user->street_number;
+                    }
+                    if (! isset($booking['city']) || $booking['city'] === '' || $booking['city'] === null) {
+                        $booking['city'] = $user->city;
+                    }
+                    if (! isset($booking['postal_code']) || $booking['postal_code'] === '' || $booking['postal_code'] === null) {
+                        $booking['postal_code'] = $user->postal_code;
+                    }
+
+                    // Pre-fill invoice data from saved profile (if exists)
+                    if ($user->invoiceProfile) {
+                        $profile = $user->invoiceProfile;
+
+                        if (! isset($booking['invoice_type'])) {
+                            $booking['invoice_type'] = $profile->type;
+                        }
+                        if (! isset($booking['invoice_company_name'])) {
+                            $booking['invoice_company_name'] = $profile->company_name;
+                        }
+                        if (! isset($booking['invoice_nip'])) {
+                            $booking['invoice_nip'] = $profile->nip; // Will be formatted by accessor
+                        }
+                        if (! isset($booking['invoice_vat_id'])) {
+                            $booking['invoice_vat_id'] = $profile->vat_id;
+                        }
+                        if (! isset($booking['invoice_regon'])) {
+                            $booking['invoice_regon'] = $profile->regon;
+                        }
+                        if (! isset($booking['invoice_street'])) {
+                            $booking['invoice_street'] = $profile->street;
+                        }
+                        if (! isset($booking['invoice_street_number'])) {
+                            $booking['invoice_street_number'] = $profile->street_number;
+                        }
+                        if (! isset($booking['invoice_postal_code'])) {
+                            $booking['invoice_postal_code'] = $profile->postal_code;
+                        }
+                        if (! isset($booking['invoice_city'])) {
+                            $booking['invoice_city'] = $profile->city;
+                        }
+                        if (! isset($booking['invoice_country'])) {
+                            $booking['invoice_country'] = $profile->country;
+                        }
+                    }
+
                     // CRITICAL FIX: Update session with pre-filled data
                     // This ensures Alpine.js gets user data on init and after navigation
                     session(['booking' => $booking]);
@@ -282,6 +334,19 @@ class BookingController extends Controller
                     'notify_sms' => 'nullable|boolean',
                     'marketing_consent' => 'nullable|boolean',
                     'terms_accepted' => 'required|accepted',
+                    // Invoice fields
+                    'invoice_requested' => 'nullable|boolean',
+                    'invoice_type' => 'nullable|in:individual,company,foreign_eu,foreign_non_eu',
+                    'invoice_company_name' => 'nullable|string|max:255',
+                    'invoice_nip' => 'nullable|string|max:13',
+                    'invoice_vat_id' => 'nullable|string|max:20',
+                    'invoice_regon' => 'nullable|string|max:14',
+                    'invoice_street' => 'nullable|string|max:255',
+                    'invoice_street_number' => 'nullable|string|max:20',
+                    'invoice_postal_code' => 'nullable|string|max:6',
+                    'invoice_city' => 'nullable|string|max:100',
+                    'invoice_country' => 'nullable|string|size:2',
+                    'save_invoice_profile' => 'nullable|boolean',
                 ]);
 
                 session([
@@ -294,6 +359,24 @@ class BookingController extends Controller
                     'booking.marketing_consent' => $request->has('marketing_consent'),
                     'booking.current_step' => 4,
                 ]);
+
+                // Store invoice data in session
+                if ($request->has('invoice_requested') && $request->boolean('invoice_requested')) {
+                    session([
+                        'booking.invoice_requested' => true,
+                        'booking.invoice_type' => $validated['invoice_type'] ?? 'individual',
+                        'booking.invoice_company_name' => $validated['invoice_company_name'] ?? null,
+                        'booking.invoice_nip' => $validated['invoice_nip'] ?? null,
+                        'booking.invoice_vat_id' => $validated['invoice_vat_id'] ?? null,
+                        'booking.invoice_regon' => $validated['invoice_regon'] ?? null,
+                        'booking.invoice_street' => $validated['invoice_street'] ?? null,
+                        'booking.invoice_street_number' => $validated['invoice_street_number'] ?? null,
+                        'booking.invoice_postal_code' => $validated['invoice_postal_code'] ?? null,
+                        'booking.invoice_city' => $validated['invoice_city'] ?? null,
+                        'booking.invoice_country' => $validated['invoice_country'] ?? 'PL',
+                        'booking.save_invoice_profile' => $request->boolean('save_invoice_profile'),
+                    ]);
+                }
 
                 return redirect()->route('booking.step', 5);
 
@@ -390,7 +473,8 @@ class BookingController extends Controller
 
     private function validateStep4(array $data)
     {
-        return validator($data, [
+        $rules = [
+            // Contact fields
             'first_name' => 'required|string|min:2|max:100',
             'last_name' => 'required|string|min:2|max:100',
             'email' => 'required|email|max:255',
@@ -399,7 +483,31 @@ class BookingController extends Controller
             'notify_sms' => 'nullable|boolean',
             'marketing_consent' => 'nullable|boolean',
             'terms_accepted' => 'required|accepted',
-        ])->validate();
+
+            // Home address fields (optional)
+            'street_name' => 'nullable|string|max:255',
+            'street_number' => 'nullable|string|max:20',
+            'city' => 'nullable|string|max:255',
+            'postal_code' => 'nullable|string|size:6|regex:/^\d{2}-\d{3}$/',
+
+            // Invoice fields (conditional)
+            'invoice_requested' => 'nullable|boolean',
+            'invoice_type' => 'required_if:invoice_requested,true|in:individual,company,foreign_eu,foreign_non_eu',
+            'invoice_company_name' => 'required_if:invoice_type,company,foreign_eu,foreign_non_eu|string|max:255',
+            'invoice_nip' => ['nullable', 'required_if:invoice_type,company', new ValidNIP],
+            'invoice_vat_id' => 'nullable|required_if:invoice_type,foreign_eu|string|max:20',
+            'invoice_regon' => 'nullable|string|max:14|regex:/^[0-9]+$/',
+            'invoice_street' => 'required_if:invoice_requested,true|string|max:255',
+            'invoice_street_number' => 'nullable|string|max:20',
+            'invoice_postal_code' => 'required_if:invoice_requested,true|string|size:6|regex:/^\d{2}-\d{3}$/',
+            'invoice_city' => 'required_if:invoice_requested,true|string|max:100',
+            'invoice_country' => 'required_if:invoice_requested,true|string|size:2',
+
+            // Save invoice profile (opt-in)
+            'save_invoice_profile' => 'nullable|boolean',
+        ];
+
+        return validator($data, $rules)->validate();
     }
 
     /**
@@ -526,9 +634,19 @@ class BookingController extends Controller
             $profileUpdates['phone_e164'] = $phoneE164;
         }
 
-        // Extract address fields from location_address (optional)
-        // The wizard uses Google Maps autocomplete which provides full address
-        // For now, we'll skip individual address field parsing since they're not in wizard form
+        // Update home address fields (only if empty in profile)
+        if (empty($user->street_name) && ! empty($booking['street_name'])) {
+            $profileUpdates['street_name'] = $booking['street_name'];
+        }
+        if (empty($user->street_number) && ! empty($booking['street_number'])) {
+            $profileUpdates['street_number'] = $booking['street_number'];
+        }
+        if (empty($user->city) && ! empty($booking['city'])) {
+            $profileUpdates['city'] = $booking['city'];
+        }
+        if (empty($user->postal_code) && ! empty($booking['postal_code'])) {
+            $profileUpdates['postal_code'] = $booking['postal_code'];
+        }
 
         if (! empty($profileUpdates)) {
             $user->update($profileUpdates);
@@ -559,7 +677,46 @@ class BookingController extends Controller
             'phone' => $booking['phone'],
             'notify_email' => $booking['notify_email'] ?? true,
             'notify_sms' => $booking['notify_sms'] ?? true,
+            // Invoice data (snapshot)
+            'invoice_requested' => $booking['invoice_requested'] ?? false,
+            'invoice_type' => $booking['invoice_type'] ?? null,
+            'invoice_company_name' => $booking['invoice_company_name'] ?? null,
+            'invoice_nip' => $booking['invoice_nip'] ?? null,
+            'invoice_vat_id' => $booking['invoice_vat_id'] ?? null,
+            'invoice_regon' => $booking['invoice_regon'] ?? null,
+            'invoice_street' => $booking['invoice_street'] ?? null,
+            'invoice_street_number' => $booking['invoice_street_number'] ?? null,
+            'invoice_postal_code' => $booking['invoice_postal_code'] ?? null,
+            'invoice_city' => $booking['invoice_city'] ?? null,
+            'invoice_country' => $booking['invoice_country'] ?? null,
         ]);
+
+        // Save invoice profile if user opted in
+        if (
+            auth()->check() &&
+            ($booking['invoice_requested'] ?? false) &&
+            ($booking['save_invoice_profile'] ?? false)
+        ) {
+            UserInvoiceProfile::updateOrCreate(
+                ['user_id' => auth()->id()],
+                [
+                    'type' => $booking['invoice_type'],
+                    'company_name' => $booking['invoice_company_name'] ?? null,
+                    'nip' => $booking['invoice_nip'] ?? null,
+                    'vat_id' => $booking['invoice_vat_id'] ?? null,
+                    'regon' => $booking['invoice_regon'] ?? null,
+                    'street' => $booking['invoice_street'],
+                    'street_number' => $booking['invoice_street_number'] ?? null,
+                    'postal_code' => $booking['invoice_postal_code'],
+                    'city' => $booking['invoice_city'],
+                    'country' => $booking['invoice_country'] ?? 'PL',
+                    'validated_at' => now(),
+                    'consent_given_at' => now(),
+                    'consent_ip' => request()->ip(),
+                    'consent_user_agent' => request()->userAgent(),
+                ]
+            );
+        }
 
         // Send confirmation email/SMS
         // TODO: Implement appointment confirmation email

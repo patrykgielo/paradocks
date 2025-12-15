@@ -355,7 +355,7 @@ INSERT INTO settings (`group`, `key`, value) VALUES
 docker compose exec app php artisan db:seed --class=SettingSeeder
 ```
 
-**Important:** Run this seeder **after every `migrate:fresh --seed`** because it's not included in DatabaseSeeder.
+**Important:** Run this seeder **after every `migrate:fresh`** because it's not included in DatabaseSeeder.
 
 ### Migration Includes Seeder Call
 
@@ -695,7 +695,7 @@ private function getDefaults(): array
 **Solution:**
 ```bash
 # Always run seeder after migrate:fresh
-docker compose exec app php artisan migrate:fresh --seed
+docker compose exec app php artisan migrate:fresh
 docker compose exec app php artisan db:seed --class=SettingSeeder
 ```
 

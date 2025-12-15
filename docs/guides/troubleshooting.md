@@ -179,7 +179,12 @@ sudo chown -R $USER:$USER app/
 **Solutions:**
 1. **Fresh migrations (⚠️ DELETES DATA):**
    ```bash
-   docker compose exec app php artisan migrate:fresh --seed
+   docker compose exec app php artisan migrate:fresh
+   # Then seed only required reference data
+   docker compose exec app php artisan db:seed --class=RolePermissionSeeder
+   docker compose exec app php artisan db:seed --class=EmailTemplateSeeder
+   docker compose exec app php artisan db:seed --class=VehicleTypeSeeder
+   docker compose exec app php artisan db:seed --class=ServiceSeeder
    ```
 
 2. **Check migration status:**

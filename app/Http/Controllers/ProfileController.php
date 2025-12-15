@@ -231,4 +231,122 @@ class ProfileController extends Controller
         return redirect()->route('profile.security')
             ->with('success', __('Żądanie usunięcia konta zostało anulowane.'));
     }
+
+    /**
+     * Display invoice profile page.
+     */
+    public function invoice(Request $request): View
+    {
+        $user = $request->user();
+        $invoiceProfile = $user->invoiceProfile;
+
+        return view('profile.pages.invoice', [
+            'user' => $user,
+            'invoiceProfile' => $invoiceProfile,
+        ]);
+    }
+
+    /**
+     * Store new invoice profile.
+     */
+    public function storeInvoice(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'type' => 'required|in:individual,company,foreign_eu,foreign_non_eu',
+            'company_name' => 'required_if:type,company,foreign_eu,foreign_non_eu|nullable|string|max:255',
+            'nip' => ['nullable', 'required_if:type,company', new \App\Rules\ValidNIP],
+            'vat_id' => 'nullable|required_if:type,foreign_eu|string|max:20',
+            'regon' => 'nullable|string|max:14|regex:/^[0-9]+$/',
+            'street' => 'required|string|max:255',
+            'street_number' => 'nullable|string|max:20',
+            'postal_code' => 'required|string|size:6|regex:/^\d{2}-\d{3}$/',
+            'city' => 'required|string|max:100',
+            'country' => 'required|string|size:2',
+        ]);
+
+        $user = $request->user();
+
+        $user->invoiceProfile()->create([
+            'type' => $validated['type'],
+            'company_name' => $validated['company_name'] ?? null,
+            'nip' => $validated['nip'] ?? null,
+            'vat_id' => $validated['vat_id'] ?? null,
+            'regon' => $validated['regon'] ?? null,
+            'street' => $validated['street'],
+            'street_number' => $validated['street_number'] ?? null,
+            'postal_code' => $validated['postal_code'],
+            'city' => $validated['city'],
+            'country' => $validated['country'],
+            'validated_at' => now(),
+            'consent_given_at' => now(),
+            'consent_ip' => $request->ip(),
+            'consent_user_agent' => $request->userAgent(),
+        ]);
+
+        return redirect()->route('profile.invoice')
+            ->with('success', __('Dane do faktury zostały zapisane.'));
+    }
+
+    /**
+     * Update existing invoice profile.
+     */
+    public function updateInvoice(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'type' => 'required|in:individual,company,foreign_eu,foreign_non_eu',
+            'company_name' => 'required_if:type,company,foreign_eu,foreign_non_eu|nullable|string|max:255',
+            'nip' => ['nullable', 'required_if:type,company', new \App\Rules\ValidNIP],
+            'vat_id' => 'nullable|required_if:type,foreign_eu|string|max:20',
+            'regon' => 'nullable|string|max:14|regex:/^[0-9]+$/',
+            'street' => 'required|string|max:255',
+            'street_number' => 'nullable|string|max:20',
+            'postal_code' => 'required|string|size:6|regex:/^\d{2}-\d{3}$/',
+            'city' => 'required|string|max:100',
+            'country' => 'required|string|size:2',
+        ]);
+
+        $user = $request->user();
+        $invoiceProfile = $user->invoiceProfile;
+
+        if (! $invoiceProfile) {
+            return redirect()->route('profile.invoice')
+                ->with('error', __('Nie znaleziono profilu faktury.'));
+        }
+
+        $invoiceProfile->update([
+            'type' => $validated['type'],
+            'company_name' => $validated['company_name'] ?? null,
+            'nip' => $validated['nip'] ?? null,
+            'vat_id' => $validated['vat_id'] ?? null,
+            'regon' => $validated['regon'] ?? null,
+            'street' => $validated['street'],
+            'street_number' => $validated['street_number'] ?? null,
+            'postal_code' => $validated['postal_code'],
+            'city' => $validated['city'],
+            'country' => $validated['country'],
+            'validated_at' => now(),
+        ]);
+
+        return redirect()->route('profile.invoice')
+            ->with('success', __('Dane do faktury zostały zaktualizowane.'));
+    }
+
+    /**
+     * Delete invoice profile.
+     */
+    public function destroyInvoice(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        $invoiceProfile = $user->invoiceProfile;
+
+        if ($invoiceProfile) {
+            $invoiceProfile->delete();
+
+            return redirect()->route('profile.invoice')
+                ->with('success', __('Profil faktury został usunięty.'));
+        }
+
+        return redirect()->route('profile.invoice')
+            ->with('error', __('Nie znaleziono profilu faktury.'));
+    }
 }

@@ -6,6 +6,7 @@ use App\Events\AppointmentCancelled;
 use App\Events\AppointmentConfirmed;
 use App\Events\AppointmentCreated;
 use App\Events\AppointmentRescheduled;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -87,6 +88,18 @@ class Appointment extends Model
         'phone',
         'notify_email',
         'notify_sms',
+        // Invoice data (snapshot)
+        'invoice_requested',
+        'invoice_type',
+        'invoice_company_name',
+        'invoice_nip',
+        'invoice_vat_id',
+        'invoice_regon',
+        'invoice_street',
+        'invoice_street_number',
+        'invoice_postal_code',
+        'invoice_city',
+        'invoice_country',
     ];
 
     protected $casts = [
@@ -100,6 +113,7 @@ class Appointment extends Model
         'sent_24h_reminder_sms' => 'boolean',
         'sent_2h_reminder_sms' => 'boolean',
         'sent_followup_sms' => 'boolean',
+        'invoice_requested' => 'boolean',
     ];
 
     // Relationships
@@ -349,5 +363,52 @@ class Appointment extends Model
         }
 
         return null;
+    }
+
+    /**
+     * Get formatted invoice address.
+     */
+    public function getFormattedInvoiceAddressAttribute(): ?string
+    {
+        if (! $this->invoice_requested) {
+            return null;
+        }
+
+        $parts = [
+            trim($this->invoice_street.' '.($this->invoice_street_number ?? '')),
+            $this->invoice_postal_code.' '.$this->invoice_city,
+            $this->invoice_country === 'PL' ? 'Polska' : $this->invoice_country,
+        ];
+
+        return implode(', ', array_filter($parts));
+    }
+
+    /**
+     * Accessor/Mutator: Format NIP with dashes for display, strip for storage
+     *
+     * Display: XXX-XXX-XX-XX (e.g., 822-237-03-39)
+     * Storage: XXXXXXXXXX (e.g., 8222370339) - 10 digits only
+     */
+    protected function invoiceNip(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => $value ? $this->formatNIP($value) : null,
+            set: fn ($value) => $value ? preg_replace('/[^0-9]/', '', $value) : null
+        );
+    }
+
+    /**
+     * Helper: Format NIP for display
+     */
+    private function formatNIP(string $nip): string
+    {
+        if (strlen($nip) !== 10) {
+            return $nip;
+        }
+
+        return substr($nip, 0, 3).'-'.
+               substr($nip, 3, 3).'-'.
+               substr($nip, 6, 2).'-'.
+               substr($nip, 8, 2);
     }
 }

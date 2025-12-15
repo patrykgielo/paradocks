@@ -212,7 +212,7 @@ DB::table('email_templates')->insertOrIgnore($templates);
 **Q: When should I use seeders?**
 A: Only for local development and testing. Never in production.
 
-**Q: Can I run migrate:fresh --seed in production?**
+**Q: Can I run migrate:fresh in production?**
 A: **ABSOLUTELY NOT.** This will destroy all production data.
 
 **Q: How do I update existing templates in production?**
@@ -325,7 +325,7 @@ return new class extends Migration
 
 ```bash
 # 1. Fresh database with all data
-docker compose exec app php artisan migrate:fresh --seed
+docker compose exec app php artisan migrate:fresh
 
 # What happens:
 # - Schema migrations create tables

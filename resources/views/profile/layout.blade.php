@@ -13,6 +13,7 @@
                         ['route' => 'profile.vehicle', 'icon' => 'car', 'label' => 'Pojazd'],
                         ['route' => 'profile.address', 'icon' => 'map-pin', 'label' => 'Adres'],
                         ['route' => 'profile.notifications', 'icon' => 'bell', 'label' => 'Powiadomienia'],
+                        ['route' => 'profile.invoice', 'icon' => 'document', 'label' => 'Dane do faktury'],
                         ['route' => 'profile.security', 'icon' => 'shield', 'label' => 'Bezpieczeństwo'],
                     ] as $item)
                         <li>
@@ -55,6 +56,7 @@
                         ['route' => 'profile.vehicle', 'icon' => 'car', 'label' => 'Mój pojazd'],
                         ['route' => 'profile.address', 'icon' => 'map-pin', 'label' => 'Mój adres'],
                         ['route' => 'profile.notifications', 'icon' => 'bell', 'label' => 'Powiadomienia'],
+                        ['route' => 'profile.invoice', 'icon' => 'document', 'label' => 'Dane do faktury'],
                         ['route' => 'profile.security', 'icon' => 'shield', 'label' => 'Bezpieczeństwo'],
                     ] as $item)
                         <li>

@@ -122,6 +122,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/pojazd', [ProfileController::class, 'vehicle'])->name('vehicle');
         Route::get('/adres', [ProfileController::class, 'address'])->name('address');
         Route::get('/powiadomienia', [ProfileController::class, 'notifications'])->name('notifications');
+        Route::get('/dane-do-faktury', [ProfileController::class, 'invoice'])->name('invoice');
         Route::get('/bezpieczenstwo', [ProfileController::class, 'security'])->name('security');
 
         // Personal Info update
@@ -146,6 +147,11 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/adres/zapisz', [UserAddressController::class, 'store'])->name('address.store');
         Route::patch('/adres/{address}', [UserAddressController::class, 'update'])->name('address.update');
         Route::delete('/adres/{address}', [UserAddressController::class, 'destroy'])->name('address.destroy');
+
+        // Invoice Profile (single)
+        Route::post('/dane-do-faktury/zapisz', [ProfileController::class, 'storeInvoice'])->name('invoice.store');
+        Route::patch('/dane-do-faktury', [ProfileController::class, 'updateInvoice'])->name('invoice.update');
+        Route::delete('/dane-do-faktury', [ProfileController::class, 'destroyInvoice'])->name('invoice.destroy');
 
         // Account Deletion
         Route::post('/usun-konto', [ProfileController::class, 'requestDeletion'])->name('delete.request');

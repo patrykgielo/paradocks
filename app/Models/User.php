@@ -358,6 +358,14 @@ class User extends Authenticatable implements FilamentUser, HasName
     }
 
     /**
+     * Get the invoice profile for this user.
+     */
+    public function invoiceProfile(): HasOne
+    {
+        return $this->hasOne(UserInvoiceProfile::class);
+    }
+
+    /**
      * Check if user can add more vehicles.
      */
     public function canAddVehicle(): bool

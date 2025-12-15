@@ -230,6 +230,75 @@ class AppointmentResource extends Resource
                     ->columns(2)
                     ->collapsible()
                     ->collapsed(),
+
+                Section::make('Dane do faktury')
+                    ->schema([
+                        Forms\Components\Toggle::make('invoice_requested')
+                            ->label('Faktura VAT')
+                            ->live(),
+
+                        Forms\Components\Select::make('invoice_type')
+                            ->label('Typ faktury')
+                            ->options([
+                                'individual' => 'Na osobę prywatną',
+                                'company' => 'Faktura firmowa (NIP)',
+                                'foreign_eu' => 'Firma UE (VAT ID)',
+                                'foreign_non_eu' => 'Firma spoza UE',
+                            ])
+                            ->visible(fn (callable $get) => $get('invoice_requested')),
+
+                        Forms\Components\TextInput::make('invoice_company_name')
+                            ->label('Nazwa firmy')
+                            ->maxLength(255)
+                            ->visible(fn (callable $get) => in_array($get('invoice_type'), ['company', 'foreign_eu', 'foreign_non_eu'])),
+
+                        Forms\Components\TextInput::make('invoice_nip')
+                            ->label('NIP')
+                            ->mask('999-999-99-99')
+                            ->visible(fn (callable $get) => $get('invoice_type') === 'company'),
+
+                        Forms\Components\TextInput::make('invoice_vat_id')
+                            ->label('VAT ID (UE)')
+                            ->visible(fn (callable $get) => $get('invoice_type') === 'foreign_eu'),
+
+                        Forms\Components\TextInput::make('invoice_regon')
+                            ->label('REGON')
+                            ->visible(fn (callable $get) => $get('invoice_type') === 'company'),
+
+                        Forms\Components\TextInput::make('invoice_street')
+                            ->label('Ulica')
+                            ->visible(fn (callable $get) => $get('invoice_requested')),
+
+                        Forms\Components\TextInput::make('invoice_street_number')
+                            ->label('Numer')
+                            ->visible(fn (callable $get) => $get('invoice_requested')),
+
+                        Forms\Components\TextInput::make('invoice_postal_code')
+                            ->label('Kod pocztowy')
+                            ->mask('99-999')
+                            ->visible(fn (callable $get) => $get('invoice_requested')),
+
+                        Forms\Components\TextInput::make('invoice_city')
+                            ->label('Miasto')
+                            ->visible(fn (callable $get) => $get('invoice_requested')),
+
+                        Forms\Components\Select::make('invoice_country')
+                            ->label('Kraj')
+                            ->options([
+                                'PL' => 'Polska',
+                                'DE' => 'Niemcy',
+                                'CZ' => 'Czechy',
+                                'SK' => 'Słowacja',
+                                'UA' => 'Ukraina',
+                                'GB' => 'Wielka Brytania',
+                                'US' => 'USA',
+                            ])
+                            ->visible(fn (callable $get) => $get('invoice_requested')),
+                    ])
+                    ->columns(2)
+                    ->collapsible()
+                    ->collapsed()
+                    ->visible(fn ($record) => $record && $record->invoice_requested),
             ])
             ->columns(2);
     }
@@ -292,6 +361,14 @@ class AppointmentResource extends Resource
                         'completed' => 'Zakończona',
                         default => $state,
                     }),
+                Tables\Columns\IconColumn::make('invoice_requested')
+                    ->label('Faktura')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-document-text')
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->trueColor('success')
+                    ->falseColor('gray')
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Utworzono')
                     ->dateTime('d.m.Y H:i')
@@ -340,6 +417,7 @@ class AppointmentResource extends Resource
         return [
             'index' => Pages\ListAppointments::route('/'),
             'create' => Pages\CreateAppointment::route('/create'),
+            'view' => Pages\ViewAppointment::route('/{record}'),
             'edit' => Pages\EditAppointment::route('/{record}/edit'),
         ];
     }

@@ -52,25 +52,31 @@ sudo ./add-hosts-entry.sh
 echo "127.0.0.1 paradocks.local" | sudo tee -a /etc/hosts
 ```
 
-## Step 4: Run Migrations & Seeders
+## Step 4: Run Migrations & Seed Reference Data
 
-✅ **AUTOMATIC SETUP (v0.3.1+):** Migrations handle both schema AND reference data automatically:
+⚠️ **IMPORTANT:** Do NOT use `--seed` flag unless you want hundreds of fake test users!
 
 ```bash
-# One command for everything (schema + data)
-docker compose exec app php artisan migrate:fresh --seed
+# Run migrations (creates database schema)
+docker compose exec app php artisan migrate:fresh
 
-# What happens:
-# 1. Schema migrations create tables (users, appointments, email_templates, etc.)
-# 2. Data migrations seed reference data (email templates, SMS templates)
-# 3. DatabaseSeeder adds development data (settings, roles, vehicle types, services)
+# Seed ONLY required reference data (no fake users!)
+docker compose exec app php artisan db:seed --class=RolePermissionSeeder
+docker compose exec app php artisan db:seed --class=EmailTemplateSeeder
+docker compose exec app php artisan db:seed --class=VehicleTypeSeeder
+docker compose exec app php artisan db:seed --class=ServiceSeeder
 ```
 
+**What happens:**
+1. `migrate:fresh` creates tables (users, appointments, email_templates, etc.)
+2. Reference seeders add ONLY essential data (roles, email templates, vehicle types, services)
+3. NO fake users, NO fake appointments, NO test data clutter
+
 **Development vs Production:**
-- **Development:** `migrate:fresh --seed` (wipes DB, creates schema, seeds ALL data)
+- **Development:** `migrate:fresh` + selective seeders (clean database)
 - **Production:** `migrate --force` (runs new migrations only, preserves existing data)
 
-**Note:** Email/SMS templates are now seeded via **data migrations** (not seeders), ensuring proper versioning in production.
+**Note:** Email/SMS templates are seeded via dedicated seeders for proper version control.
 
 ## Step 5: Create Admin User
 
@@ -237,14 +243,13 @@ docker compose down
 ### Reset Database
 
 ```bash
-docker compose exec app php artisan migrate:fresh --seed
+docker compose exec app php artisan migrate:fresh
 
-# IMPORTANT: Run required seeders (see Step 4)
-docker compose exec app php artisan db:seed --class=VehicleTypeSeeder
+# Seed only required reference data (see Step 4)
 docker compose exec app php artisan db:seed --class=RolePermissionSeeder
-docker compose exec app php artisan db:seed --class=ServiceAvailabilitySeeder
 docker compose exec app php artisan db:seed --class=EmailTemplateSeeder
-docker compose exec app php artisan db:seed --class=SettingSeeder
+docker compose exec app php artisan db:seed --class=VehicleTypeSeeder
+docker compose exec app php artisan db:seed --class=ServiceSeeder
 
 # Recreate admin user
 docker compose exec app php artisan make:filament-user

@@ -61,12 +61,28 @@ cd app && npm run build
 # Run migrations
 docker compose exec app php artisan migrate
 
-# Fresh migrations with seeding (development only)
-docker compose exec app php artisan migrate:fresh --seed
+# Fresh migrations WITHOUT seeding (preferred)
+docker compose exec app php artisan migrate:fresh
+
+# Seed ONLY required reference data
+docker compose exec app php artisan db:seed --class=RolePermissionSeeder
+docker compose exec app php artisan db:seed --class=EmailTemplateSeeder
+docker compose exec app php artisan db:seed --class=VehicleTypeSeeder
+docker compose exec app php artisan db:seed --class=ServiceSeeder
 
 # Production deployments (v0.3.1+)
 docker compose exec app php artisan migrate --force
 ```
+
+**⚠️ CRITICAL - Database Seeding Policy:**
+
+**NEVER run `migrate:fresh --seed` or any seeder unless explicitly requested by the user!**
+
+- `--seed` flag creates hundreds of fake users, appointments, and test data
+- This clutters the database and makes debugging extremely difficult
+- Only seed when user explicitly asks: "please seed the database" or "add test data"
+- For development work, use ONLY: `migrate:fresh` (no --seed flag)
+- If reference data needed, ask user which specific seeders to run
 
 **See:** [Commands Reference](app/docs/guides/commands.md)
 

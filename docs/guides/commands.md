@@ -45,17 +45,19 @@ docker compose exec app php artisan migrate
 # Rollback last migration
 docker compose exec app php artisan migrate:rollback
 
-# Fresh migrations with seeding
-docker compose exec app php artisan migrate:fresh --seed
+# Fresh migrations WITHOUT fake test data (RECOMMENDED)
+docker compose exec app php artisan migrate:fresh
 
-# ⚠️ IMPORTANT: After migrate:fresh, ALWAYS run these seeders:
-docker compose exec app php artisan db:seed --class=VehicleTypeSeeder
+# ⚠️ CRITICAL: NEVER use --seed flag unless explicitly needed!
+# The --seed flag creates hundreds of fake users/appointments and clutters the database
+
+# After migrate:fresh, seed ONLY required reference data:
 docker compose exec app php artisan db:seed --class=RolePermissionSeeder
-docker compose exec app php artisan db:seed --class=ServiceAvailabilitySeeder
 docker compose exec app php artisan db:seed --class=EmailTemplateSeeder
-docker compose exec app php artisan db:seed --class=SettingSeeder
+docker compose exec app php artisan db:seed --class=VehicleTypeSeeder
+docker compose exec app php artisan db:seed --class=ServiceSeeder
 
-# Then recreate admin user
+# Then create admin user
 docker compose exec app php artisan make:filament-user
 ```
 

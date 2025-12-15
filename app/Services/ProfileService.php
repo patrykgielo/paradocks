@@ -14,7 +14,7 @@ class ProfileService
     ) {}
 
     /**
-     * Update user's personal information (name, phone).
+     * Update user's personal information (name, phone, address).
      */
     public function updatePersonalInfo(User $user, array $data): User
     {
@@ -22,6 +22,10 @@ class ProfileService
             'first_name' => $data['first_name'] ?? $user->first_name,
             'last_name' => $data['last_name'] ?? $user->last_name,
             'phone_e164' => $data['phone_e164'] ?? $user->phone_e164,
+            'street_name' => $data['street_name'] ?? $user->street_name,
+            'street_number' => $data['street_number'] ?? $user->street_number,
+            'city' => $data['city'] ?? $user->city,
+            'postal_code' => $data['postal_code'] ?? $user->postal_code,
         ]);
 
         return $user->fresh();
