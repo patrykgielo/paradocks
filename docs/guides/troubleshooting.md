@@ -448,6 +448,53 @@ build:
 
 ## Filament Form Issues
 
+### Class "Filament\Schemas\Components\TextEntry" not found
+
+**Symptoms:**
+- ViewRecord page (e.g., `/admin/appointments/2`) crashes with: `Class "Filament\Schemas\Components\TextEntry" not found`
+- Error occurs when viewing detail pages in Filament admin
+- Stack trace points to infolist() method in ViewRecord page
+
+**Root Cause:**
+
+In Filament v4.2.3, there's a namespace distinction:
+- **Form components** (EditRecord, CreateRecord): `Filament\Forms\Components\*`
+- **Infolist components** (ViewRecord): `Filament\Infolists\Components\*`
+- **Schema class** (method signature): `Filament\Schemas\Schema`
+
+**Solution:**
+
+When creating ViewRecord pages with infolist(), use:
+
+```php
+// ✅ CORRECT ViewRecord page structure
+use Filament\Infolists\Components\Grid;
+use Filament\Infolists\Components\IconEntry;
+use Filament\Infolists\Components\Section;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Resources\Pages\ViewRecord;
+use Filament\Schemas\Schema;
+
+class ViewAppointment extends ViewRecord
+{
+    public function infolist(Schema $schema): Schema
+    {
+        return $schema->components([
+            Section::make('Details')
+                ->schema([
+                    TextEntry::make('name'),
+                    IconEntry::make('is_active')->boolean(),
+                ]),
+        ]);
+    }
+}
+```
+
+**Do NOT use:**
+- `Filament\Schemas\Components\TextEntry` - Does not exist
+- `Filament\Forms\Components\TextEntry` - Wrong namespace (for forms only)
+- `Filament\Infolists\Infolist` as method signature - Use `Schema` instead
+
 ### FileUpload Type Errors
 
 **Symptoms:**
