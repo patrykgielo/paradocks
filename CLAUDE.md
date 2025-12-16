@@ -40,6 +40,38 @@ https://paradocks.local:8444/admin
 
 **See:** [Quick Start Guide](app/docs/guides/quick-start.md)
 
+## ⚠️ CRITICAL WORKFLOW RULES
+
+### When Uncertain About Technical Knowledge
+
+**ZAWSZE GDY MASZ PROBLEMY Z WIEDZĄ NIE ZGADUJESZ TYLKO ZAWSZE UŻYWASZ @agent-web-research-specialist + Firecrawl!!**
+
+**NEVER guess at:**
+- Framework API changes (Filament v3 → v4, Laravel upgrades)
+- Package namespaces and class names
+- Third-party library usage patterns
+- Best practices for new features
+- Deprecated vs current methods
+
+**ALWAYS:**
+1. Invoke `@agent-web-research-specialist` with Firecrawl
+2. Scrape official documentation
+3. Apply researched solution
+4. Verify with testing
+5. Document findings if pattern will be reused
+
+**Example Scenario:**
+```
+❌ WRONG: See error "Class not found", guess at namespace, try different imports
+✅ RIGHT: See error "Class not found", invoke web-research-specialist to research correct namespace in official docs
+```
+
+**Why This Matters:**
+- Guessing wastes time with trial-and-error
+- Can introduce bugs or use deprecated patterns
+- Official documentation is authoritative source
+- Firecrawl provides accurate, current information
+
 ## Essential Commands
 
 ### Development
