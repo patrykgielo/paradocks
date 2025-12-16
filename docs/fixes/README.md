@@ -12,6 +12,31 @@ These documents serve as:
 
 ## Active Fixes
 
+### Filament v4 Infolist Component Namespaces Fix
+**File:** [filament-v4-infolist-namespaces.md](filament-v4-infolist-namespaces.md)
+**Date:** December 16, 2025
+**Severity:** Critical - Application Crash
+**Component:** ViewAppointment, EmailSendResource
+
+**Issue:** `Class "Filament\Infolists\Components\Section" not found` error when accessing appointment view pages.
+
+**Root Cause:** Filament v4.2.3 moved layout components (Section, Grid, Fieldset, Tabs) from `Filament\Infolists\Components\*` to `Filament\Schemas\Components\*`. Data entry components (TextEntry, IconEntry) remain in Infolists namespace.
+
+**Solution:** Updated imports to use correct namespaces:
+- **Layout components:** `use Filament\Schemas\Components\Section;`
+- **Data components:** `use Filament\Infolists\Components\TextEntry;`
+
+**Key Learning:** In Filament v4+, layout and data entry components live in different namespaces. Always use Schemas namespace for Section, Grid, Fieldset, Tabs, Wizard, Group.
+
+**Impact:** Complete failure of all view pages using infolists. Blocked invoice system development.
+
+**Related:**
+- [Filament v4 Upgrade Guide](https://filamentphp.com/docs/4.x/upgrade-guide)
+- [Schemas Package](https://filamentphp.com/docs/4.x/schemas/getting-started)
+- [Infolists Package](https://filamentphp.com/docs/4.x/infolists/getting-started)
+
+---
+
 ### Google Maps Picker Livewire Re-render Fix
 **File:** [google-maps-picker-livewire-fix.md](google-maps-picker-livewire-fix.md)
 **Date:** December 14, 2025
@@ -51,11 +76,15 @@ These documents serve as:
 ## Fix Categories
 
 ### Framework Integration Issues
+- [Filament v4 Namespaces Fix](filament-v4-infolist-namespaces.md) - Filament v4 breaking namespace changes
 - [Google Maps Picker Livewire Fix](google-maps-picker-livewire-fix.md) - Livewire + Alpine.js state conflicts
 - [Alpine.js Button Click Fix](ALPINE-BUTTON-CLICK-FIX.md) - Alpine.js + Filament integration
 
 ### State Management
 - [Google Maps Picker Livewire Fix](google-maps-picker-livewire-fix.md) - Component state re-initialization
+
+### Namespace & Architecture
+- [Filament v4 Namespaces Fix](filament-v4-infolist-namespaces.md) - Layout vs data component namespaces
 
 ## Common Patterns
 
@@ -226,6 +255,11 @@ When documenting a new bug fix, include:
 - [Alpine.js Components](../guides/alpine-js.md) - Alpine.js patterns (if exists)
 
 ## Changelog
+
+**2025-12-16**
+- Documented Filament v4 infolist namespace breaking changes
+- Added namespace verification commands
+- Created Filament v4 component namespace reference table
 
 **2025-12-14**
 - Created fixes directory README

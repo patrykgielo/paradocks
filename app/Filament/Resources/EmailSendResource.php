@@ -10,9 +10,12 @@ use App\Services\Email\EmailService;
 use BackedEnum;
 use Filament\Actions;
 use Filament\Forms;
-use Filament\Infolists;
+use Filament\Infolists\Components\RepeatableEntry;
+use Filament\Infolists\Components\TextEntry as InfolistTextEntry;
+use Filament\Infolists\Components\ViewEntry;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -247,19 +250,19 @@ class EmailSendResource extends Resource
     {
         return $schema
             ->components([
-                Infolists\Components\Section::make('Email Details')
+                Section::make('Email Details')
                     ->schema([
-                        Infolists\Components\TextEntry::make('recipient_email')
+                        InfolistTextEntry::make('recipient_email')
                             ->label('Recipient')
                             ->icon('heroicon-o-envelope')
                             ->copyable(),
 
-                        Infolists\Components\TextEntry::make('template_key')
+                        InfolistTextEntry::make('template_key')
                             ->label('Template Key')
                             ->badge()
                             ->color('info'),
 
-                        Infolists\Components\TextEntry::make('language')
+                        InfolistTextEntry::make('language')
                             ->label('Language')
                             ->badge()
                             ->color(fn (string $state): string => match ($state) {
@@ -268,7 +271,7 @@ class EmailSendResource extends Resource
                                 default => 'gray',
                             }),
 
-                        Infolists\Components\TextEntry::make('status')
+                        InfolistTextEntry::make('status')
                             ->label('Status')
                             ->badge()
                             ->color(fn (string $state): string => match ($state) {
@@ -279,44 +282,44 @@ class EmailSendResource extends Resource
                                 default => 'gray',
                             }),
 
-                        Infolists\Components\TextEntry::make('sent_at')
+                        InfolistTextEntry::make('sent_at')
                             ->label('Sent At')
                             ->dateTime('Y-m-d H:i:s'),
 
-                        Infolists\Components\TextEntry::make('created_at')
+                        InfolistTextEntry::make('created_at')
                             ->label('Created At')
                             ->dateTime('Y-m-d H:i:s'),
                     ])
                     ->columns(2),
 
-                Infolists\Components\Section::make('Email Content')
+                Section::make('Email Content')
                     ->schema([
-                        Infolists\Components\TextEntry::make('subject')
+                        InfolistTextEntry::make('subject')
                             ->label('Subject Line')
                             ->columnSpanFull(),
 
-                        Infolists\Components\ViewEntry::make('body_html')
+                        ViewEntry::make('body_html')
                             ->label('HTML Body')
                             ->view('filament.resources.email-send.html-preview')
                             ->columnSpanFull(),
 
-                        Infolists\Components\TextEntry::make('body_text')
+                        InfolistTextEntry::make('body_text')
                             ->label('Plain Text Body')
                             ->placeholder('No plain text version')
                             ->columnSpanFull()
                             ->visible(fn (EmailSend $record): bool => ! empty($record->body_text)),
                     ]),
 
-                Infolists\Components\Section::make('Metadata')
+                Section::make('Metadata')
                     ->schema([
-                        Infolists\Components\TextEntry::make('metadata')
+                        InfolistTextEntry::make('metadata')
                             ->label('Additional Data')
                             ->placeholder('No metadata')
                             ->formatStateUsing(fn ($state): string => json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))
                             ->markdown()
                             ->columnSpanFull(),
 
-                        Infolists\Components\TextEntry::make('error_message')
+                        InfolistTextEntry::make('error_message')
                             ->label('Error Message')
                             ->placeholder('No errors')
                             ->color('danger')
@@ -325,12 +328,12 @@ class EmailSendResource extends Resource
                     ])
                     ->collapsed(),
 
-                Infolists\Components\Section::make('Related Events')
+                Section::make('Related Events')
                     ->schema([
-                        Infolists\Components\RepeatableEntry::make('emailEvents')
+                        RepeatableEntry::make('emailEvents')
                             ->label('')
                             ->schema([
-                                Infolists\Components\TextEntry::make('event_type')
+                                InfolistTextEntry::make('event_type')
                                     ->label('Event')
                                     ->badge()
                                     ->color(fn (string $state): string => match ($state) {
@@ -352,7 +355,7 @@ class EmailSendResource extends Resource
                                         default => 'heroicon-o-information-circle',
                                     }),
 
-                                Infolists\Components\TextEntry::make('occurred_at')
+                                InfolistTextEntry::make('occurred_at')
                                     ->label('Occurred At')
                                     ->dateTime('Y-m-d H:i:s'),
                             ])
