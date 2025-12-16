@@ -457,21 +457,26 @@ build:
 
 **Root Cause:**
 
-In Filament v4.2.3, there's a namespace distinction:
-- **Form components** (EditRecord, CreateRecord): `Filament\Forms\Components\*`
-- **Infolist components** (ViewRecord): `Filament\Infolists\Components\*`
-- **Schema class** (method signature): `Filament\Schemas\Schema`
+Filament v4.2.3 has a **breaking namespace change** for infolist components:
+
+| Component Type | Namespace |
+|----------------|-----------|
+| **Layout** (Section, Grid, Fieldset, Tabs, Wizard) | `Filament\Schemas\Components\*` |
+| **Data Entry** (TextEntry, IconEntry, ImageEntry) | `Filament\Infolists\Components\*` |
+| **Method Signature** (infolist parameter) | `Filament\Schemas\Schema` |
+
+This was a v3→v4 migration change documented in `vendor/filament/upgrade/src/rector.php:169`.
 
 **Solution:**
 
-When creating ViewRecord pages with infolist(), use:
+When creating ViewRecord pages with infolist(), use CORRECT namespace for each component type:
 
 ```php
 // ✅ CORRECT ViewRecord page structure
-use Filament\Infolists\Components\Grid;
-use Filament\Infolists\Components\IconEntry;
-use Filament\Infolists\Components\Section;
-use Filament\Infolists\Components\TextEntry;
+use Filament\Schemas\Components\Grid;      // Layout component
+use Filament\Schemas\Components\Section;   // Layout component
+use Filament\Infolists\Components\IconEntry;  // Data component
+use Filament\Infolists\Components\TextEntry;  // Data component
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Schema;
 
@@ -491,9 +496,18 @@ class ViewAppointment extends ViewRecord
 ```
 
 **Do NOT use:**
-- `Filament\Schemas\Components\TextEntry` - Does not exist
-- `Filament\Forms\Components\TextEntry` - Wrong namespace (for forms only)
-- `Filament\Infolists\Infolist` as method signature - Use `Schema` instead
+- ❌ `Filament\Infolists\Components\Section` - Section is layout, use Schemas
+- ❌ `Filament\Infolists\Components\Grid` - Grid is layout, use Schemas
+- ❌ `Filament\Schemas\Components\TextEntry` - TextEntry is data, use Infolists
+
+**Complete Guide:**
+
+See [Filament v4 Best Practices](filament-v4-best-practices.md) for:
+- Complete namespace reference table
+- Common mistakes to avoid
+- Verification commands
+- Working examples for all component types
+- Quick reference card
 
 ### FileUpload Type Errors
 

@@ -8,6 +8,10 @@ Laravel 12 car detailing booking application with:
 - **Backend:** Laravel 12, PHP 8.2+, MySQL 8.0
 - **Frontend:** Vite 7+, Tailwind CSS 4.0
 - **Admin Panel:** Filament v4.2.3
+  - ⚠️ **CRITICAL - Filament v4 Namespace Breaking Change:**
+    - Layout components (Section, Grid, Tabs): `Filament\Schemas\Components\*`
+    - Data entry components (TextEntry, IconEntry): `Filament\Infolists\Components\*`
+    - **See:** [Filament v4 Best Practices](app/docs/guides/filament-v4-best-practices.md)
 - **Queue:** Redis with Laravel Horizon
 - **Containerization:** Docker Compose (9 services)
 
