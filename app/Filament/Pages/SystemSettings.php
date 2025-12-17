@@ -20,6 +20,7 @@ use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 use UnitEnum;
 
@@ -564,6 +565,11 @@ class SystemSettings extends Page implements HasForms
 
         $settingsManager = app(SettingsManager::class);
         $settingsManager->updateGroups($data);
+
+        // Clear group caches to ensure frontend sees updated values
+        foreach (array_keys($data) as $group) {
+            Cache::forget("settings:{$group}");
+        }
 
         Notification::make()
             ->title('Settings saved successfully')
