@@ -25,7 +25,7 @@ class EmailSendResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-paper-airplane';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Email';
+    protected static string|UnitEnum|null $navigationGroup = 'communication';
 
     protected static ?int $navigationSort = 2;
 
