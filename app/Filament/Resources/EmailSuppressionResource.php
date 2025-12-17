@@ -23,7 +23,7 @@ class EmailSuppressionResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-no-symbol';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Email';
+    protected static string|UnitEnum|null $navigationGroup = 'communication';
 
     protected static ?int $navigationSort = 4;
 

@@ -20,15 +20,15 @@ class StaffDateExceptionResource extends Resource
 {
     protected static ?string $model = StaffDateException::class;
 
-    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-calendar-days';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-clock';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Harmonogramy';
+    protected static string|UnitEnum|null $navigationGroup = 'staff';
 
     protected static ?string $modelLabel = 'Wyjątek';
 
     protected static ?string $pluralModelLabel = 'Wyjątki od harmonogramu';
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 3;
 
     // Hide from main navigation - accessible via StaffScheduleResource header actions
     // This reduces cognitive load by consolidating schedule management

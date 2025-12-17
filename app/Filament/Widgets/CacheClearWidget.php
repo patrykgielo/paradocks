@@ -48,12 +48,6 @@ class CacheClearWidget extends Widget
         try {
             Cache::flush();
 
-            // Log operation
-            activity()
-                ->causedBy(auth()->user())
-                ->withProperties(['cache_type' => 'application'])
-                ->log('Cleared application cache');
-
             Notification::make()
                 ->title('Application cache cleared')
                 ->body('All cached data has been removed successfully.')
@@ -78,12 +72,6 @@ class CacheClearWidget extends Widget
             Artisan::call('route:clear');
             Artisan::call('view:clear');
 
-            // Log operation
-            activity()
-                ->causedBy(auth()->user())
-                ->withProperties(['cache_type' => 'config'])
-                ->log('Cleared config cache');
-
             Notification::make()
                 ->title('Config cache cleared')
                 ->body('Configuration, routes, and views cache cleared successfully.')
@@ -99,22 +87,25 @@ class CacheClearWidget extends Widget
     }
 
     /**
-     * Clear Filament cache.
+     * Clear all caches at once.
      */
-    public function clearFilamentCache(): void
+    public function clearAllCaches(): void
     {
         try {
-            Artisan::call('filament:optimize-clear');
+            // Clear application cache
+            Cache::flush();
 
-            // Log operation
-            activity()
-                ->causedBy(auth()->user())
-                ->withProperties(['cache_type' => 'filament'])
-                ->log('Cleared Filament cache');
+            // Clear config, routes, views
+            Artisan::call('config:clear');
+            Artisan::call('route:clear');
+            Artisan::call('view:clear');
+
+            // Clear Filament cache
+            Artisan::call('filament:clear-cached-components');
 
             Notification::make()
-                ->title('Filament cache cleared')
-                ->body('Filament components and icons cache cleared successfully.')
+                ->title('All caches cleared')
+                ->body('Application, config, routes, views, and Filament caches cleared successfully.')
                 ->success()
                 ->send();
         } catch (\Exception $e) {

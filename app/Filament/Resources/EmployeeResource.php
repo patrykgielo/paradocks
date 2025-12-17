@@ -23,13 +23,13 @@ class EmployeeResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-user-circle';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Zarządzanie Użytkownikami';
+    protected static string|UnitEnum|null $navigationGroup = 'staff';
 
     protected static ?string $modelLabel = 'Pracownik';
 
     protected static ?string $pluralModelLabel = 'Pracownicy';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 1;
 
     public static function getEloquentQuery(): Builder
     {

@@ -22,13 +22,13 @@ class StaffVacationPeriodResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-sun';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Harmonogramy';
+    protected static string|UnitEnum|null $navigationGroup = 'staff';
 
     protected static ?string $modelLabel = 'Urlop';
 
     protected static ?string $pluralModelLabel = 'Urlopy';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 4;
 
     public static function form(Schema $schema): Schema
     {
