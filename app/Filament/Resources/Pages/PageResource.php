@@ -56,7 +56,19 @@ class PageResource extends Resource
                             ->required()
                             ->maxLength(255)
                             ->unique(ignoreRecord: true)
-                            ->helperText('Automatycznie generowany z tytułu'),
+                            ->helperText('Automatycznie generowany z tytułu. Użyj "/" dla strony głównej.')
+                            ->rules([
+                                fn ($record): \Closure => function (string $attribute, $value, \Closure $fail) use ($record) {
+                                    if ($value === '/') {
+                                        $settingsManager = app(\App\Support\Settings\SettingsManager::class);
+                                        $homepageId = $settingsManager->get('cms.homepage_page_id');
+
+                                        if (! $record || $homepageId != $record->id) {
+                                            $fail('slug="/" is reserved for homepage. Set this page as homepage in Settings → CMS first.');
+                                        }
+                                    }
+                                },
+                            ]),
 
                         Forms\Components\Select::make('layout')
                             ->label('Layout')
@@ -265,6 +277,306 @@ class PageResource extends Resource
                                             ->maxLength(255)
                                             ->helperText('np. CEO, Dyrektor'),
                                     ]),
+
+                                Forms\Components\Builder\Block::make('hero')
+                                    ->label('Hero Section')
+                                    ->icon('heroicon-o-photo')
+                                    ->schema([
+                                        Forms\Components\Select::make('background_type')
+                                            ->label('Typ tła')
+                                            ->options([
+                                                'gradient' => 'Gradient',
+                                                'solid' => 'Kolor',
+                                                'image' => 'Obraz',
+                                            ])
+                                            ->default('gradient')
+                                            ->required()
+                                            ->live(),
+
+                                        Forms\Components\FileUpload::make('background_image')
+                                            ->label('Obraz tła')
+                                            ->image()
+                                            ->directory('pages/hero')
+                                            ->maxSize(5120)
+                                            ->visible(fn ($get) => $get('background_type') === 'image'),
+
+                                        Forms\Components\ColorPicker::make('background_color')
+                                            ->label('Kolor tła')
+                                            ->visible(fn ($get) => $get('background_type') === 'solid'),
+
+                                        Forms\Components\TextInput::make('title')
+                                            ->label('Tytuł')
+                                            ->required()
+                                            ->maxLength(100),
+
+                                        Forms\Components\Textarea::make('subtitle')
+                                            ->label('Podtytuł')
+                                            ->maxLength(200)
+                                            ->rows(2),
+
+                                        Forms\Components\Repeater::make('cta_buttons')
+                                            ->label('Przyciski CTA')
+                                            ->schema([
+                                                Forms\Components\TextInput::make('text')
+                                                    ->label('Tekst')
+                                                    ->required()
+                                                    ->maxLength(50),
+
+                                                Forms\Components\TextInput::make('url')
+                                                    ->label('URL')
+                                                    ->required()
+                                                    ->url(),
+
+                                                Forms\Components\Select::make('style')
+                                                    ->label('Styl')
+                                                    ->options([
+                                                        'primary' => 'Primary',
+                                                        'secondary' => 'Secondary',
+                                                        'accent' => 'Accent',
+                                                    ])
+                                                    ->default('primary')
+                                                    ->required(),
+                                            ])
+                                            ->defaultItems(1)
+                                            ->maxItems(3)
+                                            ->collapsible(),
+
+                                        Forms\Components\Slider::make('overlay_opacity')
+                                            ->label('Przezroczystość nakładki')
+                                            ->default(50)
+                                            ->minValue(0)
+                                            ->maxValue(100)
+                                            ->step(10),
+                                    ]),
+
+                                Forms\Components\Builder\Block::make('content_grid')
+                                    ->label('Siatka treści')
+                                    ->icon('heroicon-o-squares-2x2')
+                                    ->schema([
+                                        Forms\Components\Select::make('content_type')
+                                            ->label('Typ treści')
+                                            ->options([
+                                                'services' => 'Usługi',
+                                                'posts' => 'Posty',
+                                                'promotions' => 'Promocje',
+                                                'portfolio' => 'Portfolio',
+                                            ])
+                                            ->required()
+                                            ->live(),
+
+                                        Forms\Components\Select::make('content_items')
+                                            ->label('Wybierz elementy')
+                                            ->options(function ($get) {
+                                                return match ($get('content_type')) {
+                                                    'services' => \App\Models\Service::where('is_active', true)->pluck('name', 'id'),
+                                                    'posts' => \App\Models\Post::whereNotNull('published_at')->pluck('title', 'id'),
+                                                    'promotions' => \App\Models\Promotion::where('is_active', true)->pluck('title', 'id'),
+                                                    'portfolio' => \App\Models\PortfolioItem::whereNotNull('published_at')->pluck('title', 'id'),
+                                                    default => [],
+                                                };
+                                            })
+                                            ->multiple()
+                                            ->searchable()
+                                            ->required(),
+
+                                        Forms\Components\Select::make('columns')
+                                            ->label('Kolumny')
+                                            ->options([
+                                                '2' => '2',
+                                                '3' => '3',
+                                                '4' => '4',
+                                            ])
+                                            ->default('3')
+                                            ->required(),
+
+                                        Forms\Components\TextInput::make('heading')
+                                            ->label('Nagłówek')
+                                            ->maxLength(100),
+
+                                        Forms\Components\Textarea::make('subheading')
+                                            ->label('Podtytuł')
+                                            ->maxLength(200)
+                                            ->rows(2),
+
+                                        Forms\Components\Select::make('background_color')
+                                            ->label('Tło')
+                                            ->options([
+                                                'white' => 'Białe',
+                                                'neutral-50' => 'Neutral 50',
+                                                'primary-50' => 'Primary 50',
+                                            ])
+                                            ->default('white'),
+                                    ]),
+
+                                Forms\Components\Builder\Block::make('feature_list')
+                                    ->label('Lista funkcji')
+                                    ->icon('heroicon-o-star')
+                                    ->schema([
+                                        Forms\Components\Repeater::make('features')
+                                            ->label('Funkcje')
+                                            ->schema([
+                                                Forms\Components\TextInput::make('icon')
+                                                    ->label('Ikona Heroicon')
+                                                    ->helperText('np. sparkles, shield-check, clock')
+                                                    ->required(),
+
+                                                Forms\Components\TextInput::make('title')
+                                                    ->label('Tytuł')
+                                                    ->required()
+                                                    ->maxLength(100),
+
+                                                Forms\Components\Textarea::make('description')
+                                                    ->label('Opis')
+                                                    ->required()
+                                                    ->maxLength(200)
+                                                    ->rows(2),
+                                            ])
+                                            ->defaultItems(3)
+                                            ->maxItems(8)
+                                            ->collapsible(),
+
+                                        Forms\Components\Select::make('layout')
+                                            ->label('Układ')
+                                            ->options([
+                                                'grid' => 'Siatka',
+                                                'split' => 'Podzielony (z obrazem)',
+                                            ])
+                                            ->default('grid')
+                                            ->required()
+                                            ->live(),
+
+                                        Forms\Components\Select::make('columns')
+                                            ->label('Kolumny (tylko siatka)')
+                                            ->options([
+                                                '2' => '2',
+                                                '3' => '3',
+                                                '4' => '4',
+                                            ])
+                                            ->default('3')
+                                            ->visible(fn ($get) => $get('layout') === 'grid'),
+
+                                        Forms\Components\FileUpload::make('image')
+                                            ->label('Obraz (tylko podzielony)')
+                                            ->image()
+                                            ->directory('pages/features')
+                                            ->visible(fn ($get) => $get('layout') === 'split'),
+
+                                        Forms\Components\TextInput::make('heading')
+                                            ->label('Nagłówek')
+                                            ->maxLength(100),
+
+                                        Forms\Components\Textarea::make('subheading')
+                                            ->label('Podtytuł')
+                                            ->maxLength(200)
+                                            ->rows(2),
+
+                                        Forms\Components\Select::make('background_color')
+                                            ->label('Tło')
+                                            ->options([
+                                                'white' => 'Białe',
+                                                'neutral-50' => 'Neutral 50',
+                                            ])
+                                            ->default('white'),
+                                    ]),
+
+                                Forms\Components\Builder\Block::make('cta_banner')
+                                    ->label('CTA Banner')
+                                    ->icon('heroicon-o-cursor-arrow-ripple')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('heading')
+                                            ->label('Nagłówek')
+                                            ->required()
+                                            ->maxLength(100),
+
+                                        Forms\Components\Textarea::make('subheading')
+                                            ->label('Podtytuł')
+                                            ->maxLength(200)
+                                            ->rows(2),
+
+                                        Forms\Components\ColorPicker::make('background_color')
+                                            ->label('Kolor tła')
+                                            ->default('#0891b2'),
+
+                                        Forms\Components\Repeater::make('cta_buttons')
+                                            ->label('Przyciski CTA')
+                                            ->schema([
+                                                Forms\Components\TextInput::make('text')
+                                                    ->label('Tekst')
+                                                    ->required()
+                                                    ->maxLength(50),
+
+                                                Forms\Components\TextInput::make('url')
+                                                    ->label('URL')
+                                                    ->required()
+                                                    ->url(),
+
+                                                Forms\Components\Select::make('style')
+                                                    ->label('Styl')
+                                                    ->options([
+                                                        'primary' => 'Primary',
+                                                        'secondary' => 'Secondary',
+                                                    ])
+                                                    ->default('primary')
+                                                    ->required(),
+                                            ])
+                                            ->defaultItems(1)
+                                            ->maxItems(2)
+                                            ->collapsible(),
+
+                                        Forms\Components\Toggle::make('background_orbs')
+                                            ->label('Animowane tło')
+                                            ->default(true),
+                                    ]),
+
+                                Forms\Components\Builder\Block::make('text_block')
+                                    ->label('Blok tekstowy')
+                                    ->icon('heroicon-o-document-text')
+                                    ->schema([
+                                        Forms\Components\RichEditor::make('content')
+                                            ->label('Treść')
+                                            ->required()
+                                            ->toolbarButtons([
+                                                'bold', 'italic', 'link', 'bulletList',
+                                                'orderedList', 'h2', 'h3', 'blockquote',
+                                            ])
+                                            ->extraInputAttributes(['style' => 'min-height: 20rem;']),
+
+                                        Forms\Components\Select::make('layout')
+                                            ->label('Układ')
+                                            ->options([
+                                                'default' => 'Domyślny',
+                                                'full-width' => 'Pełna szerokość',
+                                                'narrow' => 'Wąski',
+                                            ])
+                                            ->default('default')
+                                            ->required(),
+
+                                        Forms\Components\Select::make('background_color')
+                                            ->label('Tło')
+                                            ->options([
+                                                'white' => 'Białe',
+                                                'neutral-50' => 'Neutral 50',
+                                                'primary-50' => 'Primary 50',
+                                            ])
+                                            ->default('white'),
+                                    ]),
+
+                                Forms\Components\Builder\Block::make('custom_html')
+                                    ->label('Własny HTML')
+                                    ->icon('heroicon-o-code-bracket')
+                                    ->visible(fn () => auth()->user()?->hasRole('super-admin') ?? false)
+                                    ->schema([
+                                        Forms\Components\Textarea::make('html')
+                                            ->label('Kod HTML')
+                                            ->required()
+                                            ->rows(10)
+                                            ->helperText('⚠️ Używaj ostrożnie. Tylko zaufany kod HTML.'),
+
+                                        Forms\Components\Toggle::make('container_wrapper')
+                                            ->label('Opakowanie kontenera')
+                                            ->default(true)
+                                            ->helperText('Dodaje kontener max-width wokół HTML'),
+                                    ]),
                             ])
                             ->collapsible()
                             ->collapsed()
@@ -308,6 +620,20 @@ class PageResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->weight('bold'),
+
+                Tables\Columns\IconColumn::make('is_homepage')
+                    ->label('Homepage')
+                    ->boolean()
+                    ->getStateUsing(function (Page $record): bool {
+                        $settingsManager = app(\App\Support\Settings\SettingsManager::class);
+                        $homepageId = $settingsManager->get('cms.homepage_page_id');
+
+                        return $homepageId == $record->id;
+                    })
+                    ->trueIcon('heroicon-o-home')
+                    ->falseIcon('')
+                    ->alignCenter()
+                    ->tooltip(fn (bool $state): string => $state ? 'This is the homepage' : ''),
 
                 Tables\Columns\TextColumn::make('slug')
                     ->label('Slug')
@@ -369,7 +695,16 @@ class PageResource extends Resource
                 Actions\Action::make('preview')
                     ->label('Podgląd')
                     ->icon('heroicon-o-eye')
-                    ->url(fn (Page $record) => route('page.show', $record->slug))
+                    ->url(function (Page $record) {
+                        $settingsManager = app(\App\Support\Settings\SettingsManager::class);
+                        $homepageId = $settingsManager->get('cms.homepage_page_id');
+
+                        if ($homepageId == $record->id) {
+                            return route('home');
+                        }
+
+                        return route('page.show', $record->slug);
+                    })
                     ->openUrlInNewTab()
                     ->visible(fn (Page $record) => $record->published_at && $record->published_at->isPast()),
                 Actions\EditAction::make()

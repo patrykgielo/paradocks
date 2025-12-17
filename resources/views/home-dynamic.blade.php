@@ -23,7 +23,7 @@
 @section('content')
     @forelse($page->sections ?? [] as $section)
         <x-dynamic-component
-            :component="'cms.section-' . $section['type']"
+            :component="'cms.section-' . str_replace('_', '-', $section['type'])"
             :data="$section['data']"
         />
     @empty

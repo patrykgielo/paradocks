@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages;
 
+use App\Models\Page as PageModel;
 use App\Services\Sms\SmsService;
 use App\Support\Settings\SettingsManager;
 use BackedEnum;
@@ -107,6 +108,7 @@ class SystemSettings extends Page implements HasForms
                         $this->marketingTab(),
                         $this->emailTab(),
                         $this->smsTab(),
+                        $this->cmsTab(),
                     ])
                     ->columnSpanFull(),
             ])
@@ -558,6 +560,38 @@ class SystemSettings extends Page implements HasForms
                             ->helperText('Email address for cost alerts (also configurable via SMS_ALERT_EMAIL in .env)'),
                     ])
                     ->columns(2),
+            ]);
+    }
+
+    /**
+     * CMS settings tab.
+     */
+    private function cmsTab(): Tabs\Tab
+    {
+        return Tabs\Tab::make('CMS')
+            ->schema([
+                Section::make('Homepage Settings')
+                    ->description('Configure which page displays as homepage')
+                    ->schema([
+                        Select::make('cms.homepage_page_id')
+                            ->label('Homepage')
+                            ->options(PageModel::published()->pluck('title', 'id'))
+                            ->searchable()
+                            ->required()
+                            ->helperText('Select which page displays at / (root URL). Page must have slug="/"'),
+
+                        Placeholder::make('homepage_info')
+                            ->label('Current Homepage')
+                            ->content(function ($get) {
+                                $pageId = $get('cms.homepage_page_id');
+                                if (! $pageId) {
+                                    return 'No homepage set';
+                                }
+                                $page = PageModel::find($pageId);
+
+                                return $page ? "/{$page->slug} → /" : 'Page not found';
+                            }),
+                    ]),
             ]);
     }
 

@@ -16,6 +16,7 @@ use App\Events\PasswordResetRequested;
 use App\Events\UserRegistered;
 use App\Models\Appointment;
 use App\Models\HomePage;
+use App\Models\Page as PageModel;
 use App\Models\User;
 use App\Notifications\AdminCreatedUserNotification;
 use App\Notifications\AppointmentCancelledNotification;
@@ -28,6 +29,7 @@ use App\Notifications\PasswordResetNotification;
 use App\Notifications\UserRegisteredNotification;
 use App\Observers\AppointmentObserver;
 use App\Observers\HomePageObserver;
+use App\Observers\PageObserver;
 use App\Observers\UserObserver;
 use App\Services\Email\EmailGatewayInterface;
 use App\Services\Email\EmailService;
@@ -80,6 +82,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Appointment::observe(AppointmentObserver::class);
         HomePage::observe(HomePageObserver::class);
+        PageModel::observe(PageObserver::class);
         User::observe(UserObserver::class);
 
         // Override mail configuration with database settings

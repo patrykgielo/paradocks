@@ -95,6 +95,24 @@
                             </footer>
                         @endif
                     </blockquote>
+
+                @elseif($block['type'] === 'hero')
+                    <x-content-blocks.hero :data="$block['data']" />
+
+                @elseif($block['type'] === 'content_grid')
+                    <x-content-blocks.content-grid :data="$block['data']" />
+
+                @elseif($block['type'] === 'feature_list')
+                    <x-content-blocks.feature-list :data="$block['data']" />
+
+                @elseif($block['type'] === 'cta_banner')
+                    <x-content-blocks.cta-banner :data="$block['data']" />
+
+                @elseif($block['type'] === 'text_block')
+                    <x-content-blocks.text-block :data="$block['data']" />
+
+                @elseif($block['type'] === 'custom_html')
+                    <x-content-blocks.custom-html :data="$block['data']" />
                 @endif
             @endforeach
         @endif

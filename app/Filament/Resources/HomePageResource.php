@@ -422,6 +422,14 @@ class HomePageResource extends Resource
     }
 
     /**
+     * Point navigation directly to edit page (singleton pattern).
+     */
+    public static function getNavigationUrl(): string
+    {
+        return static::getUrl('edit', ['record' => 1]);
+    }
+
+    /**
      * Restrict access to admins and super-admins only.
      */
     public static function canViewAny(): bool
