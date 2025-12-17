@@ -255,6 +255,163 @@ public static function form(Form $form): Form
 
 ---
 
+### Form Performance Patterns
+
+#### Debounce with `live()` 🔴 CRITICAL
+
+**Pattern:** Prevent excessive re-renders on text input.
+
+❌ **WRONG: Immediate re-render on every keystroke**
+```php
+TextInput::make('search')
+    ->reactive()  // OLD: Triggers on EVERY keystroke!
+    ->afterStateUpdated(fn ($state) => $this->search($state))
+```
+
+✅ **CORRECT: Debounced updates**
+```php
+TextInput::make('search')
+    ->live(debounce: 500)  // Wait 500ms after typing stops
+    ->afterStateUpdated(fn ($state) => $this->search($state))
+```
+
+**Debounce Guidelines:**
+- `debounce: 300` - Real-time search (fast)
+- `debounce: 500` - Standard search (balanced)
+- `debounce: 1000` - Heavy operations (conservative)
+- `debounce: 2000` - API calls (rate-limit friendly)
+
+**Advanced Debounce:**
+```php
+// Different debounce for different actions
+TextInput::make('email')
+    ->live(debounce: 300)  // Fast validation
+    ->afterStateUpdated(fn ($state) => $this->validateEmail($state)),
+
+TextInput::make('username')
+    ->live(debounce: 800)  // Slower API check
+    ->afterStateUpdated(fn ($state) => $this->checkAvailability($state)),
+```
+
+---
+
+#### Dehydrated Fields for Computed Values
+
+**Pattern:** Prevent computed fields from being saved to database.
+
+```php
+TextInput::make('full_name')
+    ->label('Full Name')
+    ->dehydrated(false)  // Don't save to database
+    ->formatStateUsing(fn ($record) =>
+        $record ? "{$record->first_name} {$record->last_name}" : ''
+    )
+    ->disabled(),
+
+TextInput::make('age')
+    ->dehydrated(false)  // Computed from birth_date
+    ->formatStateUsing(fn ($record) =>
+        $record?->birth_date?->age
+    )
+    ->disabled(),
+```
+
+**Conditional Dehydration:**
+```php
+TextInput::make('password')
+    ->password()
+    ->dehydrated(fn ($state) => filled($state))  // Only save if provided
+    ->required(fn (string $context): bool => $context === 'create'),
+
+Select::make('shipping_method')
+    ->options([...])
+    ->dehydrated(fn (Get $get): bool =>
+        $get('requires_shipping') === true  // Only save if shipping enabled
+    ),
+```
+
+---
+
+#### Lazy Loading Select Options
+
+**Pattern:** Load options only when needed for large datasets.
+
+❌ **WRONG: Preload all options**
+```php
+Select::make('customer_id')
+    ->options(Customer::pluck('name', 'id'))  // Loads ALL customers!
+    ->searchable()
+```
+
+✅ **CORRECT: Search-driven loading**
+```php
+Select::make('customer_id')
+    ->relationship('customer', 'name')
+    ->searchable()
+    ->getSearchResultsUsing(fn (string $search): array =>
+        Customer::where('name', 'like', "%{$search}%")
+            ->limit(50)
+            ->pluck('name', 'id')
+            ->toArray()
+    )
+    ->getOptionLabelUsing(fn ($value): ?string =>
+        Customer::find($value)?->name
+    )
+```
+
+**When to Use `preload()`:**
+```php
+// ✅ SAFE: Small datasets (<100 records)
+Select::make('country_id')
+    ->relationship('country', 'name')
+    ->searchable()
+    ->preload()  // OK for ~200 countries
+
+// ❌ DANGEROUS: Large datasets
+Select::make('customer_id')
+    ->relationship('customer', 'name')
+    ->preload()  // BAD: May load 10,000+ customers!
+```
+
+---
+
+#### Reactive Form Dependencies
+
+**Pattern:** Update fields based on other field values.
+
+```php
+use Filament\Forms\Get;
+use Filament\Forms\Set;
+
+Select::make('country')
+    ->options(['US' => 'USA', 'CA' => 'Canada', 'MX' => 'Mexico'])
+    ->live()  // Trigger updates
+    ->afterStateUpdated(function (Set $set, ?string $state) {
+        $set('state', null);  // Reset dependent field
+        $set('city', null);
+    }),
+
+Select::make('state')
+    ->options(fn (Get $get): array =>
+        $get('country')
+            ? State::where('country', $get('country'))->pluck('name', 'id')->toArray()
+            : []
+    )
+    ->disabled(fn (Get $get): bool => ! $get('country'))
+    ->live()
+    ->afterStateUpdated(fn (Set $set) => $set('city', null)),
+
+Select::make('city')
+    ->options(fn (Get $get): array =>
+        $get('state')
+            ? City::where('state_id', $get('state'))->pluck('name', 'id')->toArray()
+            : []
+    )
+    ->disabled(fn (Get $get): bool => ! $get('state')),
+```
+
+---
+
 ### Table Configuration Best Practices
 
 #### ✅ CORRECT: Well-Organized Table
@@ -454,6 +611,226 @@ public function afterCreate(): void
 
 ---
 
+#### Widget Lazy Loading 🔴 CRITICAL
+
+**Pattern:** Defer widget loading until needed to improve initial page load.
+
+```php
+use Filament\Widgets\Widget;
+
+class ExpensiveStatsWidget extends Widget
+{
+    protected static bool $isLazy = true;  // Enable lazy loading
+
+    protected string $view = 'filament.widgets.expensive-stats';
+
+    public function getStats()
+    {
+        // This heavy query only runs when widget loads
+        return Cache::remember('expensive.stats', 600, fn () =>
+            HeavyModel::with(['deep', 'relations'])
+                ->selectRaw('SUM(amount) as total, COUNT(*) as count')
+                ->groupBy('category')
+                ->get()
+        );
+    }
+}
+```
+
+**When to Use Lazy Loading:**
+- ✅ Widgets below the fold (not immediately visible)
+- ✅ Widgets with expensive queries (>500ms)
+- ✅ Dashboard with 5+ widgets
+- ✅ Charts with complex calculations
+- ❌ Critical above-the-fold metrics
+- ❌ Real-time data displays
+
+**Performance Impact:**
+```
+Without lazy loading:
+┌─────────────────────────┐
+│ Page Load: 3.2s         │
+│ - Widget 1: 0.8s        │
+│ - Widget 2: 1.2s        │ ← Expensive!
+│ - Widget 3: 0.6s        │
+│ - Widget 4: 0.6s        │
+└─────────────────────────┘
+
+With lazy loading (Widget 2):
+┌─────────────────────────┐
+│ Initial Load: 2.0s      │
+│ - Widget 1: 0.8s        │
+│ - Widget 3: 0.6s        │
+│ - Widget 4: 0.6s        │
+│ Widget 2 loads after: +1.2s (async)
+└─────────────────────────┘
+```
+
+---
+
+#### Query Memoization with `once()`
+
+**Pattern:** Cache query results within single request to prevent duplicate queries.
+
+```php
+use function Laravel\Prompts\{once};
+
+class OrderStatsWidget extends Widget
+{
+    public function getTodayOrders()
+    {
+        return once(function () {
+            return Order::whereDate('created_at', today())
+                ->with(['customer', 'items'])
+                ->get();
+        });
+    }
+
+    public function getTodayRevenue()
+    {
+        // Reuses getTodayOrders() result - no additional query!
+        return $this->getTodayOrders()->sum('total');
+    }
+
+    public function getTodayCount()
+    {
+        // Reuses getTodayOrders() result - no additional query!
+        return $this->getTodayOrders()->count();
+    }
+}
+```
+
+**Before `once()` (N queries):**
+```php
+// ❌ WRONG: Each method triggers separate query
+public function getTodayRevenue() {
+    return Order::whereDate('created_at', today())->sum('total'); // Query 1
+}
+
+public function getTodayCount() {
+    return Order::whereDate('created_at', today())->count(); // Query 2 (duplicate!)
+}
+```
+
+**After `once()` (1 query):**
+```php
+// ✅ CORRECT: Single query, reused result
+protected function getTodayOrders() {
+    return once(fn () => Order::whereDate('created_at', today())->get());
+}
+
+public function getTodayRevenue() {
+    return $this->getTodayOrders()->sum('total'); // Reuses
+}
+
+public function getTodayCount() {
+    return $this->getTodayOrders()->count(); // Reuses
+}
+```
+
+**Benefits:**
+- ✅ Eliminates duplicate queries in same request
+- ✅ Cleaner code (DRY principle)
+- ✅ Automatic memory cleanup after request
+- ✅ No manual cache invalidation needed
+
+---
+
+#### Cache Tagging for Granular Invalidation
+
+**Pattern:** Organize cache with tags for selective clearing.
+
+```php
+use Illuminate\Support\Facades\Cache;
+
+class OrderStatsWidget extends Widget
+{
+    public function getStats(): array
+    {
+        return Cache::tags(['orders', 'stats', 'dashboard'])
+            ->remember('orders.stats', 300, function () {
+                return [
+                    'today' => Order::today()->count(),
+                    'week' => Order::thisWeek()->count(),
+                    'month' => Order::thisMonth()->count(),
+                ];
+            });
+    }
+}
+
+// Clear only order-related cache
+Cache::tags(['orders'])->flush();
+
+// Clear all dashboard cache
+Cache::tags(['dashboard'])->flush();
+
+// Clear specific cache key
+Cache::tags(['orders', 'stats'])->forget('orders.stats');
+```
+
+**Model Event Integration:**
+```php
+// app/Models/Order.php
+protected static function booted(): void
+{
+    parent::booted();
+
+    static::saved(function () {
+        // Clear all order-related cache
+        Cache::tags(['orders'])->flush();
+    });
+
+    static::deleted(function () {
+        Cache::tags(['orders', 'stats'])->flush();
+    });
+}
+```
+
+---
+
+#### User-Specific Cache Keys
+
+**Pattern:** Prevent cache collision between users.
+
+```php
+class UserDashboardWidget extends Widget
+{
+    protected function getStats(): array
+    {
+        $userId = auth()->id();
+
+        return Cache::remember("dashboard.stats.user.{$userId}", 300, function () {
+            return [
+                'my_orders' => auth()->user()->orders()->count(),
+                'my_revenue' => auth()->user()->orders()->sum('total'),
+            ];
+        });
+    }
+}
+```
+
+**Clear user-specific cache:**
+```php
+// On user data change
+public function afterSave(): void
+{
+    $userId = $this->record->id;
+    Cache::forget("dashboard.stats.user.{$userId}");
+}
+
+// Clear all user caches (admin action)
+public function clearAllUserCaches(): void
+{
+    User::chunk(100, function ($users) {
+        foreach ($users as $user) {
+            Cache::forget("dashboard.stats.user.{$user->id}");
+        }
+    });
+}
+```
+
+---
+
 ### Asset Optimization
 
 #### ✅ CORRECT: Optimize Production Build
@@ -544,6 +921,163 @@ class UserResource extends Resource
 ```
 
 **Risk:** Unauthorized users can view/edit sensitive data.
+
+---
+
+#### Authorization Granularity 🔴 CRITICAL
+
+**Pattern:** Implement fine-grained authorization including soft deletes and record-specific rules.
+
+```php
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class OrderResource extends Resource
+{
+    // Basic CRUD authorization
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('viewAny', Order::class);
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()->can('create', Order::class);
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        // Record-specific authorization
+        return auth()->user()->can('update', $record)
+            && $record->status !== 'completed'  // Can't edit completed orders
+            && $record->user_id === auth()->id();  // Only own orders
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return auth()->user()->can('delete', $record)
+            && $record->status === 'pending'  // Only pending orders
+            && $record->created_at->isToday();  // Only today's orders
+    }
+
+    // Soft delete authorization
+    public static function canForceDelete(Model $record): bool
+    {
+        return auth()->user()->hasRole('super-admin')
+            && $record->trashed();
+    }
+
+    public static function canRestore(Model $record): bool
+    {
+        return auth()->user()->can('restore', $record)
+            && $record->trashed()
+            && $record->deleted_at->greaterThan(now()->subDays(30));  // Within 30 days
+    }
+
+    // Replicate authorization
+    public static function canReplicate(Model $record): bool
+    {
+        return auth()->user()->can('create', Order::class)
+            && $record->status === 'completed';  // Only replicate completed
+    }
+}
+```
+
+---
+
+#### Query Scoping for Multi-Tenancy
+
+**Pattern:** Automatically scope queries by tenant or user context.
+
+```php
+class OrderResource extends Resource
+{
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->when(
+                ! auth()->user()->hasRole('admin'),
+                fn ($query) => $query->where('user_id', auth()->id())
+            )
+            ->when(
+                Filament::getTenant(),
+                fn ($query) => $query->where('tenant_id', Filament::getTenant()->id)
+            );
+    }
+}
+```
+
+**Advanced Scoping:**
+```php
+// Scope by department
+public static function getEloquentQuery(): Builder
+{
+    $query = parent::getEloquentQuery();
+
+    // Admins see all
+    if (auth()->user()->hasRole('admin')) {
+        return $query;
+    }
+
+    // Managers see their department
+    if (auth()->user()->hasRole('manager')) {
+        return $query->where('department_id', auth()->user()->department_id);
+    }
+
+    // Regular users see only their records
+    return $query->where('user_id', auth()->id());
+}
+```
+
+---
+
+#### Action-Level Authorization
+
+**Pattern:** Control individual table/form actions based on record state.
+
+```php
+use Filament\Tables\Actions\Action;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\DeleteAction;
+
+public static function table(Table $table): Table
+{
+    return $table
+        ->actions([
+            EditAction::make()
+                ->visible(fn (Model $record): bool =>
+                    $record->status !== 'completed'
+                    && auth()->user()->can('update', $record)
+                ),
+
+            Action::make('approve')
+                ->icon('heroicon-o-check')
+                ->visible(fn (Model $record): bool =>
+                    $record->status === 'pending'
+                    && auth()->user()->hasPermission('approve-orders')
+                )
+                ->requiresConfirmation()
+                ->action(fn (Model $record) => $record->approve()),
+
+            Action::make('cancel')
+                ->icon('heroicon-o-x-mark')
+                ->color('danger')
+                ->visible(fn (Model $record): bool =>
+                    $record->status !== 'completed'
+                    && ($record->user_id === auth()->id()
+                        || auth()->user()->hasRole('admin'))
+                )
+                ->requiresConfirmation()
+                ->action(fn (Model $record) => $record->cancel()),
+
+            DeleteAction::make()
+                ->visible(fn (Model $record): bool =>
+                    $record->status === 'draft'
+                    && auth()->user()->can('delete', $record)
+                ),
+        ]);
+}
+```
 
 ---
 
@@ -675,6 +1209,283 @@ it('creates user with valid data', function () {
     expect(User::where('email', 'john@example.com')->exists())->toBeTrue();
 });
 ```
+
+---
+
+### Livewire Component Testing 🔴 CRITICAL
+
+**Pattern:** Test Filament resources using Livewire testing helpers.
+
+#### Testing Form Validation
+
+```php
+use function Pest\Livewire\livewire;
+
+it('validates email format', function () {
+    $admin = User::factory()->create()->assignRole('admin');
+
+    livewire(CreateUser::class)
+        ->actingAs($admin)
+        ->fillForm([
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'email' => 'not-an-email',  // Invalid
+        ])
+        ->call('create')
+        ->assertHasFormErrors(['email' => 'email']);
+});
+
+it('validates unique email', function () {
+    $existing = User::factory()->create(['email' => 'john@example.com']);
+    $admin = User::factory()->create()->assignRole('admin');
+
+    livewire(CreateUser::class)
+        ->actingAs($admin)
+        ->fillForm([
+            'first_name' => 'Jane',
+            'last_name' => 'Doe',
+            'email' => 'john@example.com',  // Duplicate
+        ])
+        ->call('create')
+        ->assertHasFormErrors(['email' => 'unique']);
+});
+```
+
+---
+
+#### Testing Table Actions
+
+```php
+it('admin can cancel appointment', function () {
+    $admin = User::factory()->create()->assignRole('admin');
+    $appointment = Appointment::factory()->create(['status' => 'pending']);
+
+    livewire(ListAppointments::class)
+        ->actingAs($admin)
+        ->callTableAction('cancel', $appointment)
+        ->assertSuccessful();
+
+    expect($appointment->fresh()->status)->toBe('cancelled');
+});
+
+it('cannot cancel completed appointment', function () {
+    $admin = User::factory()->create()->assignRole('admin');
+    $appointment = Appointment::factory()->create(['status' => 'completed']);
+
+    livewire(ListAppointments::class)
+        ->actingAs($admin)
+        ->callTableAction('cancel', $appointment)
+        ->assertActionHidden('cancel');
+});
+```
+
+---
+
+#### Testing Table Bulk Actions
+
+```php
+it('admin can bulk delete appointments', function () {
+    $admin = User::factory()->create()->assignRole('admin');
+    $appointments = Appointment::factory()->count(5)->create();
+
+    livewire(ListAppointments::class)
+        ->actingAs($admin)
+        ->callTableBulkAction('delete', $appointments)
+        ->assertSuccessful();
+
+    expect(Appointment::count())->toBe(0);
+});
+```
+
+---
+
+#### Testing Table Filters
+
+```php
+it('filters appointments by status', function () {
+    $admin = User::factory()->create()->assignRole('admin');
+
+    Appointment::factory()->create(['status' => 'pending']);
+    Appointment::factory()->create(['status' => 'confirmed']);
+    Appointment::factory()->create(['status' => 'completed']);
+
+    livewire(ListAppointments::class)
+        ->actingAs($admin)
+        ->filterTable('status', 'pending')
+        ->assertCanSeeTableRecords(
+            Appointment::where('status', 'pending')->get()
+        )
+        ->assertCanNotSeeTableRecords(
+            Appointment::whereNot('status', 'pending')->get()
+        );
+});
+```
+
+---
+
+#### Testing Authorization
+
+```php
+it('regular user cannot access admin panel', function () {
+    $user = User::factory()->create();
+
+    livewire(ListAppointments::class)
+        ->actingAs($user)
+        ->assertForbidden();
+});
+
+it('admin can view all users', function () {
+    $admin = User::factory()->create()->assignRole('admin');
+    User::factory()->count(5)->create();
+
+    livewire(ListUsers::class)
+        ->actingAs($admin)
+        ->assertSuccessful()
+        ->assertCountTableRecords(6);  // 5 + admin
+});
+
+it('user can only view their own appointments', function () {
+    $user = User::factory()->create();
+    Appointment::factory()->count(3)->create(['user_id' => $user->id]);
+    Appointment::factory()->count(2)->create();  // Other users
+
+    livewire(ListAppointments::class)
+        ->actingAs($user)
+        ->assertSuccessful()
+        ->assertCountTableRecords(3);
+});
+```
+
+---
+
+#### Testing Form State
+
+```php
+it('updates related fields when country changes', function () {
+    $admin = User::factory()->create()->assignRole('admin');
+
+    livewire(CreateAddress::class)
+        ->actingAs($admin)
+        ->fillForm([
+            'country' => 'US',
+            'state' => 'CA',
+            'city' => 'Los Angeles',
+        ])
+        ->set('data.country', 'CA')  // Change country
+        ->assertFormSet([
+            'state' => null,  // Should reset
+            'city' => null,   // Should reset
+        ]);
+});
+```
+
+---
+
+#### Testing Widgets
+
+```php
+it('displays stats overview widget', function () {
+    $admin = User::factory()->create()->assignRole('admin');
+
+    User::factory()->count(10)->create();
+    Order::factory()->count(20)->create();
+
+    livewire(StatsOverview::class)
+        ->actingAs($admin)
+        ->assertSee('Total Users: 11')  // 10 + admin
+        ->assertSee('Total Orders: 20');
+});
+
+it('widget polls for updates', function () {
+    $admin = User::factory()->create()->assignRole('admin');
+
+    $component = livewire(LiveOrdersWidget::class)
+        ->actingAs($admin);
+
+    // Create order after mount
+    Order::factory()->create();
+
+    // Dispatch polling event
+    $component->dispatch('$refresh')
+        ->assertSee('1 order');
+});
+```
+
+---
+
+#### Testing Notifications
+
+```php
+it('sends notification on successful save', function () {
+    $admin = User::factory()->create()->assignRole('admin');
+
+    livewire(CreateUser::class)
+        ->actingAs($admin)
+        ->fillForm([
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'email' => 'john@example.com',
+        ])
+        ->call('create')
+        ->assertNotified('User created successfully');
+});
+
+it('sends error notification on failure', function () {
+    $admin = User::factory()->create()->assignRole('admin');
+
+    // Mock service to throw exception
+    $this->mock(UserService::class)
+        ->shouldReceive('create')
+        ->andThrow(new \Exception('Database error'));
+
+    livewire(CreateUser::class)
+        ->actingAs($admin)
+        ->fillForm([
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'email' => 'john@example.com',
+        ])
+        ->call('create')
+        ->assertNotified('Failed to create user', type: 'danger');
+});
+```
+
+---
+
+### Test Organization Best Practices
+
+```
+tests/
+├── Feature/
+│   ├── Admin/
+│   │   ├── Resources/
+│   │   │   ├── UserResourceTest.php
+│   │   │   ├── OrderResourceTest.php
+│   │   │   └── AppointmentResourceTest.php
+│   │   ├── Widgets/
+│   │   │   ├── StatsOverviewTest.php
+│   │   │   └── CacheClearWidgetTest.php
+│   │   └── Pages/
+│   │       ├── DashboardTest.php
+│   │       └── SystemSettingsTest.php
+│   │
+│   └── Auth/
+│       ├── LoginTest.php
+│       └── RegistrationTest.php
+│
+└── Unit/
+    ├── Models/
+    ├── Services/
+    └── Actions/
+```
+
+**Best Practices:**
+- ✅ Group tests by feature area
+- ✅ Separate unit and feature tests
+- ✅ Use descriptive test names
+- ✅ Test authorization thoroughly
+- ✅ Test validation rules
+- ✅ Test table actions and bulk actions
 
 ---
 

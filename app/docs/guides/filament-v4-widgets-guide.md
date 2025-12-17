@@ -148,6 +148,44 @@ class StatsOverview extends BaseWidget
 
 ---
 
+#### Icon Positioning & Extra Attributes
+
+**Pattern:** Customize icon position and add extra HTML.
+
+```php
+Stat::make('Total Revenue', '$192,920')
+    ->icon('heroicon-o-currency-dollar')
+    ->iconPosition(IconPosition::End)  // Icon on right side
+    ->iconColor('success')
+    ->extraAttributes([
+        'class' => 'cursor-pointer',
+        'wire:click' => '$dispatch("openRevenueDetails")',
+    ]),
+```
+
+**Icon Positions:**
+- `IconPosition::Start` - Icon on left (default)
+- `IconPosition::End` - Icon on right
+
+---
+
+#### Stats with Charts Inside Cards
+
+**Pattern:** Inline charts within stat cards.
+
+```php
+Stat::make('Revenue Trend', '$42,350')
+    ->description('Last 7 days')
+    ->descriptionIcon('heroicon-o-arrow-trending-up')
+    ->chart([7000, 8200, 6500, 7100, 8800, 9200, 10450])
+    ->chartColor('success')
+    ->color('success'),
+```
+
+**Chart Colors:** `primary`, `success`, `warning`, `danger`, `gray`, `info`
+
+---
+
 ## Chart Widgets
 
 ### Line Chart Widget
@@ -254,6 +292,68 @@ class RevenueByServiceChart extends ChartWidget
     protected function getType(): string
     {
         return 'bar';
+    }
+}
+```
+
+---
+
+### Multiple Datasets Chart 🔴 NEW
+
+**Pattern:** Display multiple data series on one chart.
+
+```php
+class RevenueVsExpensesChart extends LineChartWidget
+{
+    protected static ?string $heading = 'Revenue vs Expenses';
+
+    protected function getData(): array
+    {
+        $months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+
+        return [
+            'datasets' => [
+                [
+                    'label' => 'Revenue',
+                    'data' => [12000, 19000, 15000, 22000, 28000, 32000],
+                    'borderColor' => '#10b981',
+                    'backgroundColor' => 'rgba(16, 185, 129, 0.1)',
+                ],
+                [
+                    'label' => 'Expenses',
+                    'data' => [8000, 12000, 9000, 15000, 18000, 20000],
+                    'borderColor' => '#ef4444',
+                    'backgroundColor' => 'rgba(239, 68, 68, 0.1)',
+                ],
+                [
+                    'label' => 'Profit',
+                    'data' => [4000, 7000, 6000, 7000, 10000, 12000],
+                    'borderColor' => '#3b82f6',
+                    'backgroundColor' => 'rgba(59, 130, 246, 0.1)',
+                ],
+            ],
+            'labels' => $months,
+        ];
+    }
+
+    protected function getOptions(): array
+    {
+        return [
+            'scales' => [
+                'y' => [
+                    'beginAtZero' => true,
+                    'ticks' => [
+                        'callback' => 'function(value) { return "$" + value.toLocaleString(); }',
+                    ],
+                ],
+            ],
+            'plugins' => [
+                'legend' => [
+                    'display' => true,
+                    'position' => 'bottom',
+                ],
+            ],
+        ];
     }
 }
 ```
@@ -429,6 +529,65 @@ public function table(Table $table): Table
                 ->counts('items'),  // Efficient count
         ]);
 }
+```
+
+---
+
+### Table Bulk Actions 🔴 NEW
+
+**Pattern:** Allow bulk operations on multiple table records.
+
+```php
+public function table(Table $table): Table
+{
+    return $table
+        ->query(Order::query()->latest()->limit(20))
+        ->columns([
+            Tables\Columns\TextColumn::make('order_number'),
+            Tables\Columns\BadgeColumn::make('status'),
+            Tables\Columns\TextColumn::make('total')->money('USD'),
+        ])
+        ->bulkActions([
+            Tables\Actions\BulkAction::make('markAsProcessing')
+                ->label('Mark as Processing')
+                ->icon('heroicon-o-clock')
+                ->requiresConfirmation()
+                ->action(function (Collection $records) {
+                    $records->each->update(['status' => 'processing']);
+
+                    Notification::make()
+                        ->title('Orders updated')
+                        ->body($records->count() . ' orders marked as processing')
+                        ->success()
+                        ->send();
+                }),
+
+            Tables\Actions\BulkAction::make('export')
+                ->label('Export Selected')
+                ->icon('heroicon-o-arrow-down-tray')
+                ->action(function (Collection $records) {
+                    return response()->streamDownload(function () use ($records) {
+                        echo $records->toCsv();
+                    }, 'orders.csv');
+                }),
+
+            Tables\Actions\DeleteBulkAction::make()
+                ->requiresConfirmation()
+                ->modalHeading('Delete selected orders')
+                ->modalDescription('Are you sure you want to delete these orders?'),
+        ])
+        ->selectCurrentPageOnly()  // Only select current page records
+        ->deselectAllRecordsWhenFiltered();  // Clear selection on filter change
+}
+```
+
+**Authorization for Bulk Actions:**
+
+```php
+Tables\Actions\BulkAction::make('approve')
+    ->action(fn (Collection $records) => $records->each->approve())
+    ->visible(fn (): bool => auth()->user()->can('approve_orders'))
+    ->requiresConfirmation(),
 ```
 
 ---
@@ -834,6 +993,73 @@ class LiveStatsWidget extends BaseWidget
 }
 ```
 
+#### Conditional Polling 🔴 NEW
+
+**Pattern:** Enable polling only when certain conditions are met.
+
+```php
+class OrderProcessingWidget extends BaseWidget
+{
+    protected static ?string $pollingInterval = null;  // Default: no polling
+
+    public function mount(): void
+    {
+        // Enable polling only if there are pending orders
+        if (Order::where('status', 'pending')->exists()) {
+            $this->pollingInterval = '5s';
+        }
+    }
+
+    protected function getStats(): array
+    {
+        $pendingCount = Order::where('status', 'pending')->count();
+
+        // Disable polling if no pending orders
+        if ($pendingCount === 0) {
+            $this->pollingInterval = null;
+        }
+
+        return [
+            Stat::make('Pending Orders', $pendingCount)
+                ->description('Awaiting processing')
+                ->color('warning'),
+        ];
+    }
+}
+```
+
+**Use Cases:**
+- ✅ Poll only when status is "processing" or "pending"
+- ✅ Stop polling when queue is empty
+- ✅ Save bandwidth by polling only when needed
+- ❌ Don't poll completed/static data
+
+**Advanced: User-Specific Polling:**
+
+```php
+class UserNotificationsWidget extends Widget
+{
+    protected static ?string $pollingInterval = null;
+
+    public function mount(): void
+    {
+        $user = auth()->user();
+
+        // Poll only if user has unread notifications
+        if ($user->unreadNotifications()->exists()) {
+            $this->pollingInterval = '30s';
+        }
+    }
+
+    public function getNotifications()
+    {
+        return once(fn () => auth()->user()->unreadNotifications()->limit(5)->get());
+    }
+}
+```
+
+---
+
 #### Manual Refresh
 
 ```php
@@ -888,6 +1114,121 @@ class ManualRefreshWidget extends Widget
     </div>
 </x-filament-widgets::widget>
 ```
+
+---
+
+### Deferred Widget Loading 🔴 NEW
+
+**Pattern:** Progressive loading using Livewire's `#[Defer]` attribute for faster initial page load.
+
+**Widget Class:**
+
+```php
+<?php
+
+namespace App\Filament\Widgets;
+
+use Filament\Widgets\Widget;
+use Livewire\Attributes\Defer;
+use App\Models\Analytics;
+
+class AnalyticsDashboard extends Widget
+{
+    protected string $view = 'filament.widgets.analytics-dashboard';
+
+    #[Defer]  // Load this widget after page renders
+    public function getAnalyticsData()
+    {
+        // Expensive computation - runs AFTER initial page load
+        return [
+            'pageviews' => Analytics::getTotalPageviews(),
+            'conversions' => Analytics::getConversionRate(),
+            'revenue' => Analytics::getTotalRevenue(),
+            'topPages' => Analytics::getTopPages(10),
+        ];
+    }
+}
+```
+
+**Blade Template:**
+
+```blade
+<x-filament-widgets::widget>
+    <x-slot name="heading">
+        Analytics Dashboard
+    </x-slot>
+
+    <div>
+        @php
+            $data = $this->getAnalyticsData();
+        @endphp
+
+        @if($data)
+            <div class="grid grid-cols-3 gap-4">
+                <div>
+                    <p class="text-sm text-gray-600">Pageviews</p>
+                    <p class="text-2xl font-bold">{{ number_format($data['pageviews']) }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Conversion Rate</p>
+                    <p class="text-2xl font-bold">{{ $data['conversions'] }}%</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Revenue</p>
+                    <p class="text-2xl font-bold">${{ number_format($data['revenue']) }}</p>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <h3 class="font-semibold mb-2">Top Pages</h3>
+                <ul>
+                    @foreach($data['topPages'] as $page)
+                        <li>{{ $page->url }} - {{ $page->views }} views</li>
+                    @endforeach
+                </ul>
+            </div>
+        @else
+            {{-- Show loading skeleton while deferred content loads --}}
+            <div class="animate-pulse">
+                <div class="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+                <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+            </div>
+        @endif
+    </div>
+</x-filament-widgets::widget>
+```
+
+**Benefits:**
+- ✅ **Faster Initial Load** - Page renders immediately, widgets load progressively
+- ✅ **Better UX** - Users see content faster, heavy widgets load in background
+- ✅ **Reduced TTFB** - Time to first byte improved
+- ✅ **Parallel Loading** - Multiple deferred widgets load simultaneously
+
+**Use Cases:**
+- External API calls (analytics, payment gateways)
+- Heavy database aggregations
+- Report generation
+- Data exports/imports status
+
+**Combining with Lazy Loading:**
+
+```php
+class HeavyReportWidget extends Widget
+{
+    protected static bool $isLazy = true;  // Load after page renders (Filament)
+
+    #[Defer]  // Load method after component renders (Livewire)
+    public function getReportData()
+    {
+        return HeavyReport::generate();
+    }
+}
+```
+
+**When to Use Each:**
+- **`$isLazy = true`**: Entire widget waits until scrolled into view (Filament behavior)
+- **`#[Defer]`**: Widget renders immediately, but data methods load after initial page (Livewire behavior)
+- **Both**: Maximum optimization - widget deferred until visible, then data deferred within widget
 
 ---
 
