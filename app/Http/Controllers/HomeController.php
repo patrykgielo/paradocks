@@ -2,22 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Service;
-use App\Support\Settings\SettingsManager;
+use App\Models\HomePage;
+use Illuminate\Support\Facades\Cache;
 
 class HomeController extends Controller
 {
-    public function __construct(private readonly SettingsManager $settings) {}
-
+    /**
+     * Display home page.
+     *
+     * Uses aggressive caching (1-hour TTL) for performance.
+     * Cache automatically cleared by HomePageObserver on updates.
+     */
     public function index()
     {
-        $services = Service::active()
-            ->ordered()
-            ->get();
+        $page = Cache::remember('home.full_page', 3600, function () {
+            return HomePage::getInstance();
+        });
 
-        return view('home', [
-            'services' => $services,
-            'marketingContent' => $this->settings->marketingContent(),
-        ]);
+        return view('home-dynamic', compact('page'));
     }
 }
