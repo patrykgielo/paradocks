@@ -338,8 +338,7 @@ class PageResource extends Resource
                                                     ->required(),
                                             ])
                                             ->defaultItems(1)
-                                            ->maxItems(3)
-                                            ->collapsible(),
+                                            ->maxItems(3),
 
                                         Forms\Components\Slider::make('overlay_opacity')
                                             ->label('Przezroczystość nakładki')
@@ -520,8 +519,7 @@ class PageResource extends Resource
                                                     ->required(),
                                             ])
                                             ->defaultItems(1)
-                                            ->maxItems(2)
-                                            ->collapsible(),
+                                            ->maxItems(2),
 
                                         Forms\Components\Toggle::make('background_orbs')
                                             ->label('Animowane tło')
@@ -579,7 +577,7 @@ class PageResource extends Resource
                                     ]),
                             ])
                             ->collapsible()
-                            ->collapsed()
+                            ->collapsed(false)
                             ->blockNumbers(false)
                             ->reorderable()
                             ->addActionLabel('Dodaj blok')
