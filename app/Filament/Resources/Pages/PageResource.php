@@ -369,7 +369,7 @@ class PageResource extends Resource
                                                 return match ($get('content_type')) {
                                                     'services' => \App\Models\Service::where('is_active', true)->pluck('name', 'id'),
                                                     'posts' => \App\Models\Post::whereNotNull('published_at')->pluck('title', 'id'),
-                                                    'promotions' => \App\Models\Promotion::where('is_active', true)->pluck('title', 'id'),
+                                                    'promotions' => \App\Models\Promotion::where('active', true)->pluck('title', 'id'),
                                                     'portfolio' => \App\Models\PortfolioItem::whereNotNull('published_at')->pluck('title', 'id'),
                                                     default => [],
                                                 };
