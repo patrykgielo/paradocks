@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
 // Public routes
-Route::get('/', function () {
+Route::middleware('web')->get('/', function () {
     $settingsManager = app(\App\Support\Settings\SettingsManager::class);
     $pageId = $settingsManager->get('cms.homepage_page_id');
 
