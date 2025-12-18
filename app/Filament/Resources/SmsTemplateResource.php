@@ -25,11 +25,11 @@ class SmsTemplateResource extends Resource
 {
     protected static ?string $model = SmsTemplate::class;
 
-    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-chat-bubble-bottom-center-text';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-chat-bubble-left-right';
 
-    protected static string|UnitEnum|null $navigationGroup = 'SMS';
+    protected static string|UnitEnum|null $navigationGroup = 'communication';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 5;
 
     protected static ?string $navigationLabel = 'SMS Templates';
 

@@ -23,13 +23,13 @@ class CustomerResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-user-group';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Zarządzanie Użytkownikami';
+    protected static string|UnitEnum|null $navigationGroup = 'users';
 
     protected static ?string $modelLabel = 'Klient';
 
     protected static ?string $pluralModelLabel = 'Klienci';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 2;
 
     public static function getEloquentQuery(): Builder
     {

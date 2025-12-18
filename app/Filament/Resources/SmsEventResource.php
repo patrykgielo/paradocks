@@ -20,9 +20,9 @@ class SmsEventResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-bell-alert';
 
-    protected static string|UnitEnum|null $navigationGroup = 'SMS';
+    protected static string|UnitEnum|null $navigationGroup = 'communication';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 7;
 
     protected static ?string $navigationLabel = 'SMS Events';
 

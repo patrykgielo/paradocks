@@ -5,7 +5,6 @@ use App\Http\Controllers\Api\SmsApiWebhookController;
 use App\Http\Controllers\Api\VehicleDataController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\BookingController;
-use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PortfolioController;
 use App\Http\Controllers\PostController;
@@ -19,7 +18,22 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
 // Public routes
-Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/', function () {
+    $settingsManager = app(\App\Support\Settings\SettingsManager::class);
+    $pageId = $settingsManager->get('cms.homepage_page_id');
+
+    if (! $pageId) {
+        return view('home-fallback');
+    }
+
+    $page = \App\Models\Page::find($pageId);
+
+    if (! $page || ! $page->isPublished()) {
+        abort(404, 'Homepage not found or not published');
+    }
+
+    return view('pages.show', compact('page'));
+})->name('home');
 
 // Health check endpoint (for CI/CD deployment verification)
 Route::get('/health', function () {

@@ -18,11 +18,11 @@ class SmsSendResource extends Resource
 {
     protected static ?string $model = SmsSend::class;
 
-    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-envelope';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-device-phone-mobile';
 
-    protected static string|UnitEnum|null $navigationGroup = 'SMS';
+    protected static string|UnitEnum|null $navigationGroup = 'communication';
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 6;
 
     protected static ?string $navigationLabel = 'SMS History';
 

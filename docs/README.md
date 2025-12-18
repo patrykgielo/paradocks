@@ -187,6 +187,74 @@ Complete role-based authorization system for Filament admin panel with granular 
 
 ---
 
+## 📘 Filament v4 Documentation
+
+**Version:** Filament v4.2.3 | **Status:** ✅ Complete | **Docs:** [`guides/`](./guides/)
+
+Complete architectural guides for Laravel Filament v4.2.3 admin panel development. Essential reading before implementing any admin panel features.
+
+### Core Documentation
+
+- **[Component Architecture](./guides/filament-v4-component-architecture.md)** - Understanding Filament's component hierarchy, nesting rules, and placement strategies. **Critical reading** before creating any new feature.
+
+- **[Best Practices](./guides/filament-v4-best-practices.md)** - Do's and don'ts for Filament development. Includes common mistakes to avoid (like widget/section nesting issue) and performance optimization patterns.
+
+- **[Widgets Guide](./guides/filament-v4-widgets-guide.md)** - Comprehensive widget implementation patterns covering Stats, Charts, Tables, and Custom widgets with real-world examples.
+
+- **[Migration Guide](./guides/filament-v4-migration-guide.md)** - Complete v3 → v4 breaking changes checklist. Review if working with older code or Filament v3 examples.
+
+### Quick Navigation
+
+**Widget Development:**
+- Widget nesting rules → [Component Architecture - Widget Architecture](./guides/filament-v4-component-architecture.md#widget-architecture)
+- Widget lazy loading → [Best Practices - Performance Optimization](./guides/filament-v4-best-practices.md#performance-optimization)
+- Stats widgets patterns → [Widgets Guide - Stats Widgets](./guides/filament-v4-widgets-guide.md#stats-widgets)
+- Chart widgets patterns → [Widgets Guide - Chart Widgets](./guides/filament-v4-widgets-guide.md#chart-widgets)
+- Table bulk actions → [Widgets Guide - Table Widgets](./guides/filament-v4-widgets-guide.md#table-widgets)
+
+**Common Tasks:**
+- Form debouncing → [Best Practices - Component Composition](./guides/filament-v4-best-practices.md#component-composition-guidelines)
+- Authorization patterns → [Best Practices - Security](./guides/filament-v4-best-practices.md#security-best-practices)
+- Testing patterns → [Best Practices - Testing Strategies](./guides/filament-v4-best-practices.md#testing-strategies)
+
+**Troubleshooting:**
+- Common mistakes → [Best Practices - Common Mistakes](./guides/filament-v4-best-practices.md#common-mistakes-to-avoid)
+- Namespace changes → [Migration Guide - Critical Namespace Changes](./guides/filament-v4-migration-guide.md#critical-namespace-changes)
+
+### Critical Widget Rule
+
+⚠️ **IMPORTANT:** Widgets are top-level components with built-in layout. **Never nest `<x-filament::section>` as root element in widgets.**
+
+```php
+// ❌ WRONG: Section nested in Widget (causes layout issues)
+<x-filament-widgets::widget>
+    <x-filament::section heading="Title">
+        Content
+    </x-filament::section>
+</x-filament-widgets::widget>
+
+// ✅ CORRECT: Use widget's named slots
+<x-filament-widgets::widget>
+    <x-slot name="heading">Title</x-slot>
+    <div>Content</div>
+</x-filament-widgets::widget>
+```
+
+**See:** [Component Architecture - Common Mistakes](./guides/filament-v4-component-architecture.md#common-mistakes-to-avoid) for complete explanation.
+
+### Documentation Coverage
+
+**Total:** 3,850+ lines across 4 comprehensive guides
+
+- **Component Architecture** (1,794 lines) - Widget scopes, responsive grids, visibility rules, infolist integration
+- **Best Practices** (1,728 lines) - Performance, caching, authorization, testing patterns
+- **Widgets Guide** (1,241 lines) - Stats, charts, tables, custom widgets, polling, deferred loading
+- **Migration Guide** (387 lines) - Breaking changes, namespace updates, upgrade checklist
+
+**Last Audit:** December 17, 2025 - Based on official Filament v4.x documentation via Firecrawl
+
+---
+
 ## 🔧 Bug Fixes & Solutions
 
 **Directory:** [`fixes/`](./fixes/)
