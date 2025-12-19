@@ -29,6 +29,7 @@ services:
       - SESSION_DRIVER=redis
       - GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
       - GOOGLE_MAPS_MAP_ID=${GOOGLE_MAPS_MAP_ID}
+      - FILESYSTEM_DISK=public
 
   mysql:
     image: mysql:8.0
@@ -104,6 +105,7 @@ services:
       - MAIL_FROM_NAME=${MAIL_FROM_NAME}
       - GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
       - GOOGLE_MAPS_MAP_ID=${GOOGLE_MAPS_MAP_ID}
+      - FILESYSTEM_DISK=public
     depends_on:
       - app
       - redis
@@ -129,6 +131,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_CLIENT=phpredis
+      - FILESYSTEM_DISK=public
     depends_on:
       - app
       - mysql
