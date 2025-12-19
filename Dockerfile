@@ -69,10 +69,21 @@ RUN docker-php-ext-configure gd --with-jpeg && \
 RUN pecl install redis && \
     docker-php-ext-enable redis
 
-# Copy OPcache configuration based on OPCACHE_MODE
-# Local development: opcache-dev.ini (validate_timestamps=On)
-# Production: Skip file (use PHP defaults: validate_timestamps=Off)
+# Copy PHP configuration files
+# - OPcache: Mode-dependent (dev vs production)
+# - Upload limits: Always applied (10MB for Filament file uploads)
 COPY docker/php/ /tmp/php-config/
+
+# Apply upload limits configuration (ALWAYS)
+RUN if [ -f "/tmp/php-config/uploads.ini" ]; then \
+        cp /tmp/php-config/uploads.ini /usr/local/etc/php/conf.d/uploads.ini; \
+        chmod 644 /usr/local/etc/php/conf.d/uploads.ini; \
+        echo "✓ Upload limits configured (10MB)"; \
+    else \
+        echo "⚠ uploads.ini not found, using PHP defaults"; \
+    fi
+
+# Apply OPcache configuration (MODE-DEPENDENT)
 RUN if [ "$OPCACHE_MODE" = "dev" ]; then \
         if [ -f "/tmp/php-config/opcache-dev.ini" ]; then \
             cp /tmp/php-config/opcache-dev.ini /usr/local/etc/php/conf.d/opcache.ini; \
@@ -82,11 +93,11 @@ RUN if [ "$OPCACHE_MODE" = "dev" ]; then \
         fi; \
     else \
         echo "✓ Using default OPcache production settings (validate_timestamps=Off)"; \
-    fi && \
-    rm -rf /tmp/php-config
+    fi
 
-# Cleanup
-RUN apk del .build-deps
+# Cleanup temporary files and build dependencies
+RUN rm -rf /tmp/php-config && \
+    apk del .build-deps
 
 # Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
