@@ -128,6 +128,35 @@ Complete SMS notification system with SMSAPI.pl integration.
 
 ---
 
+### Invoice PDF Generation System
+**Status:** 📋 PLANNED (pending budget approval) | **Docs:** [`features/invoice-pdf-system/`](./features/invoice-pdf-system/) | **Estimate:** 1,700 PLN
+
+Automatic VAT invoice PDF generation for appointments with invoice data requested.
+
+- **[Overview & Quick Start](./features/invoice-pdf-system/README.md)** - Feature documentation
+- **[Installation Guide](./features/invoice-pdf-system/installation.md)** - Step-by-step deployment (30 min)
+- **[Architecture](./features/invoice-pdf-system/architecture.md)** - Technical details & data flow
+- **[Implementation Plan](./features/invoice-pdf-system/implementation-plan.md)** - Complete scope of work
+- **[Commercial Estimate](./estimates/wycena-kompletny-system-faktur-3200-pln.md)** - Client pricing (3,200 PLN total)
+- **[Retrospective Analysis](./estimates/analiza-retrospektywna-etap-1-invoice-data.md)** - Etap 1 cost review
+
+**Key Features:**
+- Automatic invoice numbering (FV/YYYY/MM/XXXX)
+- PDF generation (Spatie Laravel-PDF + mPDF fallback)
+- Price snapshot at booking (historical accuracy)
+- Authorization (customer/admin/assigned staff)
+- Rate limiting (10 downloads/min)
+- Filament integration (Settings tab + download action)
+- Customer panel download button
+
+**ROI:**
+- Investment: 1,700 PLN
+- Monthly savings: 755 PLN
+- Annual ROI: 283%
+- Payback period: 4.2 months (~20 days)
+
+---
+
 ### Content Management System (CMS)
 **Status:** ✅ Production Ready | **Docs:** [`features/cms-system/`](./features/cms-system/)
 

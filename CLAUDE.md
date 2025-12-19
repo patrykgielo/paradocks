@@ -284,6 +284,27 @@ Places Autocomplete for accurate location capture in booking wizard.
 Centralized settings management via Filament admin panel.
 **See:** [Settings System](app/docs/features/settings-system/README.md)
 
+### Invoice PDF Generation System
+**Status:** 📋 PLANNED (pending budget - 1,700 PLN) | **ROI:** 283% annually
+
+Automatic VAT invoice PDF generation for appointments with invoice data. Generates professional Polish Faktura VAT on-the-fly (no disk storage).
+
+**Key Features:**
+- Automatic numbering (FV/YYYY/MM/XXXX)
+- PDF engines: Spatie Laravel-PDF (Puppeteer) + mPDF fallback
+- Price snapshot at booking (historical accuracy)
+- Authorization: customer/admin/assigned staff
+- Rate limiting (10 downloads/min)
+- Filament integration (Settings tab for company data + download action)
+- Customer panel download button
+
+**See:**
+- [Complete Documentation](app/docs/features/invoice-pdf-system/README.md)
+- [Installation Guide](app/docs/features/invoice-pdf-system/installation.md) - 30-min deployment
+- [Architecture](app/docs/features/invoice-pdf-system/architecture.md) - Technical deep-dive
+- [Implementation Plan](app/docs/features/invoice-pdf-system/implementation-plan.md) - Full scope
+- [Commercial Estimate](app/docs/estimates/wycena-kompletny-system-faktur-3200-pln.md) - Client pricing
+
 ### Booking System
 Multi-step wizard for appointment booking with validation.
 **See:** [Booking System](app/docs/features/booking-system/README.md)
