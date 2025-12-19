@@ -242,6 +242,57 @@ command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-CHANGE_ME
 | `SESSION_LIFETIME` | No | 120 | Session lifetime in minutes |
 | `SESSION_ENCRYPT` | No | false | Encrypt session data (not needed with HTTPS) |
 
+### File Storage
+
+| Variable | Required | Default | Production Value | Description |
+|----------|----------|---------|------------------|-------------|
+| `FILESYSTEM_DISK` | **YES** | local | **public** | **CRITICAL: Storage disk for file uploads** |
+
+**⚠️ CRITICAL CONFIGURATION:**
+
+`FILESYSTEM_DISK` determines where uploaded files (images, documents) are stored. **This setting MUST be `public` for both local AND production environments.**
+
+**Valid Options:**
+- **`public`** (REQUIRED):
+  - Files stored in `storage/app/public`
+  - Accessible via `/storage` URL (requires `php artisan storage:link`)
+  - **USE THIS FOR ALL ENVIRONMENTS**
+
+- **`local`** (NEVER use):
+  - Files stored in `storage/app/private`
+  - NOT publicly accessible
+  - **Causes file upload failures in Filament admin panel**
+  - **DO NOT USE THIS**
+
+**Common Production Error:**
+
+Setting `FILESYSTEM_DISK=local` on production breaks ALL file uploads:
+- CMS image uploads (Pages, Posts, Promotions, Portfolio)
+- Filament Builder blocks (Hero Section backgrounds, Content Grid images)
+- User profile avatars
+- All Filament forms with file upload fields
+
+**Error Message:**
+```
+The data.content.xxx.background_image.xxx failed to upload.
+```
+
+**Root Cause:**
+Files uploaded to `storage/app/private` (local disk) cannot be accessed via public URLs.
+
+**Fix:**
+```bash
+# On production server
+sed -i 's/FILESYSTEM_DISK=local/FILESYSTEM_DISK=public/' .env
+docker compose -f docker-compose.prod.yml restart app horizon
+docker compose -f docker-compose.prod.yml exec -T app php artisan config:clear
+```
+
+**Deployment Checklist:**
+- ✅ Verify `.env` has `FILESYSTEM_DISK=public`
+- ✅ Run `php artisan storage:link` after deployment
+- ✅ Test file upload in Filament admin panel
+
 ---
 
 ## Database Environment Variables
@@ -498,6 +549,14 @@ QUEUE_CONNECTION=redis
 CACHE_DRIVER=redis
 SESSION_DRIVER=redis
 SESSION_LIFETIME=120
+
+#############################################################################
+# File Storage (CRITICAL!)
+#############################################################################
+# ⚠️ MUST BE 'public' FOR PRODUCTION (enables file uploads in Filament)
+# NEVER set to 'local' - breaks all file uploads!
+FILESYSTEM_DISK=public
+BROADCAST_CONNECTION=log
 
 #############################################################################
 # Email (Gmail SMTP)

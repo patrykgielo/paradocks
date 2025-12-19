@@ -231,10 +231,41 @@ REDIS_CLIENT=phpredis
 REDIS_HOST=redis
 REDIS_PASSWORD=your-redis-password
 
+# File Storage (CRITICAL - Different for Local vs Production!)
+# Local Development: FILESYSTEM_DISK=public
+# Production: FILESYSTEM_DISK=public
+# ⚠️ NEVER set to 'local' in production - breaks file uploads!
+# 'public' → storage/app/public (publicly accessible via /storage)
+# 'local' → storage/app/private (NOT publicly accessible, causes upload failures)
+FILESYSTEM_DISK=public
+
 # Google Maps
 GOOGLE_MAPS_API_KEY=AIzaSy...
 GOOGLE_MAPS_MAP_ID=your_map_id
 ```
+
+**⚠️ CRITICAL - FILESYSTEM_DISK Configuration:**
+
+This setting determines where uploaded files (images, documents) are stored:
+
+- **`public`** (REQUIRED for both local AND production):
+  - Files stored in `storage/app/public`
+  - Accessible via `/storage` URL (after `php artisan storage:link`)
+  - **USE THIS FOR ALL ENVIRONMENTS**
+
+- **`local`** (NEVER use in production):
+  - Files stored in `storage/app/private`
+  - NOT publicly accessible
+  - Causes file upload failures in Filament admin panel
+  - **DO NOT USE THIS**
+
+**Common Error:** Setting `FILESYSTEM_DISK=local` on production breaks all file uploads in:
+- CMS image uploads (Pages, Posts, Promotions, Portfolio)
+- Filament Builder blocks (Hero Section background images, Content Grid images)
+- User profile avatars
+- Any Filament form with file upload fields
+
+**Deployment Checklist:** Always verify production `.env` has `FILESYSTEM_DISK=public` before deploying.
 
 ## Feature Documentation
 
@@ -337,6 +368,43 @@ resources/css/app.css:
 ```
 
 **See:** [Production Build Guide](app/docs/guides/production-build.md)
+
+## Deployment Validation
+
+**⚠️ ALWAYS validate environment before deployment!**
+
+```bash
+# Validate production environment on server
+ssh root@72.60.17.138 "cd /var/www/paradocks && source .env && ./scripts/validate-env.sh production"
+
+# Validate local environment
+source .env && ./scripts/validate-env.sh local
+```
+
+**Validation Script Checks:**
+- ✅ FILESYSTEM_DISK=public (prevents upload failures)
+- ✅ APP_KEY set and valid format
+- ✅ Database credentials configured
+- ✅ Queue/Cache using Redis (production)
+- ✅ Storage symlink exists
+- ✅ External services (Google Maps, Email)
+
+**Exit Codes:**
+- `0` - All validations passed
+- `1` - Validation failures (must fix before deploying)
+- `2` - Script usage error
+
+**Pre-Deployment Checklist:**
+```bash
+# 1. Validate environment
+./scripts/validate-env.sh production
+
+# 2. Verify critical settings
+grep FILESYSTEM_DISK .env  # Must be 'public'
+grep APP_DEBUG .env         # Must be 'false' for production
+
+# 3. Test file uploads in admin panel after deployment
+```
 
 ## Git Workflow
 

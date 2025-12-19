@@ -17,6 +17,7 @@ services:
     environment:
       - APP_URL=https://paradocks.local
       - DB_HOST=mysql  # Use Docker service name
+      - FILESYSTEM_DISK=public  # CRITICAL: Enables file uploads in Filament
     depends_on:
       - mysql
 
