@@ -30,6 +30,7 @@ services:
       - FILESYSTEM_DISK=public
       - GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
       - GOOGLE_MAPS_MAP_ID=${GOOGLE_MAPS_MAP_ID}
+      - FILESYSTEM_DISK=public
 
   mysql:
     image: mysql:8.0
@@ -106,6 +107,7 @@ services:
       - MAIL_FROM_NAME=${MAIL_FROM_NAME}
       - GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
       - GOOGLE_MAPS_MAP_ID=${GOOGLE_MAPS_MAP_ID}
+      - FILESYSTEM_DISK=public
     depends_on:
       - app
       - redis
