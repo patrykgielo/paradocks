@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.6.0] - 2025-12-20
+
+### Added
+- **Commercial Estimate Specialist Agent**
+  - Professional IT project pricing estimates with ROI analysis
+  - Retrospective analysis (completed work via Git history)
+  - Forward-looking estimates (future work projections)
+  - Hybrid estimates (completed + future phases)
+  - LOC counting and complexity assessment
+  - Polish IT market benchmarking
+  - ROI calculations (optional, for replacements only)
+  - Location: `.claude/agents/commercial-estimate-specialist.md`
+
 ## [4.2.0] - 2025-12-14
 
 ### Added
