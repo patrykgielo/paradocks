@@ -12,6 +12,12 @@ services:
       - storage-logs:/var/www/storage/logs
     networks:
       - paradocks-prod
+    healthcheck:
+      test: ["CMD-SHELL", "php artisan inspire || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     environment:
       - APP_ENV=production
       - APP_KEY=${APP_KEY}
@@ -44,6 +50,11 @@ services:
       - mysql_data:/var/lib/mysql
     networks:
       - paradocks-prod
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   redis:
     image: redis:7.2-alpine
@@ -53,6 +64,11 @@ services:
       - redis_data:/data
     networks:
       - paradocks-prod
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
 
   nginx:
     image: nginx:1.25-alpine
@@ -72,6 +88,11 @@ services:
       - paradocks-prod
     depends_on:
       - app
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:80"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
 
   horizon:
     image: ghcr.io/patrykgielo/paradocks:latest

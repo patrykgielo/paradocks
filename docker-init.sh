@@ -63,6 +63,12 @@ docker compose exec app php artisan key:generate --no-interaction
 echo "Running database migrations and seeders..."
 docker compose exec app php artisan migrate:fresh --seed --no-interaction
 
+# Create Livewire temporary upload directory
+echo "Creating Livewire temporary upload directory..."
+docker compose exec app mkdir -p storage/app/livewire-tmp
+docker compose exec app chmod 775 storage/app/livewire-tmp
+echo "✓ Livewire tmp directory created"
+
 echo ""
 echo "Setup completed successfully!"
 echo ""

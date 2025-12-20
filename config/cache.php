@@ -13,6 +13,10 @@ return [
     | framework. This connection is utilized if another isn't explicitly
     | specified when running a cache operation inside the application.
     |
+    | IMPORTANT: For PRODUCTION, use 'redis' for best performance.
+    | Database cache requires SQL queries for every cache operation (slow).
+    | Set CACHE_STORE=redis in .env for production deployments.
+    |
     */
 
     'default' => env('CACHE_STORE', 'database'),

@@ -14,9 +14,13 @@ return [
     | the connection which will be utilized unless another connection
     | is explicitly specified when you execute a query / statement.
     |
+    | IMPORTANT: Default changed from 'sqlite' to 'mysql' to prevent
+    | v0.2.5 disaster (app fell back to SQLite when DB_CONNECTION missing).
+    | This ensures the app fails loudly instead of silently switching DBs.
+    |
     */
 
-    'default' => env('DB_CONNECTION', 'sqlite'),
+    'default' => env('DB_CONNECTION', 'mysql'),
 
     /*
     |--------------------------------------------------------------------------

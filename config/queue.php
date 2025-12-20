@@ -11,6 +11,10 @@ return [
     | API, giving you convenient access to each backend using identical
     | syntax for each. The default queue connection is defined below.
     |
+    | IMPORTANT: For PRODUCTION, use 'redis' for best performance.
+    | Database queue requires constant polling (inefficient, high DB load).
+    | Set QUEUE_CONNECTION=redis in .env for production deployments.
+    |
     */
 
     'default' => env('QUEUE_CONNECTION', 'database'),

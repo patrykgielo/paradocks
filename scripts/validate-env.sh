@@ -232,6 +232,26 @@ fi
 echo ""
 
 ###############################################################################
+# Logging Configuration
+###############################################################################
+
+echo "━━━ Logging ━━━"
+
+if [ "$ENV" == "production" ]; then
+    LOG_STACK="${LOG_STACK:-single}"
+    if [ "$LOG_STACK" == "single" ]; then
+        warn "LOG_STACK=single in production (use 'daily' for log rotation to prevent disk fill)"
+    fi
+
+    LOG_LEVEL="${LOG_LEVEL:-debug}"
+    if [ "$LOG_LEVEL" != "error" ] && [ "$LOG_LEVEL" != "warning" ]; then
+        warn "LOG_LEVEL=$LOG_LEVEL in production (use 'error' or 'warning' for performance)"
+    fi
+fi
+
+echo ""
+
+###############################################################################
 # Results Summary
 ###############################################################################
 

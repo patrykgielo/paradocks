@@ -92,7 +92,12 @@ RUN if [ "$OPCACHE_MODE" = "dev" ]; then \
             echo "⚠ opcache-dev.ini not found, using defaults"; \
         fi; \
     else \
-        echo "✓ Using default OPcache production settings (validate_timestamps=Off)"; \
+        if [ -f "/tmp/php-config/opcache-prod.ini" ]; then \
+            cp /tmp/php-config/opcache-prod.ini /usr/local/etc/php/conf.d/opcache.ini; \
+            echo "✓ OPcache production config installed (optimized for max performance)"; \
+        else \
+            echo "⚠ opcache-prod.ini not found, using PHP defaults"; \
+        fi; \
     fi
 
 # Cleanup temporary files and build dependencies
