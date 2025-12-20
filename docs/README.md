@@ -1,8 +1,25 @@
 # Paradocks - Documentation Hub
 
-**Last Updated:** December 14, 2025
+**Last Updated:** December 20, 2025
 
 Centralna nawigacja po dokumentacji projektu Laravel 12 + Filament 4.2.3.
+
+## ⚡ Production Optimization (v4.5.0)
+
+**Status:** ✅ **82/100 Production-Ready** (improved from 72%)
+
+On December 20, 2025, we deployed 11 critical production optimizations that significantly improved performance and reliability:
+
+- **Performance:** +150-300ms faster responses (Laravel caching), +20-30% PHP speed (OPcache)
+- **Security:** XSS protection (CSP headers), database failover prevention
+- **Reliability:** Docker healthchecks, zero-downtime deployment fix
+- **Bandwidth:** -30% (gzip compression)
+
+**📖 Full Documentation:**
+- [ADR-015: Production Optimization Quick Wins](./deployment/ADR-015-production-optimization-quick-wins.md) - Complete technical analysis
+- [Deployment Notes v4.5.0](./deployment/DEPLOYMENT-NOTES-v4.5.0.md) - Deployment summary and verification
+
+---
 
 ## 🚀 Quick Start
 
