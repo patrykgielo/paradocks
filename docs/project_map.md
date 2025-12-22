@@ -1,6 +1,6 @@
 # Project Map - Paradocks Booking System
 
-**Last Updated:** 2025-11-30
+**Last Updated:** 2025-12-23
 **Laravel Version:** 12.32.5
 **PHP Version:** 8.2+
 **Node.js:** 20.19 LTS
@@ -55,6 +55,7 @@ This project maintains comprehensive documentation in `/var/www/projects/paradoc
 | **Customer Profile** | [customer-profile/README.md](features/customer-profile/README.md) | ✅ Complete |
 | **Maintenance Mode** | [maintenance-mode/README.md](features/maintenance-mode/README.md) | ✅ Complete |
 | **Settings System** | [settings-system/README.md](features/settings-system/README.md) | ✅ Complete |
+| **Discount System** | [discount-system/README.md](features/discount-system/README.md) | ✅ Complete (MVP) |
 
 ### Operational Guides
 
