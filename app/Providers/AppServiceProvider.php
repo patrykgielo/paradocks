@@ -6,6 +6,7 @@ namespace App\Providers;
 
 use App\Events\AdminCreatedUser;
 use App\Events\AppointmentCancelled;
+use App\Events\AppointmentCompleted;
 use App\Events\AppointmentConfirmed;
 use App\Events\AppointmentCreated;
 use App\Events\AppointmentFollowUp;
@@ -194,6 +195,9 @@ class AppServiceProvider extends ServiceProvider
                 new AppointmentFollowUpNotification($event->appointment)
             );
         });
+
+        // Appointment Completed - Generate reward coupon
+        Event::listen(AppointmentCompleted::class, \App\Listeners\GenerateRewardCoupon::class);
 
         // ========== SECURITY: SESSION REGENERATION ==========
 
