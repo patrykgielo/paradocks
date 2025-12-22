@@ -20,6 +20,14 @@ class CouponResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
+    protected static ?string $navigationLabel = 'Kody rabatowe';
+
+    protected static ?string $modelLabel = 'Kod rabatowy';
+
+    protected static ?string $pluralModelLabel = 'Kody rabatowe';
+
+    protected static ?string $navigationGroup = 'Marketing';
+
     public static function form(Schema $schema): Schema
     {
         return CouponForm::configure($schema);

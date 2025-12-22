@@ -20,6 +20,14 @@ class InfluencerResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
+    protected static ?string $navigationLabel = 'Influencerzy';
+
+    protected static ?string $modelLabel = 'Influencer';
+
+    protected static ?string $pluralModelLabel = 'Influencerzy';
+
+    protected static ?string $navigationGroup = 'Marketing';
+
     public static function form(Schema $schema): Schema
     {
         return InfluencerForm::configure($schema);
@@ -33,7 +41,7 @@ class InfluencerResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            \App\Filament\Resources\Influencers\RelationManagers\CouponsRelationManager::class,
         ];
     }
 
