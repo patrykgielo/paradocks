@@ -50,6 +50,11 @@ class Appointment extends Model
             if ($appointment->isDirty('status') && $appointment->status === 'cancelled') {
                 event(new AppointmentCancelled($appointment));
             }
+
+            // Detect appointment completion (status change to 'completed')
+            if ($appointment->isDirty('status') && $appointment->status === 'completed') {
+                event(new \App\Events\AppointmentCompleted($appointment));
+            }
         });
     }
 
@@ -87,6 +92,11 @@ class Appointment extends Model
         'phone',
         'notify_email',
         'notify_sms',
+        // Pricing fields
+        'subtotal_amount',
+        'discount_amount',
+        'total_amount',
+        'coupon_id',
     ];
 
     protected $casts = [
@@ -100,6 +110,9 @@ class Appointment extends Model
         'sent_24h_reminder_sms' => 'boolean',
         'sent_2h_reminder_sms' => 'boolean',
         'sent_followup_sms' => 'boolean',
+        'subtotal_amount' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
+        'total_amount' => 'decimal:2',
     ];
 
     // Relationships
@@ -131,6 +144,16 @@ class Appointment extends Model
     public function carModel()
     {
         return $this->belongsTo(CarModel::class);
+    }
+
+    public function coupon()
+    {
+        return $this->belongsTo(Coupon::class);
+    }
+
+    public function couponUsages()
+    {
+        return $this->hasMany(CouponUsage::class);
     }
 
     // Scopes
