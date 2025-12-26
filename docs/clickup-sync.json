@@ -1,11 +1,15 @@
 {
-  "workspace_id": "TBD_SETUP_REQUIRED",
-  "default_space_id": "TBD_SETUP_REQUIRED",
+  "workspace_id": "9015419555",
+  "default_space_id": "90157366429",
   "default_lists": {
-    "backlog": "TBD_GET_FROM_CLICKUP",
-    "current_sprint": "TBD_GET_FROM_CLICKUP",
-    "bugs": "TBD_GET_FROM_CLICKUP",
-    "done": "TBD_GET_FROM_CLICKUP"
+    "backlog": "901516385496",
+    "current_sprint": "901516385496",
+    "bugs": "901517641347",
+    "done": "901516385496"
+  },
+  "available_statuses": {
+    "list_901516385496": ["planning", "to do", "in progress", "ready to dev", "ready to test", "approved", "complete", "cancelled"],
+    "list_901517641347": ["Open", "triage", "in progress", "need info", "testiing", "cannot reproduce", "not a bug", "Closed"]
   },
   "task_templates": {
     "feature_epic": {
@@ -63,95 +67,7 @@
     "git_branch": "TBD_GET_FROM_CLICKUP"
   },
   "commit_task_map": {},
-  "last_updated": "2025-12-26T10:00:00Z",
+  "last_updated": "2025-12-26T15:30:00Z",
   "version": "1.0",
-  "_setup_instructions": {
-    "overview": "This file is the single source of truth for ClickUp integration. Complete setup before using clickup-task-manager agent.",
-    "step_1": {
-      "task": "Get workspace ID and hierarchy",
-      "command": "@clickup-task-manager Show workspace structure",
-      "description": "This will call mcp__clickup__clickup_get_workspace_hierarchy and display your workspace, spaces, and lists."
-    },
-    "step_2": {
-      "task": "Create or identify Space for Paradocks project",
-      "action": "In ClickUp web UI, create a new Space called 'Paradocks Project' or identify existing space to use",
-      "note": "Copy the Space ID from the workspace hierarchy output"
-    },
-    "step_3": {
-      "task": "Create Lists in Space",
-      "required_lists": [
-        "Backlog - For unscheduled tasks",
-        "Current Sprint - For active sprint tasks",
-        "Bugs - For bug tracking",
-        "Done - For completed tasks"
-      ],
-      "note": "Copy each List ID from the workspace hierarchy output"
-    },
-    "step_4": {
-      "task": "Create Custom Fields in Space",
-      "required_fields": [
-        {
-          "name": "Story Points",
-          "type": "number",
-          "description": "Effort estimate in story points"
-        },
-        {
-          "name": "Component",
-          "type": "dropdown",
-          "options": ["Backend", "Frontend", "DevOps", "Docs", "Testing"],
-          "description": "System component this task relates to"
-        },
-        {
-          "name": "Related ADR",
-          "type": "text",
-          "description": "Architecture Decision Record reference (e.g., ADR-015)"
-        },
-        {
-          "name": "PR Link",
-          "type": "url",
-          "description": "GitHub Pull Request URL"
-        },
-        {
-          "name": "Git Branch",
-          "type": "text",
-          "description": "Feature branch name"
-        }
-      ],
-      "note": "In ClickUp: Space Settings → Custom Fields → Add Field. Copy field IDs after creation."
-    },
-    "step_5": {
-      "task": "Update this file with real IDs",
-      "fields_to_update": [
-        "workspace_id",
-        "default_space_id",
-        "default_lists.backlog",
-        "default_lists.current_sprint",
-        "default_lists.bugs",
-        "default_lists.done",
-        "custom_fields.story_points",
-        "custom_fields.component",
-        "custom_fields.related_adr",
-        "custom_fields.pr_link",
-        "custom_fields.git_branch"
-      ],
-      "example": {
-        "workspace_id": "12345678",
-        "default_space_id": "space_abc123def",
-        "default_lists": {
-          "backlog": "list_001xyz",
-          "current_sprint": "list_002xyz"
-        }
-      }
-    },
-    "step_6": {
-      "task": "Remove this _setup_instructions key",
-      "action": "Delete the entire '_setup_instructions' object from this JSON file",
-      "note": "After setup complete, this section is no longer needed"
-    },
-    "verification": {
-      "test_command": "@clickup-task-manager Create task: Test ClickUp integration",
-      "expected_result": "Task created successfully in ClickUp with URL returned",
-      "troubleshooting": "If error occurs, check that all TBD values are replaced with real IDs from ClickUp"
-    }
-  }
+  "_note": "Custom fields IDs to be added after creation in ClickUp Space settings"
 }
