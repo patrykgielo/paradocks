@@ -60,7 +60,7 @@
          class="mb-12">
 
         <!-- Progress Header -->
-        <div class="bg-white rounded-xl shadow-lg p-6 md:p-8 mb-8">
+        <div class="bg-white rounded-lg shadow-lg p-6 md:p-8 mb-8">
             <h1 class="text-2xl md:text-3xl font-bold text-gray-900 mb-6 text-center">
                 Rezerwacja: <span class="text-primary-600" data-service-name>{{ $service->name }}</span>
             </h1>
@@ -90,7 +90,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Step Content -->
             <div class="lg:col-span-2">
-                <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+                <div class="bg-white rounded-lg shadow-lg p-6 md:p-8">
 
                     <!-- Step 1: Service Confirmation -->
                     <div data-step="1" style="display: block;">
@@ -616,7 +616,7 @@
                             </div>
 
                             <!-- Price Summary -->
-                            <div class="bg-gradient-to-r from-primary-50 to-accent-50 rounded-lg p-6 border-2 border-primary-200">
+                            <div class="bg-primary-50 rounded-lg p-6 border-2 border-primary-200">
                                 <div class="flex items-center justify-between">
                                     <span class="text-lg font-semibold text-gray-900">Całkowity Koszt:</span>
                                     <span class="text-3xl font-bold text-primary-600" id="summary-price">0 zł</span>
@@ -679,7 +679,7 @@
 
             <!-- Sidebar Summary (Sticky) -->
             <div class="lg:col-span-1">
-                <div class="bg-white rounded-xl shadow-lg p-6 sticky top-8">
+                <div class="bg-white rounded-lg shadow-lg p-6 sticky top-8">
                     <h3 class="text-lg font-bold text-gray-900 mb-4">Twoja Rezerwacja</h3>
 
                     <div class="space-y-4">

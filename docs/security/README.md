@@ -40,6 +40,11 @@
 - [Initial Baseline (2025-11-30)](audit-reports/2025-11-30-initial-baseline.md) - First security scan
 - [Pre-Deployment Audits](audit-reports/) - Historical security checks
 
+### 🔧 Security Fixes
+
+- [SECURITY-FIX-001: Booking Confirmation ID Exposure](SECURITY-FIX-001-booking-confirmation.md) - Session-based confirmation (2025-12-12)
+- [SECURITY-FIX-002: Service Area Cleanup](SECURITY-FIX-002-service-area-cleanup.md) - Data integrity & seeder idempotency (2025-12-14)
+
 ### 🎯 Project-Specific Patterns
 
 **Paradocks Security Patterns**:
@@ -303,6 +308,13 @@ Ask agent: "Fix VULN-001" (hands off to laravel-senior-architect)
 ---
 
 ## Changelog
+
+### 2025-12-12 - Critical Security Fix
+- **FIXED:** SECURITY-FIX-001 - Booking confirmation ID exposure vulnerability
+- Replaced sequential ID URLs with single-use session tokens
+- Fixed authorization bug (user_id vs customer_id)
+- Enhanced confirmation page UX with improved navigation
+- GDPR compliance restored (no personal data exposure)
 
 ### 2025-11-30 - Initial Setup
 - Created security documentation structure

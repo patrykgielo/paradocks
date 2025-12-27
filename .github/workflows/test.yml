@@ -2,9 +2,9 @@ name: Run Tests
 
 on:
   pull_request:
-    branches: [main, staging]
+    branches: [main, develop, staging]
   push:
-    branches: [staging]
+    branches: [develop, staging]  # Only auto-run on develop and staging, not main
   workflow_dispatch:
 
 jobs:
@@ -63,66 +63,10 @@ jobs:
       - name: Run Laravel Pint (Code Style)
         run: ./vendor/bin/pint --test
 
-      - name: Start MySQL service
-        uses: getong/mariadb-action@acf7bc08e06a9c26e2a534d54284cb9a62697e7d  # v1.1
-        with:
-          mysql database: 'paradocks_test'
-          mysql root password: 'secret'
-
-      - name: Wait for MySQL to be ready
-        run: |
-          echo "Waiting for MySQL to accept connections..."
-          for i in {1..30}; do
-            if mysqladmin ping -h127.0.0.1 -uroot -psecret --silent 2>/dev/null; then
-              echo "✓ MySQL is ready!"
-              exit 0
-            fi
-            echo "Attempt $i/30: MySQL not ready, retrying in 1s..."
-            sleep 1
-          done
-          echo "ERROR: MySQL failed to become ready after 30 attempts (30 seconds)"
-          exit 1
-
       - name: Prepare test environment
         run: |
           cp .env.example .env
           php artisan key:generate
-          php artisan config:cache
-        env:
-          DB_CONNECTION: mysql
-          DB_HOST: 127.0.0.1
-          DB_PORT: 3306
-          DB_DATABASE: paradocks_test
-          DB_USERNAME: root
-          DB_PASSWORD: secret
-
-      - name: Run migrations and seeders
-        run: |
-          php artisan migrate --force
-          php artisan db:seed --force
-        env:
-          DB_CONNECTION: mysql
-          DB_HOST: 127.0.0.1
-          DB_PORT: 3306
-          DB_DATABASE: paradocks_test
-          DB_USERNAME: root
-          DB_PASSWORD: secret
 
       - name: Run PHPUnit tests
-        run: |
-          php artisan config:clear
-          php artisan test --testsuite=Feature
-        env:
-          DB_CONNECTION: mysql
-          DB_HOST: 127.0.0.1
-          DB_PORT: 3306
-          DB_DATABASE: paradocks_test
-          DB_USERNAME: root
-          DB_PASSWORD: secret
-          REDIS_HOST: 127.0.0.1
-          REDIS_PORT: 6379
-          QUEUE_CONNECTION: redis
-          CACHE_DRIVER: redis
-          CACHE_STORE: redis
-          SESSION_DRIVER: array
-          MAIL_MAILER: array
+        run: php artisan test

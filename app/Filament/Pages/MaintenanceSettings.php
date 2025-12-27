@@ -35,13 +35,13 @@ class MaintenanceSettings extends Page implements HasForms
 
     protected string $view = 'filament.pages.maintenance-settings';
 
-    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-wrench-screwdriver';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-wrench';
 
-    protected static string|UnitEnum|null $navigationGroup = 'System';
+    protected static string|UnitEnum|null $navigationGroup = 'system';
 
     protected static ?string $navigationLabel = 'Maintenance Mode';
 
-    protected static ?int $navigationSort = 10;
+    protected static ?int $navigationSort = 1;
 
     protected static ?string $title = 'Maintenance Mode';
 

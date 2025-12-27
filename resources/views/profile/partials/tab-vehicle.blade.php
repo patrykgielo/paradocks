@@ -21,7 +21,7 @@
                         {{ __('Typ pojazdu') }} <span class="text-red-500">*</span>
                     </label>
                     <select name="vehicle_type_id" id="vehicle_type_id"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                             required>
                         <option value="">{{ __('Wybierz typ') }}</option>
                         @foreach($vehicleTypes as $type)
@@ -42,7 +42,7 @@
                         {{ __('Marka') }}
                     </label>
                     <select name="car_brand_id" id="car_brand_id"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                         <option value="">{{ __('Wybierz markę lub wpisz własną') }}</option>
                         @foreach($carBrands as $brand)
                             <option value="{{ $brand->id }}"
@@ -61,7 +61,7 @@
                     <input type="text" name="custom_brand" id="custom_brand"
                            value="{{ old('custom_brand', $vehicle->custom_brand) }}"
                            placeholder="{{ __('Jeśli marki nie ma na liście') }}"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                 </div>
 
                 {{-- Custom Model --}}
@@ -72,7 +72,7 @@
                     <input type="text" name="custom_model" id="custom_model"
                            value="{{ old('custom_model', $vehicle->custom_model ?? $vehicle->carModel?->name) }}"
                            placeholder="{{ __('np. Golf, Civic, 3 Series') }}"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                 </div>
 
                 {{-- Year --}}
@@ -83,7 +83,7 @@
                     <input type="number" name="year" id="year"
                            value="{{ old('year', $vehicle->year) }}"
                            min="1900" max="{{ date('Y') + 1 }}"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                 </div>
 
                 {{-- Nickname --}}
@@ -94,7 +94,7 @@
                     <input type="text" name="nickname" id="nickname"
                            value="{{ old('nickname', $vehicle->nickname) }}"
                            placeholder="{{ __('np. Mój samochód służbowy') }}"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                 </div>
             </div>
 
@@ -104,7 +104,7 @@
                     {{ __('Usuń pojazd') }}
                 </button>
                 <button type="submit"
-                        class="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        class="px-6 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
                     {{ __('Zapisz zmiany') }}
                 </button>
             </div>
@@ -130,7 +130,7 @@
                             {{ __('Typ pojazdu') }} <span class="text-red-500">*</span>
                         </label>
                         <select name="vehicle_type_id" id="vehicle_type_id"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                                 required>
                             <option value="">{{ __('Wybierz typ') }}</option>
                             @foreach($vehicleTypes as $type)
@@ -150,7 +150,7 @@
                             {{ __('Marka') }}
                         </label>
                         <select name="car_brand_id" id="car_brand_id_new"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                             <option value="">{{ __('Wybierz markę lub wpisz własną') }}</option>
                             @foreach($carBrands as $brand)
                                 <option value="{{ $brand->id }}" {{ old('car_brand_id') == $brand->id ? 'selected' : '' }}>
@@ -168,7 +168,7 @@
                         <input type="text" name="custom_brand" id="custom_brand_new"
                                value="{{ old('custom_brand') }}"
                                placeholder="{{ __('Jeśli marki nie ma na liście') }}"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                     </div>
 
                     {{-- Custom Model --}}
@@ -179,7 +179,7 @@
                         <input type="text" name="custom_model" id="custom_model_new"
                                value="{{ old('custom_model') }}"
                                placeholder="{{ __('np. Golf, Civic, 3 Series') }}"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                     </div>
 
                     {{-- Year --}}
@@ -190,7 +190,7 @@
                         <input type="number" name="year" id="year_new"
                                value="{{ old('year') }}"
                                min="1900" max="{{ date('Y') + 1 }}"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                     </div>
 
                     {{-- Nickname --}}
@@ -201,13 +201,13 @@
                         <input type="text" name="nickname" id="nickname_new"
                                value="{{ old('nickname') }}"
                                placeholder="{{ __('np. Mój samochód służbowy') }}"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                     </div>
                 </div>
 
                 <div class="mt-6 flex justify-end">
                     <button type="submit"
-                            class="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                            class="px-6 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
                         {{ __('Dodaj pojazd') }}
                     </button>
                 </div>
@@ -219,8 +219,8 @@
         @endif
     @endif
 
-    <div class="mt-6 p-4 bg-blue-50 rounded-lg">
-        <p class="text-sm text-blue-700">
+    <div class="mt-6 p-4 bg-primary-50 rounded-lg">
+        <p class="text-sm text-primary-700">
             <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>

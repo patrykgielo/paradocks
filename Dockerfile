@@ -34,7 +34,8 @@ RUN apk add --no-cache \
     libzip \
     oniguruma \
     icu-libs \
-    libxml2
+    libxml2 \
+    sqlite-libs
 
 # Build dependencies
 RUN apk add --no-cache --virtual .build-deps \
@@ -44,12 +45,14 @@ RUN apk add --no-cache --virtual .build-deps \
     oniguruma-dev \
     icu-dev \
     libxml2-dev \
+    sqlite-dev \
     $PHPIZE_DEPS
 
-# Install PHP extensions (v0.3.5 + composer.lock requirements)
+# Install PHP extensions (v0.3.5 + composer.lock requirements + pdo_sqlite for tests)
 RUN docker-php-ext-configure gd --with-jpeg && \
     docker-php-ext-install -j$(nproc) \
     pdo_mysql \
+    pdo_sqlite \
     mbstring \
     intl \
     pcntl \

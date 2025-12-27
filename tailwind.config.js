@@ -1,4 +1,5 @@
 import daisyui from 'daisyui';
+import typography from '@tailwindcss/typography';
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -8,31 +9,32 @@ export default {
     './resources/**/*.vue',
   ],
   plugins: [
+    typography,
     daisyui,
   ],
   daisyui: {
     themes: [
       {
         ios: {
-          // Paradocks Brand Colors (Bentley Modern: 25% Saturation Sophisticated)
-          "primary": "#6B9FA8",        // Desaturated Cyan (25% sat, luxury automotive)
-          "secondary": "#2B2D2F",      // Warm Charcoal (dark primary)
-          "accent": "#8B7355",         // Bronze (premium touch)
+          // Paradocks Brand Colors (Medical Precision: 24% Saturation Monochrome)
+          "primary": "#4AA5B0",        // Turquoise accent (24% sat, from logo)
+          "secondary": "#2B2D2F",      // Warm Charcoal
+          "accent": "#4AA5B0",         // Same as primary (monochrome + accent)
           "success": "#34C759",        // iOS Green
           "warning": "#FF9500",        // iOS Orange
           "error": "#FF3B30",          // iOS Red
-          "info": "#6B9FA8",           // Desaturated Cyan
+          "info": "#4AA5B0",           // Turquoise
 
-          // Base colors (Warm & Sophisticated)
-          "base-100": "#FFFFFF",       // Pure White Background
-          "base-200": "#D4C5B0",       // Tan Leather (30% usage)
-          "base-300": "#E8DFD0",       // Light Tan
-          "base-content": "#2B2D2F",   // Warm Charcoal Text
+          // Neutral Base Colors (Monochrome Luxury)
+          "base-100": "#FFFFFF",       // Pure White
+          "base-200": "#F3F4F6",       // Light Gray (neutral-100)
+          "base-300": "#E5E7EB",       // Soft Gray (neutral-200)
+          "base-content": "#1F2937",   // Charcoal Text (neutral-800)
 
-          // Border radius (iOS-style)
-          "--rounded-box": "1.5rem",   // 24px for cards
-          "--rounded-btn": "9999px",   // Pill buttons
-          "--rounded-badge": "1rem",   // 16px badges
+          // Border radius (10px standard)
+          "--rounded-box": "0.625rem",   // 10px for cards
+          "--rounded-btn": "9999px",     // Pill buttons (preserve)
+          "--rounded-badge": "0.625rem", // 10px for badges
 
           // Animations
           "--animation-btn": "0.3s",

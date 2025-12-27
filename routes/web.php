@@ -5,7 +5,6 @@ use App\Http\Controllers\Api\SmsApiWebhookController;
 use App\Http\Controllers\Api\VehicleDataController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\BookingController;
-use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PortfolioController;
 use App\Http\Controllers\PostController;
@@ -19,7 +18,22 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
 // Public routes
-Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/', function () {
+    $settingsManager = app(\App\Support\Settings\SettingsManager::class);
+    $pageId = $settingsManager->get('cms.homepage_page_id');
+
+    if (! $pageId) {
+        return view('home-fallback');
+    }
+
+    $page = \App\Models\Page::find($pageId);
+
+    if (! $page || ! $page->isPublished()) {
+        abort(404, 'Homepage not found or not published');
+    }
+
+    return view('pages.show', compact('page'));
+})->name('home');
 
 // Health check endpoint (for CI/CD deployment verification)
 Route::get('/health', function () {
@@ -88,7 +102,7 @@ Route::prefix('api/webhooks')->name('webhooks.')->middleware('throttle:120,1')->
 Route::middleware(['auth'])->group(function () {
     // Booking (old single-page flow)
     Route::get('/services/{service}/book', [BookingController::class, 'create'])->name('booking.create');
-    Route::post('/booking/available-slots', [BookingController::class, 'getAvailableSlots'])->name('booking.slots');
+    Route::get('/booking/available-slots', [BookingController::class, 'getAvailableSlots'])->name('booking.slots');
 
     // Booking Wizard (new multi-step flow)
     Route::get('/booking/step/{step}', [BookingController::class, 'showStep'])->name('booking.step');
@@ -98,12 +112,13 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/booking/save-progress', [BookingController::class, 'saveProgress'])->name('booking.save-progress');
     Route::get('/booking/restore-progress', [BookingController::class, 'restoreProgress'])->name('booking.restore-progress');
 
-    // Calendar availability APIs
-    Route::get('/booking/unavailable-dates', [BookingController::class, 'getUnavailableDates'])->name('booking.unavailable-dates');
+    // Calendar availability endpoint (AJAX) - requires auth to match booking wizard access
+    Route::get('/booking/unavailable-dates', [BookingController::class, 'getUnavailableDates'])
+        ->name('booking.unavailable-dates');
 
-    // Booking confirmation
+    // Booking confirmation (SECURITY: No ID in URL, uses single-use session token)
     Route::post('/booking/confirm', [BookingController::class, 'confirm'])->name('booking.confirm');
-    Route::get('/booking/confirmation/{appointment}', [BookingController::class, 'showConfirmation'])->name('booking.confirmation');
+    Route::get('/booking/confirmation', [BookingController::class, 'showConfirmation'])->name('booking.confirmation');
     Route::get('/booking/ical/{appointment}', [BookingController::class, 'downloadIcal'])->name('booking.ical');
 
     // Appointments

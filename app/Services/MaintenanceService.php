@@ -15,13 +15,14 @@ use Illuminate\Support\Str;
 /**
  * MaintenanceService
  *
- * Manages application maintenance mode with Redis-based state storage.
+ * Manages application maintenance mode with cache-based state storage.
+ * Uses Redis in production, array cache in testing.
  * Singleton service registered in AppServiceProvider.
  */
 class MaintenanceService
 {
     /**
-     * Redis cache keys
+     * Cache keys
      */
     private const CACHE_KEY_MODE = 'maintenance:mode';
 
@@ -36,11 +37,26 @@ class MaintenanceService
     ) {}
 
     /**
+     * Get the cache store to use for maintenance mode.
+     * Uses 'redis' in production/development, falls back to default in testing.
+     */
+    private function cacheStore(): \Illuminate\Contracts\Cache\Repository
+    {
+        // In testing environment, use default cache (array)
+        if (app()->environment('testing')) {
+            return Cache::store();
+        }
+
+        // In production/development, use Redis
+        return Cache::store('redis');
+    }
+
+    /**
      * Check if maintenance mode is currently active.
      */
     public function isActive(): bool
     {
-        return Cache::store('redis')->has(self::CACHE_KEY_MODE);
+        return $this->cacheStore()->has(self::CACHE_KEY_MODE);
     }
 
     /**
@@ -48,7 +64,7 @@ class MaintenanceService
      */
     public function getType(): ?MaintenanceType
     {
-        $mode = Cache::store('redis')->get(self::CACHE_KEY_MODE);
+        $mode = $this->cacheStore()->get(self::CACHE_KEY_MODE);
 
         if (! $mode) {
             return null;
@@ -62,7 +78,7 @@ class MaintenanceService
      */
     public function getConfig(): array
     {
-        return Cache::store('redis')->get(self::CACHE_KEY_CONFIG, []);
+        return $this->cacheStore()->get(self::CACHE_KEY_CONFIG, []);
     }
 
     /**
@@ -106,7 +122,7 @@ class MaintenanceService
      */
     public function checkSecretToken(string $token): bool
     {
-        $storedToken = Cache::store('redis')->get(self::CACHE_KEY_SECRET_TOKEN);
+        $storedToken = $this->cacheStore()->get(self::CACHE_KEY_SECRET_TOKEN);
 
         if (! $storedToken) {
             return false;
@@ -129,13 +145,13 @@ class MaintenanceService
             $secretToken = $this->generateSecretToken();
         }
 
-        // Store in Redis (no TTL - manually disabled)
-        Cache::store('redis')->put(self::CACHE_KEY_MODE, $type->value);
-        Cache::store('redis')->put(self::CACHE_KEY_CONFIG, $config);
-        Cache::store('redis')->put(self::CACHE_KEY_ENABLED_AT, now()->toIso8601String());
+        // Store in cache (no TTL - manually disabled)
+        $this->cacheStore()->put(self::CACHE_KEY_MODE, $type->value);
+        $this->cacheStore()->put(self::CACHE_KEY_CONFIG, $config);
+        $this->cacheStore()->put(self::CACHE_KEY_ENABLED_AT, now()->toIso8601String());
 
         if ($secretToken) {
-            Cache::store('redis')->put(self::CACHE_KEY_SECRET_TOKEN, $secretToken);
+            $this->cacheStore()->put(self::CACHE_KEY_SECRET_TOKEN, $secretToken);
         }
 
         // Log event to database
@@ -170,11 +186,11 @@ class MaintenanceService
             return;
         }
 
-        // Remove from Redis
-        Cache::store('redis')->forget(self::CACHE_KEY_MODE);
-        Cache::store('redis')->forget(self::CACHE_KEY_CONFIG);
-        Cache::store('redis')->forget(self::CACHE_KEY_ENABLED_AT);
-        Cache::store('redis')->forget(self::CACHE_KEY_SECRET_TOKEN);
+        // Remove from cache
+        $this->cacheStore()->forget(self::CACHE_KEY_MODE);
+        $this->cacheStore()->forget(self::CACHE_KEY_CONFIG);
+        $this->cacheStore()->forget(self::CACHE_KEY_ENABLED_AT);
+        $this->cacheStore()->forget(self::CACHE_KEY_SECRET_TOKEN);
 
         // Log event
         $this->logEvent(
@@ -206,7 +222,7 @@ class MaintenanceService
             'type_label' => $type?->label(),
             'can_bypass' => $type?->canBypass(),
             'retry_after' => $type?->retryAfter(),
-            'enabled_at' => Cache::store('redis')->get(self::CACHE_KEY_ENABLED_AT),
+            'enabled_at' => $this->cacheStore()->get(self::CACHE_KEY_ENABLED_AT),
             'config' => $this->getConfig(),
         ];
     }
@@ -216,7 +232,7 @@ class MaintenanceService
      */
     public function getSecretToken(): ?string
     {
-        return Cache::store('redis')->get(self::CACHE_KEY_SECRET_TOKEN);
+        return $this->cacheStore()->get(self::CACHE_KEY_SECRET_TOKEN);
     }
 
     /**
@@ -226,7 +242,7 @@ class MaintenanceService
     {
         $newToken = $this->generateSecretToken();
 
-        Cache::store('redis')->put(self::CACHE_KEY_SECRET_TOKEN, $newToken);
+        $this->cacheStore()->put(self::CACHE_KEY_SECRET_TOKEN, $newToken);
 
         Log::info('Secret token regenerated', [
             'user_id' => $user?->id,

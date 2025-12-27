@@ -46,7 +46,7 @@
                         <input type="hidden" name="email_marketing" value="0">
                         <input type="checkbox" name="email_marketing" value="1"
                                {{ $user->hasEmailMarketingConsent() ? 'checked' : '' }}
-                               class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                               class="h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500">
                     </div>
                     <div class="ml-3">
                         <span class="font-medium text-gray-700">{{ __('Promocje i oferty specjalne') }}</span>
@@ -60,7 +60,7 @@
                         <input type="hidden" name="email_newsletter" value="0">
                         <input type="checkbox" name="email_newsletter" value="1"
                                {{ $user->hasEmailNewsletterConsent() ? 'checked' : '' }}
-                               class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                               class="h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500">
                     </div>
                     <div class="ml-3">
                         <span class="font-medium text-gray-700">{{ __('Newsletter') }}</span>
@@ -83,7 +83,7 @@
                         <input type="hidden" name="sms_consent" value="0">
                         <input type="checkbox" name="sms_consent" value="1"
                                {{ $user->hasSmsConsent() ? 'checked' : '' }}
-                               class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                               class="h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500">
                     </div>
                     <div class="ml-3">
                         <span class="font-medium text-gray-700">{{ __('Powiadomienia SMS o wizytach') }}</span>
@@ -97,7 +97,7 @@
                         <input type="hidden" name="sms_marketing" value="0">
                         <input type="checkbox" name="sms_marketing" value="1"
                                {{ $user->hasSmsMarketingConsent() ? 'checked' : '' }}
-                               class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                               class="h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500">
                     </div>
                     <div class="ml-3">
                         <span class="font-medium text-gray-700">{{ __('SMS promocyjne') }}</span>
@@ -109,7 +109,7 @@
 
         <div class="mt-6 flex justify-end">
             <button type="submit"
-                    class="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                    class="px-6 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
                 {{ __('Zapisz preferencje') }}
             </button>
         </div>

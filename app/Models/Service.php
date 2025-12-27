@@ -59,11 +59,6 @@ class Service extends Model
         return $this->hasMany(Appointment::class);
     }
 
-    public function serviceAvailabilities()
-    {
-        return $this->hasMany(ServiceAvailability::class);
-    }
-
     /**
      * Get the staff members that can perform this service.
      */
@@ -71,6 +66,20 @@ class Service extends Model
     {
         return $this->belongsToMany(User::class, 'service_staff', 'service_id', 'user_id')
             ->withTimestamps();
+    }
+
+    /**
+     * Get the staff members that can perform this service.
+     *
+     * This is an alias for staff() to support Filament's AttachAction.
+     * Filament expects inverse relationships to use the plural model name (users),
+     * but our business logic uses staff() for clarity.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function users()
+    {
+        return $this->staff();
     }
 
     // Scopes

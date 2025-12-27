@@ -330,6 +330,22 @@ html {
     letter-spacing: 0;
 }
 
+/* Fluid Typography Utilities (Responsive without breakpoints) */
+.text-fluid-hero {
+    font-size: clamp(2.25rem, 6vw, 6rem);   /* 36-96px */
+    line-height: 1.1;
+}
+
+.text-fluid-subtitle {
+    font-size: clamp(1.125rem, 2.5vw, 1.5rem); /* 18-24px */
+    line-height: 1.5;
+}
+
+.text-fluid-body {
+    font-size: clamp(1rem, 2vw, 1.25rem);   /* 16-20px */
+    line-height: 1.6;
+}
+
 /* =============================================================================
    Service Card Conversion Optimization
    ============================================================================= */

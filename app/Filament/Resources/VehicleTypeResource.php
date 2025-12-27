@@ -17,7 +17,7 @@ class VehicleTypeResource extends Resource
 {
     protected static ?string $model = VehicleType::class;
 
-    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-tag';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-cube';
 
     protected static ?string $navigationLabel = 'Typy Pojazdów';
 
@@ -25,7 +25,7 @@ class VehicleTypeResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Typy Pojazdów';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Cars';
+    protected static string|UnitEnum|null $navigationGroup = 'vehicles';
 
     protected static ?int $navigationSort = 1;
 

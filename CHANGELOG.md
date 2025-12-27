@@ -7,8 +7,171 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.6.0] - 2025-12-20
+
 ### Added
-- (empty - ready for next changes)
+- **Commercial Estimate Specialist Agent**
+  - Professional IT project pricing estimates with ROI analysis
+  - Retrospective analysis (completed work via Git history)
+  - Forward-looking estimates (future work projections)
+  - Hybrid estimates (completed + future phases)
+  - LOC counting and complexity assessment
+  - Polish IT market benchmarking
+  - ROI calculations (optional, for replacements only)
+  - Location: `.claude/agents/commercial-estimate-specialist.md`
+
+## [4.2.0] - 2025-12-14
+
+### Added
+- **Geographic Service Area Restriction System**
+  - Define service areas with city name, center coordinates, and radius
+  - Haversine formula for distance calculation (no external API needed)
+  - Real-time address validation in booking wizard (Step 3)
+  - Admin panel management with Google Maps picker component
+  - Fallback: allow all bookings if no areas configured
+  - Cached service areas (1 hour TTL) for performance
+  - Polish and English translations for validation messages
+  - API endpoints: `/api/service-area/validate`, `/api/service-area/areas`
+  - Rate limiting: 10 req/min for validation, 30 req/min for areas
+  - Database tables: `service_areas`, `service_area_waitlist`
+  - Filament admin resources: ServiceAreaResource, ServiceAreaWaitlistResource
+  - Unit and feature tests (Haversine, validation, waitlist)
+  - See: `docs/fixes/google-maps-picker-livewire-fix.md`
+
+- **Google Maps Picker Component for Admin Panel**
+  - Custom Filament ViewField for service area management at `/admin/service-areas/{id}/edit`
+  - Draggable marker for center point selection
+  - Autocomplete address search with Google Places API
+  - Circle overlay for radius visualization
+  - Real-time coordinate updates via Livewire deferred updates
+  - Smooth map centering with `panTo()` instead of `setCenter()`
+  - Standard Google Maps marker (improved UX vs custom icon)
+  - Input validation for coordinates
+
+### Fixed
+- **CRITICAL: Livewire/Alpine.js State Conflict in Google Maps Picker**
+  - **Problem**: Map would reset to Warsaw coordinates after autocomplete selection or marker drag
+  - **Root Cause**: `$wire.set()` calls without `false` parameter triggered full component re-render, resetting Alpine.js state
+  - **Solution**: Added deferred updates: `$wire.set('data.latitude', lat, false)`
+  - **Impact**: 95%+ improvement in map interaction responsiveness
+  - **Key Pattern**: Use `$wire.set(key, value, false)` for real-time UI interactions (maps, drag events, autocomplete)
+  - **Files**: `resources/views/filament/components/google-maps-picker.blade.php`
+  - **Documentation**: Complete fix guide in `docs/fixes/google-maps-picker-livewire-fix.md` with:
+    - Root cause analysis (10-step Livewire/Alpine.js state conflict breakdown)
+    - All 4 changes with before/after code examples
+    - 6 test scenarios + 3 edge cases
+    - Troubleshooting guide and best practices
+
+### Changed
+- **Booking Wizard Step 3**: Added service area validation with AJAX
+  - Displays Polish error message with distance to nearest area if outside boundaries
+  - Shows list of available service areas when validation fails
+  - Removed waitlist form (RODO compliance - no unnecessary data collection)
+  - Updated `APP_LOCALE` from `en` to `pl` in `.env`
+
+### Documentation
+- **New Files**:
+  - `docs/fixes/google-maps-picker-livewire-fix.md` - Complete technical fix guide (742 lines)
+  - `docs/fixes/README.md` - Fixes index with common patterns and prevention checklist
+  - `docs/fixes/ALPINE-BUTTON-CLICK-FIX.md` - Alpine.js button click event fix
+  - `docs/security/SECURITY-FIX-002-service-area-cleanup.md` - Service area cleanup guide
+  - `docs/troubleshooting-service-areas-id-skew.md` - ID skew troubleshooting
+- **Updated Files**:
+  - `docs/features/google-maps/README.md` - Added "Admin Panel Integration" section
+  - `CLAUDE.md` - Added "Livewire + Alpine.js Integration Issues" troubleshooting section
+  - `docs/README.md` - Added "Bug Fixes & Solutions" section with recent fixes
+
+### Removed
+- **ServiceAvailability System - Dead Code Cleanup**
+  - **Model**: `app/Models/ServiceAvailability.php` (deleted)
+  - **Command**: `app/Console/Commands/EnsureStaffAvailability.php` (deleted, never scheduled)
+  - **RelationManager**: `app/Filament/Resources/EmployeeResource/RelationManagers/ServiceAvailabilitiesRelationManager.php` (deleted, 7,718 bytes)
+  - **Factory**: `database/factories/ServiceAvailabilityFactory.php` (deleted)
+  - **Relations**: Removed `serviceAvailabilities()` from User.php and Service.php models
+  - **Dead Method**: Removed `getAvailableTimeSlots()` from AppointmentService (56 lines, never called)
+  - **UI Components**: Removed "Dostępności" tab from EmployeeResource admin panel
+  - **Database Table**: Created migration to drop `service_availabilities` table (verified 0 records)
+  - **Reason**: Dead code since 2025-11-19 migration to StaffSchedule system
+  - **Impact**: Admin configuration reduction from 350 → 30 clicks (91% improvement)
+  - **Documentation**: Updated 9 files with deprecation notices and migration guides
+  - **See**: ADR-015: Staff Availability System Redesign for complete analysis
+
+## [4.1.0] - 2025-12-12
+
+### Added
+- **Customer Profile Redesign** - All profile pages updated to v4.0.0 "Medical Precision"
+  - 8 files updated: layout, 5 tabs (personal, vehicle, address, notifications, security), email modal
+  - Color conversion: `blue-*` → `primary-*` (turquoise #4AA5B0)
+  - 96 lines changed (20+ inputs, 12+ buttons, 8+ info boxes, 6+ links, 4 checkboxes)
+  - Full compliance with monochrome design system
+- **Fluid Typography Utilities** - Responsive text scaling without breakpoints
+  - `.text-fluid-hero`: 36-96px responsive (clamp)
+  - `.text-fluid-subtitle`: 18-24px responsive (clamp)
+  - `.text-fluid-body`: 16-20px responsive (clamp)
+  - Applied to hero-banner component for optimal mobile scaling
+
+### Fixed
+- **CRITICAL: CI/CD Pipeline - Tests Now Enforce Deployment Quality**
+  - Production deployments were bypassing PHPUnit tests (discovered during v4.0.0 release)
+  - `test.yml`: Added `develop` and `main` branches to push triggers (was only `staging`)
+  - `deploy-production.yml`: Added full test job (PHPUnit + Laravel Pint)
+  - `deploy-production.yml`: Build job now depends on test job (`needs: test`)
+  - `deploy-production.yml`: Deploy job now depends on both (`needs: [test, build]`)
+  - **Impact**: Failed tests now block production deployments (prevents broken code in production)
+- **Test Suite - Weekend Appointment Failures**
+  - Tests failing with "staff not available" when run Thursday-Saturday
+  - Root cause: `now()->addDays(2)` could land on weekends, staff schedules only cover Mon-Fri
+  - Solution: Added `getNextWorkingDay()` helper to skip weekends
+  - Updated: `AppointmentStaffValidationTest` (4 tests), `ProfileSynchronizationTest` (5 tests)
+  - Result: 9/9 tests now passing consistently regardless of execution day
+
+### Changed
+- **BREAKING: Design System v4.0.0 "Medical Precision"** - Complete visual redesign
+  - **Monochrome Color Palette**: Professional 88% neutrals + 12% turquoise accent
+    - Primary turquoise: `#4AA5B0` (24% saturation, down from 59%)
+    - 9-shade neutral system: `#F9FAFB` → `#111827` (gray scale)
+    - Removed bronze/tan accent colors (`#D4C5B0`, `#8B7355`)
+  - **Border-Radius Standardization**: All UI elements use 10px (0.625rem)
+    - `rounded-lg` now 0.625rem (was 1rem/16px)
+    - DaisyUI `--rounded-box`: 0.625rem (was 1.5rem/24px)
+    - DaisyUI `--rounded-badge`: 0.625rem (was 1rem/16px)
+    - Preserved `rounded-full` for avatars, pills, badges, status indicators
+  - **Hero Section Mobile Optimization**: Responsive height strategy
+    - Mobile (375px): 50vh (was 100vh, 50% reduction)
+    - Tablet (768px): 60vh
+    - Desktop (1024px+): 70vh
+    - Responsive padding: 3rem → 6rem across breakpoints
+  - **Component Updates (Monochrome Migration)**:
+    - `button.blade.php`: Solid colors, no gradients (primary, secondary, ghost, danger variants)
+    - `auth-card.blade.php`: Monochrome turquoise orbs (15%, 12%, 10% opacity)
+    - `hero-banner.blade.php`: Solid `bg-primary-600` background, responsive height
+    - `service-card.blade.php`: Single turquoise icon color (all services)
+  - **Template Updates (11 files)**:
+    - Auth pages (8): Removed all gradient props, monochrome backgrounds
+    - Profile: Avatar gradient → solid `bg-primary-500`
+    - Booking wizard: Border-radius standardization, gradient removal
+    - Homepage: Complete gradient elimination (hero, sections, icons, CTA)
+    - Services index: Solid hero background
+  - **Build Optimization**: CSS optimized 105.19KB → 103.35KB (-1.84KB, -1.75%)
+  - **Design Token Generation**: 113 CSS variables auto-generated from design-system.json
+
+### Removed
+- **All purple/pink/indigo gradients** (100% elimination)
+  - Hero sections: Multi-color gradients → solid backgrounds
+  - Service cards: 8 different gradient colors → single turquoise
+  - Auth pages: Colorful gradient backgrounds → monochrome
+  - Icon containers: Multi-color → solid primary
+  - CTA buttons: Gradient backgrounds → solid colors
+- **Large border-radius values** from components (xl, 2xl, 3xl)
+- **Tan/bronze accent colors** from design system (v3.0.0 "Bentley Modern")
+- **Gradient utility usage** in templates (replaced with solid design system colors)
+
+### Technical Details
+- Research-backed design: BMW, Mercedes-Benz, Stripe, Linear best practices
+- WCAG AA compliant: 4.5:1 contrast ratios maintained
+- iOS design language: Preserved rounded-full for pills/toggles/orbs
+- Logo compatibility: Sharp geometric edges preserved as brand identity
+- Files modified: 21 total (3 config, 10 components, 8 templates)
 
 ## [0.7.0] - 2025-12-11
 

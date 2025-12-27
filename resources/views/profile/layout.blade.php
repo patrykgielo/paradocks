@@ -19,12 +19,12 @@
                             <a href="{{ route($item['route']) }}"
                                class="flex items-center px-4 py-3 transition-colors min-h-[44px]
                                       {{ request()->routeIs($item['route'])
-                                         ? 'bg-blue-50 text-blue-700 font-medium'
+                                         ? 'bg-primary-50 text-primary-700 font-medium'
                                          : 'text-gray-700 hover:bg-gray-50' }}">
                                 @include('profile.partials.icons.' . $item['icon'], ['class' => 'w-5 h-5 mr-3'])
                                 <span class="flex-1">{{ __($item['label']) }}</span>
                                 @if(request()->routeIs($item['route']))
-                                    <svg class="w-5 h-5 text-blue-700" fill="currentColor" viewBox="0 0 20 20">
+                                    <svg class="w-5 h-5 text-primary-700" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                     </svg>
                                 @endif
@@ -61,7 +61,7 @@
                             <a href="{{ route($item['route']) }}"
                                class="flex items-center px-3 py-2 rounded-lg transition-colors
                                       {{ request()->routeIs($item['route'])
-                                         ? 'bg-blue-50 text-blue-700 font-medium'
+                                         ? 'bg-primary-50 text-primary-700 font-medium'
                                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
                                 @include('profile.partials.icons.' . $item['icon'], ['class' => 'w-5 h-5'])
                                 <span class="ml-3">{{ __($item['label']) }}</span>

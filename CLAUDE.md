@@ -8,6 +8,10 @@ Laravel 12 car detailing booking application with:
 - **Backend:** Laravel 12, PHP 8.2+, MySQL 8.0
 - **Frontend:** Vite 7+, Tailwind CSS 4.0
 - **Admin Panel:** Filament v4.2.3
+  - ⚠️ **CRITICAL - Filament v4 Namespace Breaking Change:**
+    - Layout components (Section, Grid, Tabs): `Filament\Schemas\Components\*`
+    - Data entry components (TextEntry, IconEntry): `Filament\Infolists\Components\*`
+    - **See:** [Filament v4 Documentation](#filament-v4-documentation)
 - **Queue:** Redis with Laravel Horizon
 - **Containerization:** Docker Compose (9 services)
 
@@ -182,6 +186,26 @@ docker compose exec app php artisan filament:optimize
 
 **Access Control:** `app/Models/User.php` → `canAccessPanel()` method
 
+## Filament v4 Documentation
+
+📚 **Complete Filament v4 guides (READ BEFORE implementing!):**
+- [Component Architecture](app/docs/guides/filament-v4-component-architecture.md) - Hierarchy and nesting rules
+- [Migration Guide](app/docs/guides/filament-v4-migration-guide.md) - v3 → v4 breaking changes
+- [Best Practices](app/docs/guides/filament-v4-best-practices.md) - Do's and don'ts
+- [Widgets Guide](app/docs/guides/filament-v4-widgets-guide.md) - Complete widget patterns
+
+⚠️ **CRITICAL Widget Rule (avoid recent bug):**
+- Widgets are top-level components with built-in layout
+- **NEVER** nest `<x-filament::section>` as root element in widgets
+- Use `<x-filament-widgets::widget>` wrapper in Blade templates
+- Heading/description go to widget slots, NOT section component
+
+🔍 **Before Creating New Components:**
+1. Check [Component Architecture](app/docs/guides/filament-v4-component-architecture.md) for nesting rules
+2. Verify namespace: `Schemas\Components` (layouts) vs `Forms\Components` (inputs) vs `Infolists\Components` (display)
+3. Follow patterns from [Best Practices](app/docs/guides/filament-v4-best-practices.md)
+4. Use [Widgets Guide](app/docs/guides/filament-v4-widgets-guide.md) for all widget implementations
+
 ## Configuration
 
 ### Critical Environment Variables
@@ -224,7 +248,9 @@ Capture vehicle information (type, brand, model, year) for service preparation.
 
 ### Google Maps Integration
 Places Autocomplete for accurate location capture in booking wizard.
+**Admin Integration:** Custom Filament map picker for service area management.
 **See:** [Google Maps Integration](app/docs/features/google-maps/README.md)
+**Known Fix:** [Livewire Re-render Loop Fix](app/docs/fixes/google-maps-picker-livewire-fix.md)
 
 ### Settings System
 Centralized settings management via Filament admin panel.
@@ -463,6 +489,28 @@ docker compose exec app php artisan filament:optimize-clear
 ```
 
 **See:** [Troubleshooting Guide](app/docs/guides/troubleshooting.md)
+
+### Livewire + Alpine.js Integration Issues
+
+**Problem:** Component state resets after user interaction (e.g., map jumps back to default position).
+
+**Root Cause:** `$wire.set()` without third parameter triggers full component re-render, resetting Alpine.js state.
+
+**Solution:** Use deferred updates for real-time UI interactions:
+
+```javascript
+// ❌ BAD: Causes re-render loop
+this.$wire.set('data.latitude', lat);
+
+// ✅ GOOD: Deferred update, no re-render
+this.$wire.set('data.latitude', lat, false);
+```
+
+**When to Use:**
+- **Deferred (`false`)**: Map interactions, drag events, real-time updates
+- **Immediate (default)**: Form submissions, "Save" button clicks
+
+**See:** [Livewire Re-render Loop Fix](app/docs/fixes/google-maps-picker-livewire-fix.md)
 
 ## Testing
 

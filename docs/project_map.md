@@ -133,7 +133,9 @@ The application follows a traditional **Model-View-Controller (MVC)** pattern en
 **Relationships:**
 - `staffAppointments()` → hasMany(Appointment) - Appointments where user is staff
 - `customerAppointments()` → hasMany(Appointment) - Appointments where user is customer
-- `serviceAvailabilities()` → hasMany(ServiceAvailability) - Staff availability schedule
+- `staffSchedules()` → hasMany(StaffSchedule) - Base weekly schedule pattern
+- `staffDateExceptions()` → hasMany(StaffDateException) - Single-day overrides
+- `staffVacationPeriods()` → hasMany(StaffVacationPeriod) - Multi-day absences
 - Uses Spatie `HasRoles` trait for role management
 
 **Key Methods:**
@@ -166,7 +168,7 @@ The application follows a traditional **Model-View-Controller (MVC)** pattern en
 
 **Relationships:**
 - `appointments()` → hasMany(Appointment)
-- `serviceAvailabilities()` → hasMany(ServiceAvailability)
+- `staff()` → belongsToMany(User) via `service_staff` pivot - Staff who can perform this service
 
 **Key Scopes:**
 - `scopeActive($query)` - Filter active services only
@@ -248,40 +250,23 @@ The application follows a traditional **Model-View-Controller (MVC)** pattern en
 
 ---
 
-### ServiceAvailability
-**Location:** `/var/www/projects/paradocks/app/app/Models/ServiceAvailability.php`
+### ~~ServiceAvailability~~ (DEPRECATED - REMOVED 2025-12-12)
 
-**Purpose:** Defines when staff members are available to perform specific services
+**Status:** ❌ **REMOVED** - Dead code eliminated
 
-**Relationships:**
-- `service()` → belongsTo(Service)
-- `user()` → belongsTo(User) - Staff member
+**Reason for Removal:**
+- Created combinatorial explosion: 10 services × 7 days × 5 staff = 350 configurations
+- Never used by booking logic (AppointmentService used StaffScheduleService instead)
+- Inferior to StaffSchedule system implemented 2025-11-19
+- Database table had 0 records at time of removal
 
-**Key Scopes:**
-- `scopeForDay($query, int $dayOfWeek)` - Filter by day of week
-- `scopeForUser($query, int $userId)` - Filter by staff member
-- `scopeForService($query, int $serviceId)` - Filter by service
+**Replaced By:** **StaffSchedule + StaffDateException + StaffVacationPeriod** architecture
 
-**Fillable Attributes:**
-- `service_id` (foreignId)
-- `user_id` (foreignId) - Staff member
-- `day_of_week` (integer) - 0=Sunday, 6=Saturday
-- `start_time` (time)
-- `end_time` (time)
+See:
+- [Staff Scheduling Guide](guides/staff-scheduling-guide.md)
+- [ADR-015: Staff Availability System Redesign](decisions/ADR-015-staff-availability-system-redesign.md)
 
-**Casts:**
-- `day_of_week` → integer
-- `start_time` → datetime:H:i
-- `end_time` → datetime:H:i
-
-**Database Constraints:**
-- Unique constraint: (user_id, service_id, day_of_week, start_time) - Prevents overlapping availability
-
-**Notes:**
-- Supports recurring weekly availability only
-- **MISSING:** No support for one-time exceptions (holidays, vacation days)
-- **MISSING:** No buffer time between appointments
-- **MISSING:** No capacity management (multiple staff same time)
+**Configuration Reduction:** 350 clicks → 30 clicks (91% improvement)
 
 ---
 
@@ -849,24 +834,19 @@ The application follows a traditional **Model-View-Controller (MVC)** pattern en
 
 ---
 
-### Table: service_availabilities
-**Columns:**
-- id (bigint, PK, auto-increment)
-- service_id (foreignId, references services.id, cascade on delete)
-- user_id (foreignId, references users.id, cascade on delete)
-- day_of_week (integer) - 0=Sunday, 6=Saturday
-- start_time (time)
-- end_time (time)
-- created_at, updated_at (timestamps)
+### ~~Table: service_availabilities~~ (DROPPED 2025-12-12)
 
-**Indexes:**
-- Primary key: id
-- Foreign keys: service_id, user_id
-- Unique: (user_id, service_id, day_of_week, start_time)
+**Status:** ❌ **TABLE DROPPED** via migration `2025_12_12_014637_drop_service_availabilities_table.php`
 
-**Notes:**
-- Unique constraint prevents duplicate availability entries
-- No support for date-specific exceptions
+**Reason:** Dead code table, 0 records at deletion, never used by booking system
+
+**Replaced By:**
+- `staff_schedules` - Base weekly patterns
+- `staff_date_exceptions` - Single-day overrides
+- `staff_vacation_periods` - Multi-day absences
+- `service_staff` - Service-to-staff pivot (informational only)
+
+**Migration Rollback:** `php artisan migrate:rollback --step=1` will recreate table structure (no data to restore)
 
 ---
 

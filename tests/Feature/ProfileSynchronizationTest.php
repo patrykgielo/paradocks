@@ -71,12 +71,27 @@ class ProfileSynchronizationTest extends TestCase
     }
 
     /**
+     * Helper method to find next valid working day (Mon-Fri) that staff works
+     */
+    protected function getNextWorkingDay(): Carbon
+    {
+        $date = Carbon::now()->addDays(2); // Start 2 days from now for 24h advance booking
+
+        // If it's Saturday or Sunday, move to next Monday
+        while ($date->dayOfWeek === Carbon::SATURDAY || $date->dayOfWeek === Carbon::SUNDAY) {
+            $date->addDay();
+        }
+
+        return $date;
+    }
+
+    /**
      * Helper method to generate complete booking data with all required fields
      */
     protected function getBookingData(array $overrides = []): array
     {
-        // Use 2 days from now to meet 24-hour advance booking requirement
-        $appointmentDate = Carbon::now()->addDays(2)->format('Y-m-d');
+        // Use next working day to meet 24-hour advance booking + staff availability
+        $appointmentDate = $this->getNextWorkingDay()->format('Y-m-d');
 
         return array_merge([
             'service_id' => $this->service->id,

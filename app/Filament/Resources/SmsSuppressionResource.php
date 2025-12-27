@@ -20,11 +20,11 @@ class SmsSuppressionResource extends Resource
 {
     protected static ?string $model = SmsSuppression::class;
 
-    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-no-symbol';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-x-circle';
 
-    protected static string|UnitEnum|null $navigationGroup = 'SMS';
+    protected static string|UnitEnum|null $navigationGroup = 'communication';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 8;
 
     protected static ?string $navigationLabel = 'SMS Suppression List';
 

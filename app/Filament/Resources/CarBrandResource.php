@@ -25,7 +25,7 @@ class CarBrandResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Marki';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Cars';
+    protected static string|UnitEnum|null $navigationGroup = 'vehicles';
 
     protected static ?int $navigationSort = 2;
 
