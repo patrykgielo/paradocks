@@ -45,7 +45,7 @@ The agent will search design-system.json for iOS blue (#007AFF), find it's defin
 </commentary>
 </example>
 
-tools: Read, Grep, Glob, Edit, Write, mcp__firecrawl__firecrawl_search, mcp__firecrawl__firecrawl_scrape, WebSearch, WebFetch
+tools: mcp__ide__getDiagnostics
 model: sonnet
 color: purple
 ---
