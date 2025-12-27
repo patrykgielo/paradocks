@@ -31,7 +31,7 @@ This combines retrospective analysis (Git history, actual LOC) with forward-look
 </commentary>
 </example>
 
-tools: Read, Grep, Glob, Bash, Edit, Write, mcp__firecrawl__firecrawl_search, mcp__firecrawl__firecrawl_scrape, WebSearch, WebFetch, mcp__clickup__clickup_get_task_time_entries, mcp__clickup__clickup_search
+tools: All tools
 model: sonnet
 color: blue
 ---
